@@ -31,7 +31,6 @@ BX01100
 ; NOTE. If the Pathfinder is rotated +45 degrees starboard
 ; (recommended alignment), set EA to EA+45000
 EA45000
-
 ; /!\ DEPEND DU MONTAGE
 ; Set manual transducer depth in case depth sensor fails
 ED0000
@@ -57,7 +56,6 @@ TP00:00.00
 ; Note: By default, water profiling is turned off.
 ; To use water profiling, set the WP command >0
 WP00001
-
 ; /!\ DEPEND DE LEO
 ; Bin size set to 400 cm
 WS0400
@@ -89,8 +87,8 @@ BK0
 #EV00000
 ; Select type of external sensor to use
 #EY 0 0 0 0 0 0 0 0
-; Set output data format to #PD0
-#PD0
+; Set output data format to #PD13
+#PD13
 ;-------------------------------------------------------------------------
 ; Save this setup to non-volatile memory in the Pathfinder
 CK
