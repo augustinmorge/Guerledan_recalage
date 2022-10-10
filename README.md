@@ -1,13 +1,20 @@
 # Recalage à l'aide de bathymétrie pour un AUV
 ***
+## Description du projet
 
-#AUV_localisation
+Recalage sur une carte MNT d'un AUV à l'aide d'un filtre à particules
+
+## Fichiers
+### AUV_localisation
 Ce fichier regroupe les algorithmes utilisés dans le cadre du sujet
 
-# MNT
-Renvoie à la carte MNT
+### References
+Documents utilisés pour ce projet :
+* Documentation du DVL
+* Documentation du filtre particulaire (PF)
+* Sujet du projet
 
-# Liens utiles
+### Liens utiles
 Manuel des différents capteurs utilisés
 [SOURCE](https://moodle.ensta-bretagne.fr/course/view.php?id=863)
 
