@@ -1,0 +1,48 @@
+;-----------------------------------------------------------------------------
+; DVL Command File for use with VmDas software.
+;
+; DVL type:    Pathfinder 600
+; Setup type:    
+;
+; NOTE:  Any line beginning with a semicolon in the first
+;        column is treated as a comment and is ignored by
+;        the VmDas software.
+;-----------------------------------------------------------------------------
+;Restore factory default settings in the ADCP
+CR1
+;Bandwidth profile mode
+WB1
+;Number of water data pings to average
+WP00001
+;Depth cells number
+WN050
+;Depth cells size (cm)
+WS050
+;Blank after transmit (cm)
+WF088
+;Radial ambiguity velocity (m/s)
+WV330
+;Data out
+WD111110000
+;Number of bottom-track pings to average
+BP001
+;Maximum bottom search depth (decimeters)
+BX500
+;Minimum time between pings
+TP00:00:00
+;Time between ensemble
+TE00:00:00.20
+;Salinity
+ES35
+;Transducer depth (decimeters)
+ED00005
+;Heading alignment (100*deg)
+EA4500
+;Coordinate Transformation
+EX00010
+;Sensor sources
+EZ10000000
+;Save this setup to non-volatile memory in the ADCP
+CK
+;Start pinging (GO)
+CS

@@ -56,12 +56,14 @@ TP00:00.00
 ; Note: By default, water profiling is turned off.
 ; To use water profiling, set the WP command >0
 WP00001
-; /!\ DEPEND DE LEO
-; Bin size set to 400 cm
-WS0400
-; Number of bins set to 50
-WN050
-;
+; Bin size set to 50 cm
+WS0050
+; Number of bins set to 100
+WN100
+; WF0088 ; default
+; WV383 ; default
+; WB1 ; default
+; WD111110000 ; default
 ; **************************************
 ; Pathfinder Expert Command Section
 ; **************************************
