@@ -30,21 +30,25 @@ BX01100
 ; Set Heading Alignment to 0 degrees
 ; NOTE. If the Pathfinder is rotated +45 degrees starboard
 ; (recommended alignment), set EA to EA+45000
-EA00000
+EA45000
+
+; /!\ DEPEND DU MONTAGE
 ; Set manual transducer depth in case depth sensor fails
 ED0000
-; Set Salinity to saltwater
-ES35
-; Output Ship coordinates, use tilts, allow 3 beam
+; Set Salinity to saltwater ; /!\ Water without salt (from 0 to 35)
+ES00
+; Output Instrument coordinates, use tilts, allow 3 beam
 ; solutions and bin mapping
-EX10111
+; /!\ DANS LE REF DE L'INSTRUMENT (cf p.124)
+EX01111
 ; Set to use internal sensors
-EZ10000010
+; EZ10000010
+EZ11110010
 ; **************************************
 ; Pathfinder Timing Setup Commands
 ; **************************************
 ; Set Time between Ensembles to zero (Pathfinder will ping as fast as possible)
-TE00000000
+TE00:00:00.00
 ; Set Time between Pings to zero (Pathfinder will ping as fast as possible)
 TP00:00.00
 ; **************************************
@@ -52,7 +56,9 @@ TP00:00.00
 ; **************************************
 ; Note: By default, water profiling is turned off.
 ; To use water profiling, set the WP command >0
-WP0
+WP00001
+
+; /!\ DEPEND DE LEO
 ; Bin size set to 400 cm
 WS0400
 ; Number of bins set to 50
