@@ -22,7 +22,7 @@ if __name__ == '__main__':
     world = World(10.0, 10.0, [[2.0, 2.0], [2.0, 8.0], [9.0, 2.0], [8, 9]])
 
     # Number of simulated time steps
-    n_time_steps = 30
+    n_time_steps = 300
 
     # Initialize visualization
     show_particle_pose = False  # only set to true for low #particles (very slow)
