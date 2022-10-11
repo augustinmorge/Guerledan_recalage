@@ -7,8 +7,8 @@ from simulator import Robot, Visualizer, World
 from core.resampling import ResamplingAlgorithms
 
 # Particle filters
-# from core.particle_filters import ParticleFilterSIR
-# from core.particle_filters import ParticleFilterNEPR
+from core.particle_filters import ParticleFilterSIR
+from core.particle_filters import ParticleFilterNEPR
 from core.particle_filters import ParticleFilterMWR
 
 # For showing plots (plt.show())
@@ -22,12 +22,12 @@ if __name__ == '__main__':
     ##
     # Set simulated world and visualization properties
     ##
-    l = []; xmax = 100.; ymax = 100.; nb_landmark = 100;
+    landemarks = []; xmax = 100.; ymax = 100.; nb_landmark = 100;
     for i in range(nb_landmark):
         a,b = np.random.uniform(0.,xmax),  np.random.uniform(0.,ymax)
-        l.append([a,b])
-    # world = World(10.0, 10.0, [[2.0, 2.0], [2.0, 8.0], [9.0, 2.0], [8, 9]])
-    world = World(xmax, ymax, l)
+        landemarks.append([a,b])
+    world = World(10.0, 10.0, [[2.0, 2.0], [2.0, 8.0], [9.0, 2.0], [8, 9]])
+    # world = World(xmax, ymax, landemarks)
 
     # Number of simulated time steps
     n_time_steps = 300
@@ -92,13 +92,13 @@ if __name__ == '__main__':
         measurement_noise=measurement_noise,
         resampling_algorithm=algorithm,
         resampling_threshold=0.65*number_of_particles)
-    # particle_filter_sir = ParticleFilterNEPR(
-    #     number_of_particles=number_of_particles,
-    #     limits=pf_state_limits,
-    #     process_noise=process_noise,
-    #     measurement_noise=measurement_noise,
-    #     resampling_algorithm=algorithm,
-    #     number_of_effective_particles_threshold=0.65*number_of_particles)
+    # # particle_filter_sir = ParticleFilterNEPR(
+    # #     number_of_particles=number_of_particles,
+    # #     limits=pf_state_limits,
+    # #     process_noise=process_noise,
+    # #     measurement_noise=measurement_noise,
+    # #     resampling_algorithm=algorithm,
+    # #     number_of_effective_particles_threshold=0.65*number_of_particles)
     # particle_filter_sir = ParticleFilterSIR(
     #     number_of_particles=number_of_particles,
     #     limits=pf_state_limits,
@@ -127,5 +127,4 @@ if __name__ == '__main__':
                                    landmarks=world.landmarks)
 
         # Visualization
-        # if i%10 == 0:
         visualizer.draw_world(world, robot, particle_filter_sir.particles, hold_on=False, particle_color='g')

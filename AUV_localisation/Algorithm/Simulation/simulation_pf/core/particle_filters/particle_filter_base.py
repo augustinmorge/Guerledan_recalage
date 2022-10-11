@@ -231,7 +231,7 @@ class ParticleFilter:
             dy = sample[1] - lm[1]
             expected_distance = np.sqrt(dx*dx + dy*dy)
             expected_angle = np.arctan2(dy, dx)
-            beta = 0.001
+            beta = 1
             # Map difference true and expected distance measurement to probability
             p_z_given_x_distance = \
                 np.exp(-beta*(expected_distance-measurement[i][0]) * (expected_distance-measurement[i][0]) /
