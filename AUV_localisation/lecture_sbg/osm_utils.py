@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import numpy as np
 
 def unwrap(t, delta):
@@ -11,7 +12,7 @@ def unwrap(t, delta):
     return tt
 
 def sync( t2, t1 ):
-    """ 
+    """
     Search a linear drift of t2 from t1
     We search a and b such that t2 = a*t1+b
     """
@@ -29,4 +30,3 @@ def sync( t2, t1 ):
     a = (n * t2a - t1b * t2b) / d
     b = (t1a * t2b - t1b * t2a)  /d
     return a, b
-

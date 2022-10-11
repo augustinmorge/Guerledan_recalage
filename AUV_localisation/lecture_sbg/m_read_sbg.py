@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -15,7 +16,7 @@ if __name__ == "__main__":
 
     gnss_raw_file = None
     #gnss_raw_file = "toto.sbf"
-    
+
     # Lecture des paquets
     sbg = ins_Sbg.SbgRawData(directory, filelist, gnss_raw_file, q_draw)
 
@@ -23,7 +24,7 @@ if __name__ == "__main__":
         # Affichage des résultats
         # ------------------------
 
-        if 0:        
+        if 0:
             # Trajectoire
             g1 = osm_ui.plot_xy(180. / np.pi * sbg.pos_nav[:,1],
                                    180. / np.pi * sbg.pos_nav[:,0],
@@ -321,9 +322,9 @@ if __name__ == "__main__":
                         "velocity val.", "position val.",
                         "vert ref used", "mag ref used",
                         "gps1 vel used", "gps1 pos used", "gps1 course used",
-                        "gps1 head used", 
+                        "gps1 head used",
                         "gps2 vel used", "gps2 pos used", "gps2 course used",
-                        "gps2 head used", "odo used")) 
+                        "gps2 head used", "odo used"))
 
         if 0:
             g23 = osm_ui.plot_xy(sbg.t_quat,
@@ -365,9 +366,9 @@ if __name__ == "__main__":
                         "velocity val.", "position val.",
                         "vert ref used", "mag ref used",
                         "gps1 vel used", "gps1 pos used", "gps1 course used",
-                        "gps1 head used", 
+                        "gps1 head used",
                         "gps2 vel used", "gps2 pos used", "gps2 course used",
-                        "gps2 head used", "odo used")) 
+                        "gps2 head used", "odo used"))
 
         if 0:
             g24 = osm_ui.plot_xy(sbg.t_nav,
@@ -404,12 +405,12 @@ if __name__ == "__main__":
                 (g24, sbg.t_nav, sbg.st_nav_gps2_hdt_used - 0.15)
             osm_ui.plot_xy_add\
                 (g24, sbg.t_nav, sbg.st_nav_odo_used - 0.15)
-            
+
             g24.legend(("solution_mode", "attitude val.", "heading val.",
                         "velocity val.", "position val.",
                         "vert ref used", "mag ref used",
                         "gps1 vel used", "gps1 pos used", "gps1 course used",
-                        "gps1 head used", 
+                        "gps1 head used",
                         "gps2 vel used", "gps2 pos used", "gps2 course used",
                         "gps2 head used", "odo used"))
 
@@ -519,5 +520,5 @@ if __name__ == "__main__":
             g31.legend(("mag x", "mag y", "mag z", "acc x", "acc y",
                         "acc z", "mag in range", "accel in range",
                         "mag calibration"))
-        
+
         plt.pause(0.1)

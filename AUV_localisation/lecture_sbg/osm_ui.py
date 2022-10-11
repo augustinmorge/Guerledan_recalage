@@ -1,10 +1,11 @@
+#!/usr/bin/env python3
 import numpy as np
 import matplotlib.pyplot as plt
 
 def print_(message, error=None):
     print(message)
 
-    
+
 def plot_xy(data_x, data_y, x_label, y_label, title, symbol=None, nro_fig=None):
     if nro_fig is None:
         ff = plt.figure()
@@ -81,7 +82,7 @@ def plot_logxy_add(gg, data_x, data_y, symbol=None):
     #plt.pause(0.01)
 
 
-    
+
 def plot_image(img, x_label, y_label, title, nro_fig=None,
                xlim=None, ylim=None, zlim=None, colormap=None, q_grid=True,
                aspect="auto", q_colorbar=False,
@@ -100,7 +101,7 @@ def plot_image(img, x_label, y_label, title, nro_fig=None,
         v_min = zlim[0]
         v_max = zlim[1]
     print(v_min, v_max)
-        
+
     if xlim is None:
         x0 = -0.5
         x1 = img.shape[1] - 0.5
@@ -119,11 +120,11 @@ def plot_image(img, x_label, y_label, title, nro_fig=None,
         cmap = None
     else:
         cmap = colormap
-        
+
     y = gg.imshow(img, vmin=v_min, vmax=v_max, extent=[x0, x1, y0, y1],
                   aspect=aspect, cmap=colormap, origin=q_origin,
                   interpolation=q_interpolation)
-    
+
     gg.set_xlabel(x_label)
     gg.set_ylabel(y_label)
     gg.set_title(title)
@@ -150,5 +151,3 @@ def plot_mesh2d(m, title, line_symbol=None, pnt_symbol=None, nro_fig=None,
     if title is not None:
         gg.set_title(title)
     return gg
-
-                

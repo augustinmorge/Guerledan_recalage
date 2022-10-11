@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import os
 import sys
 import struct
@@ -10,7 +11,7 @@ import osm_utils
 
 class SbgImu:
     """ Version de l'Ekinox2 (firmware plus récent que celui de l'Ellipse)"""
-    
+
     def __init__(self, directory, filelist=None,
                  check_synchro=None, ref_time=None):
 
@@ -28,23 +29,23 @@ class SbgImu:
                     filelist.append(x.name)
 
             filelist = sorted(filelist)
-        
+
         self.ref_time = ref_time
         self.directory = directory
         self.filelist = filelist
-        
+
         self.check_synchro = check_synchro
 
         self.type_set = set()
-        
+
         if type( filelist ) not in (tuple, list):
             filelist = (filelist,)
-       
-        self.f_list = []        
+
+        self.f_list = []
         for filename in filelist:
             self.f = open(os.path.join(directory, filename), 'rb')
             self.size = os.path.getsize(os.path.join(directory, filename))
-            
+
             self.f_list.append(self.f)
 
         self.offset = []
@@ -70,7 +71,7 @@ class SbgImu:
                 self.f.seek(0, os.SEEK_SET)
             else:
                 self.f.seek(self.offset[i_], os.SEEK_SET)
-                
+
         self.f_number = 0
         self.f = self.f_list[0]
 
@@ -80,7 +81,7 @@ class SbgImu:
                 f.close()
             self.f_list[ i_ ] = None
         self.f_number = 0
-        
+
     def read_packet(self, wished_packet=None):
         while 1:
             try:
@@ -115,7 +116,7 @@ class SbgImu:
                     osm_ui.print_("Second try to read a file is unsuccessful")
                     raise EOFError
 
-            assert class_ == 0                    
+            assert class_ == 0
             if msg not in self.type_set:
                 self.type_set.add(msg)
 
@@ -133,7 +134,7 @@ class SbgImu:
                         self.fast_imu_data["gyro y"],\
                         self.fast_imu_data["gyro z"],\
                         = struct.unpack("<IH6h", self.f.read(18))
-                    
+
                 elif msg == 1:
                     self.status_ = {}
                     if len_ == 22:
@@ -168,7 +169,7 @@ class SbgImu:
                         self.utc_time["nanosec"],\
                         self.utc_time["gps tow"],\
                         = struct.unpack("<I2H5B2I", self.f.read(21))
-                        
+
                 elif msg == 3:
                     self.imu_data = {}
                     self.imu_data["time stamp"],\
@@ -187,7 +188,7 @@ class SbgImu:
                     self.imu_data["delta angle y"],\
                     self.imu_data["delta angle z"],\
                     = struct.unpack("<IH13f", self.f.read(58))
-                    
+
                 elif msg == 4:
                     self.mag_ = {}
                     self.mag_["time stamp"],\
@@ -199,14 +200,14 @@ class SbgImu:
                         self.mag_["accel y"],\
                         self.mag_["accel z"],\
                         = struct.unpack("<IH6f", self.f.read(30))
-                    
+
                 elif msg == 5:
                     self.mag_calib_ = {}
                     self.mag_calib_["time stamp"],\
                         _,\
                     self.mag_calib_["buffer"],\
                     = struct.unpack("<IH16s", self.f.read(22))
-                    
+
                 elif msg == 6:
                     self.ekf_euler = {}
                     self.ekf_euler["time stamp"], \
@@ -218,7 +219,7 @@ class SbgImu:
                         self.ekf_euler["yaw acc"], \
                         self.ekf_euler["solution status"], \
                         =struct.unpack("<I6fI", self.f.read(32))
-                    
+
                 elif msg == 7:
                     self.ekf_quat = {}
                     self.ekf_quat["time stamp"], \
@@ -253,7 +254,7 @@ class SbgImu:
 
                     self.ekf_nav["longitude"] *= np.pi / 180.
                     self.ekf_nav["latitude"] *= np.pi / 180.
-                    
+
                 elif msg == 9:
                     self.ship_motion = {}
                     self.ship_motion["time stamp"],\
@@ -269,7 +270,7 @@ class SbgImu:
                         self.ship_motion["vel z"],\
                         self.ship_motion["status"],\
                         = struct.unpack("<I10fH", self.f.read(46))
-                    
+
                 elif msg == 13:
                     self.gps1_vel = {}
                     self.gps1_vel["time stamp"],\
@@ -284,7 +285,7 @@ class SbgImu:
                         self.gps1_vel["course"],\
                         self.gps1_vel["course acc"],\
                         = struct.unpack("<3I8f", self.f.read(44))
-                    
+
                 elif msg == 14:
                     self.gps1_pos = {}
                     self.gps1_pos["time stamp"],\
@@ -305,7 +306,7 @@ class SbgImu:
                     self.gps1_pos["latitude"] *= np.pi / 180.
                     self.gps1_pos["longitude"] *= np.pi / 180.
 
-                    
+
                 elif msg == 15:
                     self.gps1_hdt = {}
                     self.gps1_hdt["time stamp"],\
@@ -317,7 +318,7 @@ class SbgImu:
                         self.gps1_hdt["gps pitch acc"],\
                         = struct.unpack("<IHI4f", self.f.read(26))
 
-                    
+
                 elif msg == 16:
                     self.gps2_vel = {}
                     self.gps2_vel["time stamp"],\
@@ -332,7 +333,7 @@ class SbgImu:
                         self.gps2_vel["course"],\
                         self.gps2_vel["course acc"],\
                         = struct.unpack("<3I8f", self.f.read(44))
-                    
+
                 elif msg == 17:
                     self.gps2_pos = {}
                     self.gps2_pos["time stamp"],\
@@ -353,7 +354,7 @@ class SbgImu:
                     self.gps1_pos["latitude"] *= np.pi / 180.
                     self.gps1_pos["longitude"] *= np.pi / 180.
 
-                    
+
                 elif msg == 18:
                     self.gps2_hdt = {}
                     self.gps2_hdt["time stamp"],\
@@ -365,14 +366,14 @@ class SbgImu:
                         self.gps2_hdt["gps pitch acc"],\
                         = struct.unpack("<IHI4f", self.f.read(26))
 
-                    
+
                 elif msg == 19:
                     self.odo_vel = {}
                     self.odo_vel["time stamp"],\
                         self.odo_vel["odo status"],\
                         self.odo_vel["odo vel"],\
                         =struct.unpack("<IHf", self.f.read(10))
-                    
+
                 elif msg == 24:
                     self.event_A = {}
                     self.event_A["time stamp"],\
@@ -382,7 +383,7 @@ class SbgImu:
                         self.event_A["time offset 2"],\
                         self.event_A["time offset 3"],\
                         = struct.unpack("<I5H", self.f.read(14))
-                    
+
                 elif msg == 25:
                     self.event_B = {}
                     self.event_B["time stamp"],\
@@ -392,7 +393,7 @@ class SbgImu:
                         self.event_B["time offset 2"],\
                         self.event_B["time offset 3"],\
                         = struct.unpack("<I5H", self.f.read(14))
-                    
+
                 elif msg == 26:
                     self.event_C = {}
                     self.event_C["time stamp"],\
@@ -402,7 +403,7 @@ class SbgImu:
                         self.event_C["time offset 2"],\
                         self.event_C["time offset 3"],\
                         = struct.unpack("<I5H", self.f.read(14))
-                    
+
                 elif msg == 27:
                     self.event_D = {}
                     self.event_D["time stamp"],\
@@ -412,10 +413,10 @@ class SbgImu:
                         self.event_D["time offset 2"],\
                         self.event_D["time offset 3"],\
                         = struct.unpack("<I5H", self.f.read(14))
-                    
+
                 elif msg == 31:
                     self.gps1_raw  = self.f.read(len_)
-                    
+
 
                 elif msg == 32:
                     self.ship_delayed_motion = {}
@@ -432,7 +433,7 @@ class SbgImu:
                         self.ship_delayed_motion["vel z"],\
                         self.ship_delayed_motion["status"],\
                         = struct.unpack("<I10fH", self.f.read(46))
-                    
+
                 elif msg == 36:
                     self.pressure = {}
                     self.pressure["time stamp"],\
@@ -440,7 +441,7 @@ class SbgImu:
                         self.pressure["pressure"],\
                         self.pressure["altitude"],\
                         = struct.unpack("<IH2f", self.f.read(14))
-                    
+
                 elif msg == 38:
                     self.gps2_raw  = self.f.read(len_)
 
@@ -456,7 +457,7 @@ class SbgImu:
                     self.imu_short_data["delta angle z"],\
                     self.imu_short_data["temperature"],\
                     = struct.unpack("<IH6ih", self.f.read(32))
-                    
+
                     # Conversion des données en flottant
                     self.imu_short_data["delta vx"] /= 1048576.
                     self.imu_short_data["delta vy"] /= 1048576.
@@ -466,7 +467,7 @@ class SbgImu:
                     self.imu_short_data["delta angle z"] /= 67108864.
                     self.imu_short_data["temperature"] /= 256.
 
-                    
+
                 else:
                     osm_ui.print_("unknown message {:d}".format(msg))
                     self.f.seek(len_, os.SEEK_CUR)
@@ -476,12 +477,12 @@ class SbgImu:
                 return msg
             else:
                 self.f.seek(len_+3, os.SEEK_CUR)
-                
+
 class SbgRawData:
     def __init__(self, directory, filelist, gnss_raw_file=None,
                  q_load_data=False, ref_time=None):
         self.ref_time = ref_time
-        
+
         n_status = 0
         n_time = 0
         n_imu = 0
@@ -496,14 +497,14 @@ class SbgRawData:
         n_gps = 0
         n_gps_hdt = 0
         n_gps_raw = 0
-    
+
         sbg = SbgImu(directory, filelist, None, ref_time)
 
         if gnss_raw_file is not None:
             f_gnss = open(gnss_raw_file, "wb")
         else:
             f_gnss = None
-            
+
         while 1:
             try:
                 type_ = sbg.read_packet()
@@ -547,7 +548,7 @@ class SbgRawData:
                 elif type_ == 36:
                     n_pressure += 1
 
-            
+
             except (EOFError, struct.error):
                 break
 
@@ -563,7 +564,7 @@ class SbgRawData:
 
             self.t_status = np.empty((n_status,), np.float64)
             self.status = np.empty((n_status,3), np.uint32)
-        
+
             self.t_time = np.empty((n_time,2), np.float64)
             self.status_time = np.empty((n_time,), np.uint32)
             self.tow_gps_time = np.empty((n_time,), np.float32)
@@ -575,17 +576,17 @@ class SbgRawData:
             self.temp_imu = np.empty((n_imu,), np.float32)
             self.delta_v_imu = np.empty((n_imu,3), np.float32)
             self.delta_angle_imu = np.empty((n_imu,3), np.float32)
-        
+
             self.t_euler = np.empty((n_euler,), np.float64)
             self.att_euler = np.empty((n_euler,3), np.float32)
             self.att_acc_euler = np.empty((n_euler,3), np.float32)
             self.status_euler = np.empty((n_euler,), np.uint32)
-        
+
             self.t_quat = np.empty((n_quat,), np.float64)
             self.att_quat = np.empty((n_quat,4), np.float32)
             self.att_acc_quat = np.empty((n_quat,3), np.float32)
             self.status_quat = np.empty((n_quat,), np.uint32)
-        
+
             self.t_nav = np.empty((n_nav,), np.float64)
             self.velocity_nav = np.empty((n_nav,3), np.float32)
             self.velocity_acc_nav = np.empty((n_nav,3), np.float32)
@@ -600,7 +601,7 @@ class SbgRawData:
             self.accel_ship = np.empty((n_ship,3), np.float32)
             self.velocity_ship = np.empty((n_ship,3), np.float32)
             self.status_ship = np.empty((n_ship,), np.uint32)
-        
+
             self.t_ship_delayed = np.empty((n_ship_delayed,), np.float64)
             self.heave_period_ship_delayed\
                 = np.empty((n_ship_delayed,), np.float32)
@@ -608,7 +609,7 @@ class SbgRawData:
             self.accel_ship_delayed = np.empty((n_ship_delayed,3), np.float32)
             self.velocity_ship_delayed = np.empty((n_ship_delayed,3), np.float32)
             self.status_ship_delayed = np.empty((n_ship_delayed,), np.uint32)
-        
+
             self.t_mag = np.empty((n_mag,), np.float64)
             self.mag  = np.empty((n_mag, 3), np.float32)
             self.accel_mag = np.empty((n_mag,3), np.float32)
@@ -621,7 +622,7 @@ class SbgRawData:
             self.course_gps_vel =np.empty((n_gps_vel,), np.float32)
             self.course_acc_gps_vel =np.empty((n_gps_vel,), np.float32)
             self.status_gps_vel = np.empty((n_gps_vel,), np.uint32)
-        
+
             self.t_gps = np.empty((n_gps,), np.float64)
             self.tow_gps =np.empty((n_gps,), np.float32)
             self.pos_gps = np.empty((n_gps,3), np.float64)
@@ -634,17 +635,17 @@ class SbgRawData:
 
             self.t_gps_hdt = np.empty((n_gps_hdt,), np.float64)
             self.tow_gps_hdt =np.empty((n_gps_hdt,), np.float32)
-            self.status_gps_hdt = np.empty((n_gps_hdt,), np.uint32)    
-            self.true_heading_gps_hdt = np.empty((n_gps_hdt,), np.float32)    
-            self.true_heading_acc_gps_hdt = np.empty((n_gps_hdt,), np.float32)    
-            self.pitch_gps_hdt = np.empty((n_gps_hdt,), np.float32)    
-            self.pitch_acc_gps_hdt = np.empty((n_gps_hdt,), np.float32)    
+            self.status_gps_hdt = np.empty((n_gps_hdt,), np.uint32)
+            self.true_heading_gps_hdt = np.empty((n_gps_hdt,), np.float32)
+            self.true_heading_acc_gps_hdt = np.empty((n_gps_hdt,), np.float32)
+            self.pitch_gps_hdt = np.empty((n_gps_hdt,), np.float32)
+            self.pitch_acc_gps_hdt = np.empty((n_gps_hdt,), np.float32)
 
             self.t_pressure = np.empty((n_pressure,), np.float64)
             self.status_pressure = np.empty((n_pressure,), np.uint32)
             self.pressure = np.empty((n_pressure,), np.float32)
             self.altitude_pressure = np.empty((n_pressure,), np.float32)
-    
+
             n_status = 0
             n_time = 0
             n_imu = 0
@@ -658,11 +659,11 @@ class SbgRawData:
             n_gps = 0
             n_gps_hdt = 0
             n_pressure = 0
-            
+
             while 1:
                 try:
                     type_ = sbg.read_packet()
-                    
+
                     if type_ == 1:
                         self.t_status[n_status] = sbg.status_["time stamp"]
                         self.status[n_status, 0] = sbg.status_["general status"]
@@ -670,7 +671,7 @@ class SbgRawData:
                         self.status[n_status, 2] = sbg.status_["aiding status"]
                         n_status += 1
 
-                
+
                     elif type_ == 2:
 
                         self.t_time[n_time, 0] = sbg.utc_time["time stamp"]
@@ -689,9 +690,9 @@ class SbgRawData:
                         self.tow_gps_time[n_time]\
                             = sbg.utc_time["gps tow"] / 1000.
                         n_time += 1
-                    
+
                     elif type_ == 3:
-                    
+
                         self.t_imu[n_imu] = sbg.imu_data["time stamp"]
                         self.status_imu[n_imu] = sbg.imu_data["imu status"]
                         self.accel_imu[n_imu, 0] = sbg.imu_data["accel x"]
@@ -711,9 +712,9 @@ class SbgRawData:
                         self.delta_angle_imu[n_imu, 2] \
                             = sbg.imu_data["delta angle z"]
                         n_imu += 1
-                    
+
                     elif type_ == 4:
-                    
+
                         self.t_mag[n_mag] = sbg.mag["time stamp"]
                         self.mag[n_mag, 0] = sbg.mag["mag x"]
                         self.mag[n_mag, 1] = sbg.mag["mag y"]
@@ -725,7 +726,7 @@ class SbgRawData:
                         n_mag += 1
 
                     elif type_ == 6:
-                        
+
                         self.t_euler[n_euler] = sbg.ekf_euler["time stamp"]
                         self.att_euler[n_euler, 2] = sbg.ekf_euler["roll"]
                         self.att_euler[n_euler, 1] = sbg.ekf_euler["pitch"]
@@ -740,9 +741,9 @@ class SbgRawData:
                             = sbg.ekf_euler["solution status"]
                         n_euler += 1
 
-                        
+
                     elif type_ == 7:
-                        
+
                         self.t_quat[n_quat] = sbg.ekf_quat["time stamp"]
                         self.att_quat[n_quat, 0] = sbg.ekf_quat["w"]
                         self.att_quat[n_quat, 1] = sbg.ekf_quat["x"]
@@ -780,9 +781,9 @@ class SbgRawData:
                         n_nav += 1
 
 
-                    
+
                     elif type_ == 9:
-                    
+
                         self.t_ship[n_ship] = sbg.ship_motion["time stamp"]
                         self.heave_period_ship[n_ship]\
                             = sbg.ship_motion["heave period"]
@@ -819,11 +820,11 @@ class SbgRawData:
                             =  sbg.gps1_vel["gps vel status"]
                         n_gps_vel += 1
 
- 
-                        
+
+
                     elif type_ == 14:
 
-                        self.t_gps[n_gps] = sbg.gps1_pos["time stamp"] 
+                        self.t_gps[n_gps] = sbg.gps1_pos["time stamp"]
                         self.tow_gps[n_gps] = sbg.gps1_pos["gps tow"] / 1000.
                         self.pos_gps[n_gps, 0] = sbg.gps1_pos["latitude"]\
                             * np.pi / 180.
@@ -844,7 +845,7 @@ class SbgRawData:
 
 
                     elif type_ == 32:
-                    
+
                         self.t_ship_delayed[n_ship_delayed]\
                             = sbg.ship_delayed_motion["time stamp"]
                         self.heave_period_ship_delayed[n_ship_delayed]\
@@ -870,9 +871,9 @@ class SbgRawData:
                         self.status_ship_delayed[n_ship_delayed]\
                             = sbg.ship_delayed_motion["status"]
                         n_ship_delayed += 1
-                    
+
                     elif type_ == 15:
-                        
+
                         self.t_gps_hdt[n_gps_hdt] = sbg.gps1_hdt["time stamp"]
                         self.tow_gps_hdt[n_gps_hdt]\
                             = sbg.gps1_hdt["gps tow"] / 1000.
@@ -888,7 +889,7 @@ class SbgRawData:
                         self.pitch_acc_gps_hdt[n_gps_hdt]\
                             = sbg.gps1_hdt["gps pitch acc"] * np.pi / 180.
                         n_gps_hdt += 1
-                    
+
                     elif type_ == 36:
 
                         self.t_pressure[n_pressure] = sbg.pressure["time stamp"]
@@ -898,10 +899,10 @@ class SbgRawData:
                         self.status_pressure[n_pressure] \
                             = sbg.pressure["altimeter status"]
                         n_pressure += 1
-                
+
                 except (EOFError, struct.error):
                     break
-    
+
             sbg.close()
 
             # Passage de l'angle de cap entre 0 et 2pi
@@ -916,53 +917,53 @@ class SbgRawData:
             osm_ui.print_\
                 ("regression linéaire sur le temps : a: {:f} b: {:f}"\
                  .format(a, b))
-        
-            if self.t_status.size > 0: 
+
+            if self.t_status.size > 0:
                 self.t_status = osm_utils.unwrap(self.t_status, 2**32)/1.e6
                 self.t_status = a * self.t_status + b
 
-            if self.t_imu.size > 0: 
+            if self.t_imu.size > 0:
                 self.t_imu = osm_utils.unwrap(self.t_imu, 2**32)/1.e6
                 self.t_imu = a * self.t_imu + b
-                        
-            if self.t_mag.size > 0: 
+
+            if self.t_mag.size > 0:
                 self.t_mag = osm_utils.unwrap(self.t_mag, 2**32)/1.e6
                 self.t_mag = a * self.t_mag + b
-                        
-            if self.t_euler.size > 0: 
+
+            if self.t_euler.size > 0:
                 self.t_euler = osm_utils.unwrap(self.t_euler, 2**32)/1.e6
                 self.t_euler = a * self.t_euler + b
-                        
-            if self.t_quat.size > 0: 
+
+            if self.t_quat.size > 0:
                 self.t_quat = osm_utils.unwrap(self.t_quat, 2**32)/1.e6
                 self.t_quat = a * self.t_quat + b
-                        
-            if self.t_nav.size > 0: 
+
+            if self.t_nav.size > 0:
                 self.t_nav = osm_utils.unwrap(self.t_nav, 2**32)/1.e6
                 self.t_nav = a * self.t_nav + b
-                        
-            if self.t_ship.size > 0: 
+
+            if self.t_ship.size > 0:
                 self.t_ship = osm_utils.unwrap(self.t_ship, 2**32)/1.e6
                 self.t_ship = a * self.t_ship + b
-            
-            if self.t_ship_delayed.size > 0: 
+
+            if self.t_ship_delayed.size > 0:
                 self.t_ship_delayed = osm_utils.unwrap\
                     (self.t_ship_delayed, 2**32)/1.e6
                 self.t_ship_delayed = a * self.t_ship_delayed + b
 
-            if self.t_gps_vel.size > 0: 
+            if self.t_gps_vel.size > 0:
                 self.t_gps_vel = osm_utils.unwrap(self.t_gps_vel, 2**32)/1.e6
                 self.t_gps_vel = a * self.t_gps_vel + b
-                        
-            if self.t_gps.size > 0: 
+
+            if self.t_gps.size > 0:
                 self.t_gps = osm_utils.unwrap(self.t_gps, 2**32)/1.e6
                 self.t_gps = a * self.t_gps + b
-                        
-            if self.t_gps_hdt.size > 0: 
+
+            if self.t_gps_hdt.size > 0:
                 self.t_gps_hdt = osm_utils.unwrap(self.t_gps_hdt, 2**32)/1.e6
                 self.t_gps_hdt = a * self.t_gps_hdt + b
-                        
-            if self.t_pressure.size > 0: 
+
+            if self.t_pressure.size > 0:
                 self.t_pressure = osm_utils.unwrap(self.t_pressure, 2**32)/1.e6
                 self.t_pressure = a * self.t_pressure + b
 
@@ -972,7 +973,7 @@ class SbgRawData:
             self.st_general_gps_power    = (self.status[:,0] & 4) >> 2
             self.st_general_settings     = (self.status[:,0] & 8) >> 3
             self.st_general_temperature  = (self.status[:,0] & 16) >> 4
-        
+
             self.st_comm_port_a_valid    = (self.status[:,1] & 1)
             self.st_comm_port_b_valid    = (self.status[:,1] & 2) >> 1
             self.st_comm_port_c_valid    = (self.status[:,1] & 4) >> 2
@@ -991,7 +992,7 @@ class SbgRawData:
             self.st_comm_can_rx    = (self.status[:,1] & 32768) >> 15
             self.st_comm_can_tx    = (self.status[:,1] & 65536) >> 16
             self.st_comm_can_bus   = (self.status[:,1] & 917504) >> 17
-            
+
             self.st_aiding_gps1_pos    = (self.status[:,2] & 1)
             self.st_aiding_gps1_vel    = (self.status[:,2] & 2) >> 1
             self.st_aiding_gps1_hdt    = (self.status[:,2] & 4) >> 2
@@ -999,7 +1000,7 @@ class SbgRawData:
             self.st_aiding_port_mag    = (self.status[:,2] & 16) >> 4
             self.st_aiding_port_odo    = (self.status[:,2] & 32) >> 5
             self.st_aiding_port_dvl    = (self.status[:,2] & 64) >> 6
-        
+
             self.st_clock_stable    = (self.status_time & 1)
             self.st_clock_status    = (self.status_time & 30) >> 1
             self.st_clock_utc_sync    = (self.status_time & 32) >> 5
@@ -1032,7 +1033,7 @@ class SbgRawData:
             self.st_euler_gps2_course_used   = (self.status_euler & 65536) >> 16
             self.st_euler_gps2_hdt_used   = (self.status_euler & 131072) >> 17
             self.st_euler_odo_used   = (self.status_euler & 262144) >> 18
-    
+
             self.st_quat_solution_mode   = (self.status_quat & 15)
             self.st_quat_attitude_valid    = (self.status_quat & 16) >> 4
             self.st_quat_heading_valid    = (self.status_quat & 32) >> 5
@@ -1049,7 +1050,7 @@ class SbgRawData:
             self.st_quat_gps2_course_used   = (self.status_quat & 65536) >> 16
             self.st_quat_gps2_hdt_used   = (self.status_quat & 131072) >> 17
             self.st_quat_odo_used   = (self.status_quat & 262144) >> 18
-                            
+
             self.st_nav_solution_mode   = (self.status_nav & 15)
             self.st_nav_attitude_valid    = (self.status_nav & 16) >> 4
             self.st_nav_heading_valid    = (self.status_nav & 32) >> 5
@@ -1066,7 +1067,7 @@ class SbgRawData:
             self.st_nav_gps2_course_used   = (self.status_nav & 65536) >> 16
             self.st_nav_gps2_hdt_used   = (self.status_nav & 131072) >> 17
             self.st_nav_odo_used   = (self.status_nav & 262144) >> 18
-    
+
             self.st_ship_heave_valid   = (self.status_ship & 1)
             self.st_ship_heave_vel_aided    = (self.status_ship & 2) >> 1
             self.st_ship_period_available    = (self.status_ship & 4) >> 2
@@ -1079,8 +1080,8 @@ class SbgRawData:
                 = (self.status_ship_delayed & 4) >> 2
             self.st_ship_delayed_period_valid\
                 = (self.status_ship_delayed & 8) >> 3
-        
-        
+
+
             self.st_gps_vel_status   = (self.status_gps_vel & 31)
             self.st_gps_vel_type    = (self.status_gps_vel & 2016) >> 6
 
@@ -1109,4 +1110,3 @@ class SbgRawData:
             self.st_mag_mag_in_range    = (self.status_mag & 64) >> 6
             self.st_mag_accel_in_range    = (self.status_mag & 128) >> 7
             self.st_mag_calibration    = (self.status_mag & 256) >> 8
-
