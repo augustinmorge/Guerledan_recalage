@@ -1,1 +1,3 @@
 from .particle_filter_sir import ParticleFilterSIR
+from .particle_filter_nepr import ParticleFilterNEPR
+from .particle_filter_max_weight_resampling import ParticleFilterMWR

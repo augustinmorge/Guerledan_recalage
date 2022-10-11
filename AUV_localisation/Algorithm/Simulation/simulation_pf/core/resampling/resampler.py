@@ -38,6 +38,7 @@ class Resampler:
         :return: List of weighted samples.
         """
 
+        # print("--->", algorithm)
         if algorithm is ResamplingAlgorithms.MULTINOMIAL:
             return self.__multinomial(samples, N)
         elif algorithm is ResamplingAlgorithms.RESIDUAL:

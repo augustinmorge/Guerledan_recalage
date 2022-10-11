@@ -7,7 +7,9 @@ from simulator import Robot, Visualizer, World
 from core.resampling import ResamplingAlgorithms
 
 # Particle filters
-from core.particle_filters import ParticleFilterSIR
+# from core.particle_filters import ParticleFilterSIR
+# from core.particle_filters import ParticleFilterNEPR
+from core.particle_filters import ParticleFilterMWR
 
 # For showing plots (plt.show())
 import matplotlib.pyplot as plt
@@ -20,7 +22,7 @@ if __name__ == '__main__':
     ##
     # Set simulated world and visualization properties
     ##
-    l = []; xmax = 100.; ymax = 100.; nb_landmark = 3;
+    l = []; xmax = 100.; ymax = 100.; nb_landmark = 100;
     for i in range(nb_landmark):
         a,b = np.random.uniform(0.,xmax),  np.random.uniform(0.,ymax)
         l.append([a,b])
@@ -80,14 +82,29 @@ if __name__ == '__main__':
 
     # Set resampling algorithm used
     algorithm = ResamplingAlgorithms.MULTINOMIAL
+    # algorithm = ResamplingAlgorithms.STRATIFIED
 
     # Initialize SIR particle filter: resample every time step
-    particle_filter_sir = ParticleFilterSIR(
+    particle_filter_sir = ParticleFilterMWR(
         number_of_particles=number_of_particles,
         limits=pf_state_limits,
         process_noise=process_noise,
         measurement_noise=measurement_noise,
-        resampling_algorithm=algorithm)
+        resampling_algorithm=algorithm,
+        resampling_threshold=0.65*number_of_particles)
+    # particle_filter_sir = ParticleFilterNEPR(
+    #     number_of_particles=number_of_particles,
+    #     limits=pf_state_limits,
+    #     process_noise=process_noise,
+    #     measurement_noise=measurement_noise,
+    #     resampling_algorithm=algorithm,
+    #     number_of_effective_particles_threshold=0.65*number_of_particles)
+    # particle_filter_sir = ParticleFilterSIR(
+    #     number_of_particles=number_of_particles,
+    #     limits=pf_state_limits,
+    #     process_noise=process_noise,
+    #     measurement_noise=measurement_noise,
+    #     resampling_algorithm=algorithm)
     particle_filter_sir.initialize_particles_uniform()
 
     ##
