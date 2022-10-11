@@ -33,7 +33,7 @@ BX01100
 EA45000
 ; /!\ DEPEND DU MONTAGE
 ; Set manual transducer depth in case depth sensor fails
-ED0000
+ED00010
 ; Set Salinity to saltwater ; /!\ Water without salt (from 0 to 35)
 ES00
 ; Output Instrument coordinates, use tilts, allow 3 beam
