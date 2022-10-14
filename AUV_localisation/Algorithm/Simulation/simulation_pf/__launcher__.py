@@ -8,8 +8,6 @@ from core.resampling import ResamplingAlgorithms
 
 # Particle filters
 from core.particle_filters import ParticleFilterSIR
-from core.particle_filters import ParticleFilterNEPR
-from core.particle_filters import ParticleFilterMWR
 
 # For showing plots (plt.show())
 import matplotlib.pyplot as plt
@@ -22,12 +20,7 @@ if __name__ == '__main__':
     ##
     # Set simulated world and visualization properties
     ##
-    landemarks = []; xmax = 100.; ymax = 100.; nb_landmark = 100;
-    for i in range(nb_landmark):
-        a,b = np.random.uniform(0.,xmax),  np.random.uniform(0.,ymax)
-        landemarks.append([a,b])
-    world = World(10.0, 10.0, [[2.0, 2.0], [2.0, 8.0], [9.0, 2.0], [8, 9]])
-    # world = World(xmax, ymax, landemarks)
+    world = World(10.0, 10.0, [[2.0, 2.0, 0.], [2.0, 8.0, 0.], [9.0, 2.0, 0.], [8, 9, 0.]])
 
     # Number of simulated time steps
     n_time_steps = 300
@@ -68,43 +61,28 @@ if __name__ == '__main__':
     ##
 
     number_of_particles = 1000
-    pf_state_limits = [0, world.x_max, 0, world.y_max]
+    pf_state_limits = [0, world.x_max, 0, world.y_max, 0, 0, 1, 5] #xmin, xmax, ymin, ymax, zmin, zmax
 
     # Process model noise (zero mean additive Gaussian noise)
-    motion_model_forward_std = 0.1
-    motion_model_turn_std = 0.20
-    process_noise = [motion_model_forward_std, motion_model_turn_std]
+    process_noise = np.eye(6)
 
     # Measurement noise (zero mean additive Gaussian noise)
-    meas_model_distance_std = 0.4
-    meas_model_angle_std = 0.3
-    measurement_noise = [meas_model_distance_std, meas_model_angle_std]
+    measurement_noise = 10*np.eye(6)
+
 
     # Set resampling algorithm used
     algorithm = ResamplingAlgorithms.MULTINOMIAL
     # algorithm = ResamplingAlgorithms.STRATIFIED
 
     # Initialize SIR particle filter: resample every time step
-    particle_filter_sir = ParticleFilterMWR(
+    particle_filter_sir = ParticleFilterSIR(
         number_of_particles=number_of_particles,
         limits=pf_state_limits,
         process_noise=process_noise,
         measurement_noise=measurement_noise,
         resampling_algorithm=algorithm,
         resampling_threshold=0.65*number_of_particles)
-    # # particle_filter_sir = ParticleFilterNEPR(
-    # #     number_of_particles=number_of_particles,
-    # #     limits=pf_state_limits,
-    # #     process_noise=process_noise,
-    # #     measurement_noise=measurement_noise,
-    # #     resampling_algorithm=algorithm,
-    # #     number_of_effective_particles_threshold=0.65*number_of_particles)
-    # particle_filter_sir = ParticleFilterSIR(
-    #     number_of_particles=number_of_particles,
-    #     limits=pf_state_limits,
-    #     process_noise=process_noise,
-    #     measurement_noise=measurement_noise,
-    #     resampling_algorithm=algorithm)
+
     particle_filter_sir.initialize_particles_uniform()
 
     ##

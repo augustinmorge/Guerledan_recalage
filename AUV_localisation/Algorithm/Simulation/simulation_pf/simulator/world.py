@@ -17,13 +17,13 @@ class World:
         if any(not isinstance(lm, list) for lm in landmarks):
 
             # Not a list of lists, then exactly two elements allowed (x,y)-position single landmark
-            if len(landmarks) != 2:
+            if len(landmarks) != 3:
                 print("Invalid landmarks provided to World: {}".format(landmarks))
             else:
                 self.landmarks = [landmarks]
         else:
             # Check if each list within landmarks list contains exactly two elements (x- and y-position)
-            if any(len(lm) != 2 for lm in landmarks):
+            if any(len(lm) != 3 for lm in landmarks):
                 print("Invalid landmarks provided to World: {}".format(landmarks))
             else:
                 self.landmarks = landmarks

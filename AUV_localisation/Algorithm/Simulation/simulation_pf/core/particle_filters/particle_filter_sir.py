@@ -16,7 +16,8 @@ class ParticleFilterSIR(ParticleFilter):
                  limits,
                  process_noise,
                  measurement_noise,
-                 resampling_algorithm):
+                 resampling_algorithm,
+                 resampling_threshold):
         """
         Initialize the SIR particle filter.
 
@@ -31,16 +32,8 @@ class ParticleFilterSIR(ParticleFilter):
 
         # Set SIR specific properties
         self.resampling_algorithm = resampling_algorithm
+        self.resampling_threshold = resampling_threshold
         self.resampler = Resampler()
-
-    def needs_resampling(self):
-        """
-        Method that determines whether not a core step is needed for the current particle filter state estimate.
-        The sampling importance core (SIR) scheme resamples every time step hence always return true.
-
-        :return: Boolean indicating whether or not core is needed.
-        """
-        return True
 
     def update(self, robot_forward_motion, robot_angular_motion, measurements, landmarks):
         """
@@ -52,22 +45,21 @@ class ParticleFilterSIR(ParticleFilter):
         :param landmarks: Landmark positions.
         """
 
-        # Loop over all particles
-        new_particles = []
-        for par in self.particles:
+        # Propagate the particle state according to the current particle
+        # propagated_state = self.propagate_samples(self.particles[1:], robot_forward_motion, robot_angular_motion)
+        propagated_state = self.propagate_samples(self.particles[1])
 
-            # Propagate the particle state according to the current particle
-            propagated_state = self.propagate_sample(par[1], robot_forward_motion, robot_angular_motion)
+        # Compute current particle's weight
+        weight = self.particles[0] * self.compute_likelihood(propagated_state, measurements, landmarks)
 
-            # Compute current particle's weight
-            weight = par[0] * self.compute_likelihood(propagated_state, measurements, landmarks)
+        # Store
+        # new_particles.append([weight, propagated_state])
+        new_particles = [weight, propagated_state[0], propagated_state[1], propagated_state[2]]
 
-            # Store
-            new_particles.append([weight, propagated_state])
 
         # Update particles
         self.particles = self.normalize_weights(new_particles)
 
         # Resample if needed
-        if self.needs_resampling():
+        if 1.0 / np.sum(self.particles[0]**2) < self.resampling_threshold:
             self.particles = self.resampler.resample(self.particles, self.n_particles, self.resampling_algorithm)
