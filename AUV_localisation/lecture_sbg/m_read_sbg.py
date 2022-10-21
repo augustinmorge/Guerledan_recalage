@@ -7,11 +7,8 @@ import osm_ui
 
 if __name__ == "__main__":
 
-    directory = "/media/michel/bckMlg7b/20180703_RecetteEkinox2/"\
-        + "session_0000/2018_07_03"
-    filelist = ( "log_13h00.bin",
-                  "log_14h00.bin",
-                  "log_15h00.bin" )
+    directory = "../../Algorithm/LOG/lecture_sbg/"
+    filelist = ( "20221013_12h_guerledan_test_dvl.000" )
     q_draw = True
 
     gnss_raw_file = None
