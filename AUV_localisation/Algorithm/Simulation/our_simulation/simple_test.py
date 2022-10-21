@@ -41,12 +41,13 @@ def propagate_sample(samples, forward_motion, angular_motion):
     propagated_samples = copy.deepcopy(samples)
     # print(propagated_sample)
     # Compute forward motion by combining deterministic forward motion with additive zero mean Gaussian noise
-    forward_displacement = np.random.normal(forward_motion, process_noise[0], 1)[0]
-    angular_motion = np.random.normal(angular_motion, process_noise[1],1)[0]
+    n_particles = samples[0].shape[0]
+    forward_displacement = np.random.normal(forward_motion, process_noise[0], n_particles).reshape(n_particles,1)
+    angular_motion = np.random.normal(angular_motion, process_noise[1],n_particles).reshape(n_particles,1)
 
     # 2. move forward
-    propagated_samples[1][0] += forward_displacement*cos(angular_motion)
-    propagated_samples[1][1] += forward_displacement*sin(angular_motion)
+    propagated_samples[1][0] += forward_displacement*np.cos(angular_motion)
+    propagated_samples[1][1] += forward_displacement*np.sin(angular_motion)
 
     # Make sure we stay within cyclic world
     return (propagated_samples)
@@ -64,13 +65,11 @@ def compute_likelihood(samples, measurement):
     p_z_given_x_distance = np.exp(-beta*distance/(2*measurement_noise[0]**2))
 
     # Return importance weight based on all landmarks
-    print("p(z|measures): ",p_z_given_x_distance)
     return p_z_given_x_distance
 
 def needs_resampling(resampling_threshold):
 
     max_weight = np.max(particles[0])
-    print("max_weight: ", max_weight)
 
     return 1.0 / max_weight < resampling_threshold
 
@@ -85,14 +84,12 @@ def update(robot_forward_motion, robot_angular_motion, measurements, particles,r
     # Store
     propagated_states[0] = weights
     new_particles = propagated_states
-    # print(new_particles[0])
 
     # Update particles
     particles = normalize_weights(new_particles)
 
     # Resample if needed
     if needs_resampling(resampling_threshold):
-        print("Need to resample")
         particles = resampler.resample(particles, n_particles) #1 = MULTINOMIAL
 
     return(particles)
@@ -100,15 +97,15 @@ def update(robot_forward_motion, robot_angular_motion, measurements, particles,r
 
 if __name__ == '__main__':
     import time
-    dt = 0.05
-    tf = 10
+    dt = 0.2
+    tf = 1000
 
     n_particles = 100
     particles = initialize_particles_uniform(n_particles)
 
     x_gps, y_gps = GPS_point(0)[0], GPS_point(0)[0]
     resampler = Resampler()
-    for t in np.arange(np.random.uniform(0,2*np.pi,1),tf,dt):
+    for t in np.arange(0,tf,dt):
         robot_forward_motion = np.sqrt((GPS_point(t)[0] - x_gps)**2 + (GPS_point(t)[1] - y_gps)**2)
         robot_angular_motion = np.arctan2((GPS_point(t)[1] - y_gps),(GPS_point(t)[0] - x_gps))
 
@@ -119,17 +116,18 @@ if __name__ == '__main__':
 
         resampling_threshold = 0.5*n_particles
 
-        #Affichage
-        plt.ion()
-        plt.xlim([-10,10])
-        plt.ylim([-10,10])
-        plt.scatter(x_gps,y_gps,color='blue')
         t0 = time.time()
         particles = update(robot_forward_motion, robot_angular_motion, measurements, particles, resampling_threshold, resampler)
-        # print(particles[0])
         print("Temps de calcul: ",time.time() - t0)
-        for i in range(n_particles):
-            plt.scatter(particles[1][0][i], particles[1][1][i], color = 'red')
-        plt.pause(0.00001)
-        plt.clf()
-        # print(x_gps,y_gps)
+
+        #Affichage
+        if True: #t%1==0:
+            plt.ion()
+            plt.xlim([-10,10])
+            plt.ylim([-10,10])
+            plt.scatter(x_gps,y_gps,color='blue')
+            for i in range(n_particles):
+                plt.scatter(particles[1][0][i], particles[1][1][i], color = 'red')
+            plt.pause(0.00001)
+            plt.clf()
+            # print(x_gps,y_gps)

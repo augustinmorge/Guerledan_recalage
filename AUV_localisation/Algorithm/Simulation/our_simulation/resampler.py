@@ -35,6 +35,7 @@ class Resampler:
 
         # Compute cumulative sum
         Q = cumulative_sum(weights)
+        # print(samples)
 
         # As long as the number of new samples is insufficient
         n = 0
@@ -48,9 +49,12 @@ class Resampler:
             m = naive_search(Q, u)
 
             # Add copy of the state sample (uniform weights)
-            new_samples.append([1.0/N, copy.deepcopy(samples[m][1])])
+            new_samples.append([1.0/N, samples[1][0][m][0], samples[1][1][m][0]])
 
             # Added another sample
             n += 1
+
+        new_samples = np.array(new_samples)
+        new_samples = [new_samples[:,0].reshape(N,1), [new_samples[:,1].reshape(N,1), new_samples[:,2].reshape(N,1)]]
 
         return new_samples
