@@ -46,7 +46,10 @@ class Resampler:
             u = np.random.uniform(1e-6, 1, 1)[0]
 
             # Naive search (alternative: binary search)
-            m = naive_search(Q, u)
+            # m = naive_search(Q, u)
+            m = 0
+            while cumulative_list[m] < x:
+                m += 1
 
             # Add copy of the state sample (uniform weights)
             new_samples.append([1.0/N, samples[1][0][m][0], samples[1][1][m][0]])

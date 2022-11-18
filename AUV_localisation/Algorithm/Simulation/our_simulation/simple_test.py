@@ -8,7 +8,8 @@ from resampler import Resampler
 
 
 def GPS_point(t):
-    return(cos(t),1/2*sin(2*t))
+    return(cos(t),
+           sin(2*t))
 
 def initialize_particles_uniform(n_particles):
     weight = 1/n_particles
@@ -90,21 +91,32 @@ def update(robot_forward_motion, robot_angular_motion, measurements, particles,r
 
     # Resample if needed
     if needs_resampling(resampling_threshold):
+        print("Ressempling..")
         particles = resampler.resample(particles, n_particles) #1 = MULTINOMIAL
 
     return(particles)
 
+def get_average_state(particles):
+
+    # Compute weighted average
+    avg_x = np.sum(particles[0]*particles[1][0]) / np.sum(particles[0])
+    avg_y = np.sum(particles[0]*particles[1][1]) / np.sum(particles[0])
+
+    return [avg_x, avg_y]
 
 if __name__ == '__main__':
     import time
     dt = 0.2
     tf = 1000
 
-    n_particles = 100
+    n_particles = int(input("Number of particles: "))
     particles = initialize_particles_uniform(n_particles)
 
-    x_gps, y_gps = GPS_point(0)[0], GPS_point(0)[0]
+    x_gps, y_gps = GPS_point(0)[0], GPS_point(0)[1]
     resampler = Resampler()
+
+    plt.ion()
+
     for t in np.arange(0,tf,dt):
         robot_forward_motion = np.sqrt((GPS_point(t)[0] - x_gps)**2 + (GPS_point(t)[1] - y_gps)**2)
         robot_angular_motion = np.arctan2((GPS_point(t)[1] - y_gps),(GPS_point(t)[0] - x_gps))
@@ -121,13 +133,16 @@ if __name__ == '__main__':
         print("Temps de calcul: ",time.time() - t0)
 
         #Affichage
-        if True: #t%1==0:
-            plt.ion()
-            plt.xlim([-10,10])
-            plt.ylim([-10,10])
-            plt.scatter(x_gps,y_gps,color='blue')
-            for i in range(n_particles):
-                plt.scatter(particles[1][0][i], particles[1][1][i], color = 'red')
-            plt.pause(0.00001)
-            plt.clf()
-            # print(x_gps,y_gps)
+        t1 = time.time()
+        plt.title("Particle filter with {} particles".format(n_particles))
+        plt.xlim([-10,10])
+        plt.ylim([-10,10])
+        plt.scatter(x_gps,y_gps,color='blue', label = 'True position')
+        # for i in range(n_particles):
+        #     plt.scatter(particles[1][0][i], particles[1][1][i], color = 'red')
+        plt.scatter(get_average_state(particles)[0],get_average_state(particles)[1], color = 'red', label = 'Approximation of particles')
+        plt.legend()
+        plt.pause(0.00001)
+        plt.clf()
+        print("Temps d'affichage: ",time.time()-t1,"\n")
+        # print(x_gps,y_gps)
