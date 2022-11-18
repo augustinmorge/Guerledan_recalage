@@ -7,7 +7,8 @@ import copy
 from resampler import Resampler
 
 
-def GPS_point(t):
+def data_ins(t):
+    # return(liste)
     return(cos(t),1/2*sin(2*t))
 
 def initialize_particles_uniform(n_particles):
@@ -97,37 +98,44 @@ def update(robot_forward_motion, robot_angular_motion, measurements, particles,r
 
 if __name__ == '__main__':
     import time
-    dt = 0.2
-    tf = 1000
+    dt = 0.005
 
-    n_particles = 100
+    v=np.array([np.random.uniform(-5, 5, 50), np.random.uniform(-5, 5, 50)])
+    gnss=np.array([np.random.uniform(-5, 5, 50), np.random.uniform(-5, 5, 50)])
+
+    n_particles = 1000
     particles = initialize_particles_uniform(n_particles)
 
-    x_gps, y_gps = GPS_point(0)[0], GPS_point(0)[0]
     resampler = Resampler()
-    for t in np.arange(0,tf,dt):
-        robot_forward_motion = np.sqrt((GPS_point(t)[0] - x_gps)**2 + (GPS_point(t)[1] - y_gps)**2)
-        robot_angular_motion = np.arctan2((GPS_point(t)[1] - y_gps),(GPS_point(t)[0] - x_gps))
+    for i in range(np.shape(gnss)[1]):
+        x_k = gnss[0][i]
+        y_k = gnss[1][i]
 
-        x_gps = GPS_point(t)[0]
-        y_gps = GPS_point(t)[1]
+        # x_k1 = x_k + dt*v[0][i]
+        # y_k1 = y_k + dt*v[1][i]
 
-        measurements = [x_gps, y_gps]
+        a = np.array([[5, 6, 7, 8]])
+        b = np.array([0, 1, 1, 0])
+
+        robot_forward_motion = np.sqrt((dt*v[0][i])**2+(dt*v[1][i])**2)
+        robot_angular_motion = np.arctan2(dt*v[1][i], dt*v[1][i])
+
+        measurements = [x_k, y_k]
 
         resampling_threshold = 0.5*n_particles
 
         t0 = time.time()
         particles = update(robot_forward_motion, robot_angular_motion, measurements, particles, resampling_threshold, resampler)
-        print("Temps de calcul: ",time.time() - t0)
+        # print("Temps de calcul: ",time.time() - t0)
 
         #Affichage
         if True: #t%1==0:
             plt.ion()
             plt.xlim([-10,10])
             plt.ylim([-10,10])
-            plt.scatter(x_gps,y_gps,color='blue')
-            for i in range(n_particles):
-                plt.scatter(particles[1][0][i], particles[1][1][i], color = 'red')
+            plt.scatter(x_k,y_k,color='blue')
+            for j in range(n_particles):
+                plt.scatter(particles[1][0][j], particles[1][1][j], color = 'red')
             plt.pause(0.00001)
             plt.clf()
             # print(x_gps,y_gps)
