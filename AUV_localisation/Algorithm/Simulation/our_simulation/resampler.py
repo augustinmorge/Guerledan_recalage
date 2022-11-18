@@ -48,7 +48,7 @@ class Resampler:
             # Naive search (alternative: binary search)
             # m = naive_search(Q, u)
             m = 0
-            while cumulative_list[m] < x:
+            while Q[m] < u:
                 m += 1
 
             # Add copy of the state sample (uniform weights)
