@@ -22,7 +22,3 @@ def data(data_file="sbgCenterExport.txt") :
 		gps[k,1]=float(line[7])
 		gps[k,2]=float(line[8])
 	return time,velocity,gps
-
-
-salut,yo,bonjour=data()
-print(bonjour)
