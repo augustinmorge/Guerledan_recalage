@@ -133,6 +133,7 @@ if __name__ == '__main__':
         # print("Temps de calcul: ",time.time() - t0)
 
         #Affichage
+<<<<<<< HEAD
         if True: #t%1==0:
             plt.ion()
             plt.xlim([-10,10])
@@ -143,3 +144,18 @@ if __name__ == '__main__':
             plt.pause(0.00001)
             plt.clf()
             # print(x_gps,y_gps)
+=======
+        t1 = time.time()
+        plt.title("Particle filter with {} particles".format(n_particles))
+        plt.xlim([-10,10])
+        plt.ylim([-10,10])
+        plt.scatter(x_gps,y_gps,color='blue', label = 'True position')
+        for i in range(n_particles):
+            plt.scatter(particles[1][0][i], particles[1][1][i], color = 'red')
+        # plt.scatter(get_average_state(particles)[0],get_average_state(particles)[1], color = 'red', label = 'Approximation of particles')
+        plt.legend()
+        plt.pause(0.00001)
+        plt.clf()
+        print("Temps d'affichage: ",time.time()-t1,"\n")
+        # print(x_gps,y_gps)
+>>>>>>> 42ec5a2 (add simulation pf)

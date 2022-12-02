@@ -35,6 +35,7 @@ class Resampler:
 
         # Compute cumulative sum
         Q = cumulative_sum(weights)
+        # Q = np.cumsum(weights)
         # print(samples)
 
         # As long as the number of new samples is insufficient
@@ -56,6 +57,21 @@ class Resampler:
 
             # Added another sample
             n += 1
+
+        # u = np.random.uniform(0,1,N)
+        # print("Q: ",Q)
+        # print("")
+        # print("u: ",u)
+        # print("Q<u: ", Q<u)
+        # m = np.where((Q<u)==True)
+        # print(N)
+        # print(m)
+        # print("\n",samples[1][0])
+        # print(samples[1][0][m])
+        # new_samples = [np.ones((N,1))*1/N, samples[1][0][m], samples[1][1][m]]
+
+
+
 
         new_samples = np.array(new_samples)
         new_samples = [new_samples[:,0].reshape(N,1), [new_samples[:,1].reshape(N,1), new_samples[:,2].reshape(N,1)]]
