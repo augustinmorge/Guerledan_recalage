@@ -7,9 +7,6 @@ import copy
 from resampler import Resampler
 
 
-def data_ins(t):
-    # return(liste)
-    return(cos(t),1/2*sin(2*t))
 
 def initialize_particles_uniform(n_particles):
     weight = 1/n_particles
@@ -100,8 +97,8 @@ if __name__ == '__main__':
     import time
     dt = 0.005
 
-    v=np.array([np.random.uniform(-5, 5, 50), np.random.uniform(-5, 5, 50)])
-    gnss=np.array([np.random.uniform(-5, 5, 50), np.random.uniform(-5, 5, 50)])
+    v=np.array([np.random.uniform(-5, 5, 15), np.random.uniform(-5, 5, 15)])
+    gnss=np.array([np.random.uniform(-5, 5, 15), np.random.uniform(-5, 5, 15)])
 
     n_particles = 1000
     particles = initialize_particles_uniform(n_particles)
@@ -114,9 +111,6 @@ if __name__ == '__main__':
         # x_k1 = x_k + dt*v[0][i]
         # y_k1 = y_k + dt*v[1][i]
 
-        a = np.array([[5, 6, 7, 8]])
-        b = np.array([0, 1, 1, 0])
-
         robot_forward_motion = np.sqrt((dt*v[0][i])**2+(dt*v[1][i])**2)
         robot_angular_motion = np.arctan2(dt*v[1][i], dt*v[1][i])
 
@@ -126,7 +120,7 @@ if __name__ == '__main__':
 
         t0 = time.time()
         particles = update(robot_forward_motion, robot_angular_motion, measurements, particles, resampling_threshold, resampler)
-        # print("Temps de calcul: ",time.time() - t0)
+        print("Temps de calcul: ",time.time() - t0)
 
         #Affichage
         if True: #t%1==0:
