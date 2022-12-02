@@ -106,6 +106,10 @@ if __name__ == '__main__':
     n_particles = 1000
     particles = initialize_particles_uniform(n_particles)
 
+<<<<<<< HEAD
+=======
+    x_gps, y_gps = GPS_point(0)[0], GPS_point(0)[1]
+>>>>>>> edeff54 (add data collect program)
     resampler = Resampler()
     for i in range(np.shape(gnss)[1]):
         x_k = gnss[0][i]
