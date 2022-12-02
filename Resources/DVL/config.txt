@@ -1,0 +1,98 @@
+;--------------------------------------------------------------------------
+; Pathfinder type: 600 kHz Pathfinder
+; Setup name: Pathfinder.txt
+; Setup type: Bottom Track only
+;
+; NOTE: Any line beginning with a semicolon in the first column is
+; treated as a comment and is ignored by the software.
+; Modified Last: 18 March 2015
+;-------------------------------------------------------------------------
+; **************************************
+; Pathfinder Basic Setup Commands
+; **************************************
+; Restore factory default settings in the Pathfinder
+CR1
+; set the data collection baud rate to 9600 bps,
+; no parity, one stop bit, 8 data bits
+CB411
+; Flow Control – set to default
+CF11110
+; **************************************
+; Pathfinder Bottom Track Setup Commands
+; **************************************
+; Enable single-ping bottom track,
+BP001
+Set maximum bottom search depth to 110 meters
+BX01100
+; **************************************
+; Pathfinder Environment Setup Commands
+; **************************************
+; Set Heading Alignment to 0 degrees
+; NOTE. If the Pathfinder is rotated +45 degrees starboard
+; (recommended alignment), set EA to EA+45000
+EA45000
+; /!\ DEPEND DU MONTAGE
+; Set manual transducer depth in case depth sensor fails
+ED00010
+; Set Salinity to saltwater ; /!\ Water without salt (from 0 to 35)
+ES00
+; Output Instrument coordinates, use tilts, allow 3 beam
+; solutions and bin mapping
+; /!\ DANS LE REF DE L'INSTRUMENT (cf p.124)
+EX01111
+; Set to use internal sensors
+; EZ10000010
+EZ11110010
+; **************************************
+; Pathfinder Timing Setup Commands
+; **************************************
+; Set Time between Ensembles to zero (Pathfinder will ping as fast as possible)
+TE00:00:00.00
+; Set Time between Pings to zero (Pathfinder will ping as fast as possible)
+TP00:00.00
+; **************************************
+; Pathfinder Water Profiling Setup Commands
+; **************************************
+; Note: By default, water profiling is turned off.
+; To use water profiling, set the WP command >0
+WP00001
+; Bin size set to 50 cm
+WS0050
+; Number of bins set to 100
+WN100
+; WF0088 ; default
+; WV383 ; default
+; WB1 ; default
+; WD111110000 ; default
+; **************************************
+; Pathfinder Expert Command Section
+; **************************************
+;
+; CAUTION - Editing or adding expert commands to the command file will
+; allow items that if set incorrectly can cause the data to
+; be the wrong format, bad, and/or uncorrectable even in post
+; processing.
+;
+; Disable Water-Mass Layer Mode (default)
+BK0
+; **************************************
+; Turnkey mode on - Pathfinder will ping when power turned on.
+; CAUTION – Pathfinder must be in water BEFORE command file is sent.
+; **************************************
+#CT1
+; Environmental Data Output – sets specialized attitude data types
+; Phased Array transducer default
+#EE0000010
+; Set Heading Bias to 0 degrees
+;
+; NOTE. Set #EV = [(local magnetic declaration)*100]
+#EV00000
+; Select type of external sensor to use
+#EY 0 0 0 0 0 0 0 0
+; Set output data format to #PD13
+#PD13
+;-------------------------------------------------------------------------
+; Save this setup to non-volatile memory in the Pathfinder
+CK
+; Start pinging
+CS
