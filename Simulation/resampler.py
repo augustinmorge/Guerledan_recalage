@@ -33,18 +33,16 @@ class Resampler:
 
         # Compute cumulative sum
         Q = cumulative_sum(weights)
-        # Q = np.cumsum(weights)
 
         # As long as the number of new samples is insufficient
         n = 0
         new_samples = []
-        while n < N:
+        for _ in range(N):
 
             # Draw a random sample u
             u = np.random.uniform(0, 1, 1)[0]
 
             # Naive search (alternative: binary search)
-            # m = naive_search(Q, u)
             m = 0
             while Q[m] < u:
                 m += 1
@@ -52,12 +50,19 @@ class Resampler:
             # Add copy of the state sample (uniform weights)
             new_samples.append([1.0/N, samples[1][0][m][0], samples[1][1][m][0]])
 
-            # Added another sample
-            n += 1
-
 
         new_samples = np.array(new_samples)
         new_samples = [new_samples[:,0].reshape(N,1), [new_samples[:,1].reshape(N,1), new_samples[:,2].reshape(N,1)]]
+
+        # Q = np.cumsum(weights).reshape(-1,1)*np.ones((weights.shape[0],weights.shape[0]))
+        # u = np.random.uniform(0, 1, weights.shape[0]).reshape(-1,1)
+        # print(f"Q={Q} and\n u = {u}")
+        # print(f"Q.T>u = {Q.T>u}")
+        # idx = [(Q.T>u)[i,:].tolist().index(True) for i in range(N)]
+        # I = np.zeros((N, weights.shape[0]))
+        # for i in range(len(idx)):
+        #     I[i,idx[i]] = 1
+        # new_samples = [1.0/N*np.ones((N,1)), [I@samples[1][0], I@samples[1][1]]]
 
         return new_samples
 
@@ -97,9 +102,6 @@ class Resampler:
             if idx_now - idx_pre != 0:
                 val_x[idx_pre:idx_now,] = xm[0][i,0]*np.ones((Nm[i,0], 1))
                 val_y[idx_pre:idx_now,] = xm[1][i,0]*np.ones((Nm[i,0], 1))
-            # print(f"So, Nm = {Nm}\nwith idx_pre, idx_now = {idx_pre, idx_now}")
-            # print(f"val_x={val_x}")
-            # time.sleep(0.5)
 
         new_samples_deterministic.append(val_x)
         new_samples_deterministic.append(val_y)
@@ -116,5 +118,4 @@ class Resampler:
         new_y = np.vstack((new_samples_deterministic[1], new_samples_stochastic[1]))
         weighted_new_samples = [1.0/N*np.ones((N,1)), [new_x, new_y]]
 
-        # print(new_samples_deterministic)
         return weighted_new_samples
