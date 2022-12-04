@@ -11,10 +11,6 @@ def distance_to_bottom(x,y):
     z = np.sqrt((x/2)**2 + (y/2)**2) + np.sin(x/2) + np.cos((x + y)/2)*np.cos(x/2)
     return(z)
 
-def GPS_point(t):
-    return(cos(t),
-           sin(2*t))
-
 def initialize_particles_uniform(n_particles):
     weight = 1/n_particles
     particles = [weight*np.ones((n_particles,1)),[ \
@@ -117,17 +113,21 @@ if __name__ == '__main__':
 
     x_gps, y_gps = GPS_point(0)[0], GPS_point(0)[1]
     resampler = Resampler()
+    t = T[0]
+    v_x = V_X[0]
+    v_y = V_Y[0]
+    lat = LAT[0]
+    lon = LON[0]
+    lat_std = LAT_STD[0]
+    lon_std = LON_STD[0]
+    v_x_std = V_X_STD[0]
+    v_y_std = V_Y_STD[0]
 
     plt.ion()
-    t_ini = time.time()
-    ERR = []; TIME = []
-    while(time.time() - t_ini < n_sec):
-        t = time.time() - t_ini
-        robot_forward_motion = np.sqrt((GPS_point(t)[0] - x_gps)**2 + (GPS_point(t)[1] - y_gps)**2)
-        robot_angular_motion = np.arctan2((GPS_point(t)[1] - y_gps),(GPS_point(t)[0] - x_gps))
+    for i in range(X.shape[0]):
 
-        x_gps = GPS_point(t)[0]
-        y_gps = GPS_point(t)[1]
+        robot_forward_motion = np.sqrt((LON[i] - lon)**2 + (LAT[i] - lat)**2)
+        robot_angular_motion = np.arctan2((LAT[i] - lat),(LON[i] - lon))
 
         measurements = [x_gps, y_gps]
 
@@ -143,6 +143,7 @@ if __name__ == '__main__':
         plt.xlim([-10,10])
         plt.ylim([-10,10])
         plt.scatter(x_gps,y_gps,color='blue', label = 'True position')
+        print(particles)
         for i in range(n_particles):
             plt.scatter(particles[1][0][i], particles[1][1][i], color = 'red')
         # plt.scatter(get_average_state(particles)[0],get_average_state(particles)[1], color = 'red', label = 'Approximation of particles')
@@ -153,6 +154,16 @@ if __name__ == '__main__':
         TIME.append(t)
         ERR.append(np.sqrt((x_gps - get_average_state(particles)[0])**2 + (y_gps - get_average_state(particles)[1])**2))
 
+        #Update data
+        t = T[i]
+        v_x = V_X[i]
+        v_y = V_Y[i]
+        lat = LAT[i]
+        lon = LON[i]
+        lat_std = LAT_STD[i]
+        lon_std = LON_STD[i]
+        v_x_std = V_X_STD[i]
+        v_y_std = V_Y_STD[i]
     plt.plot(TIME, ERR)
     plt.title(f"Error function with {n_particles} particles")
     plt.xlabel("time [s]")

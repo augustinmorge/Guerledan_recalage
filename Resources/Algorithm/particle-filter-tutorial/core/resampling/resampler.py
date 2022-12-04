@@ -120,8 +120,14 @@ class Resampler:
             replication_samples.append([xm, int(Nm)])
 
         # Replicate samples
-        new_samples_deterministic = replication(replication_samples)
+        new_samples_deterministic = [l for s in replication_samples for l in s[1] * [s[0]]]
+        new_samples_deterministic = []
+        for s in replication_samples:
+            for l in s[1]*[s[0]]:
+                new_samples_deterministic.append(l)
         Nt = len(new_samples_deterministic)
+
+        sys.exit()
 
         # Normalize new weights if needed
         if N != Nt:

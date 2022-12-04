@@ -11,8 +11,8 @@ def distance_to_bottom(x,y):
     return(z)
 
 def GPS_point(t):
-    return(cos(t),
-           sin(2*t))
+    return(4.*cos(0.25*t),
+           4.*sin(0.5*t))
 
 def initialize_particles_uniform(n_particles):
     weight = 1/n_particles
@@ -65,7 +65,8 @@ def compute_likelihood(samples, measurement):
     # Map difference true and expected distance measurement to probability
     beta = 0.1
     # distance = np.sqrt(((samples[1][0]-measurement[0])**2)+(samples[1][1]-measurement[1])**2)
-    distance = np.abs(distance_to_bottom(samples[1][0],samples[1][1]) - distance_to_bottom(measurement[0], measurement[1]))
+    z_mbes = distance_to_bottom(samples[1][0],samples[1][1])
+    distance = np.abs(z_mbes - measurement)
     p_z_given_x_distance = np.exp(-beta*distance/(2*measurement_noise[0]**2))
 
     # Return importance weight based on all landmarks
@@ -128,7 +129,7 @@ if __name__ == '__main__':
         x_gps = GPS_point(t)[0]
         y_gps = GPS_point(t)[1]
 
-        measurements = [x_gps, y_gps]
+        measurements = distance_to_bottom(x_gps, y_gps)
 
         resampling_threshold = 0.5*n_particles
 
@@ -142,9 +143,9 @@ if __name__ == '__main__':
         plt.xlim([-10,10])
         plt.ylim([-10,10])
         plt.scatter(x_gps,y_gps,color='blue', label = 'True position')
-        for i in range(n_particles):
-            plt.scatter(particles[1][0][i], particles[1][1][i], color = 'red')
-        # plt.scatter(get_average_state(particles)[0],get_average_state(particles)[1], color = 'red', label = 'Approximation of particles')
+        # for i in range(n_particles):
+        #     plt.scatter(particles[1][0][i], particles[1][1][i], color = 'red')
+        plt.scatter(get_average_state(particles)[0],get_average_state(particles)[1], color = 'red', label = 'Approximation of particles')
         plt.legend()
         plt.pause(0.00001)
         plt.clf()

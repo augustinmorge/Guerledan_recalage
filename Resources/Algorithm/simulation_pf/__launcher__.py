@@ -71,7 +71,7 @@ if __name__ == '__main__':
 
 
     # Set resampling algorithm used
-    algorithm = ResamplingAlgorithms.MULTINOMIAL
+    algorithm = ResamplingAlgorithms.RESIDUAL
     # algorithm = ResamplingAlgorithms.STRATIFIED
 
     # Initialize SIR particle filter: resample every time step

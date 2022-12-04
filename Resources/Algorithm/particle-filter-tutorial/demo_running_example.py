@@ -73,7 +73,7 @@ if __name__ == '__main__':
     measurement_noise = [meas_model_distance_std, meas_model_angle_std]
 
     # Set resampling algorithm used
-    algorithm = ResamplingAlgorithms.MULTINOMIAL
+    algorithm = ResamplingAlgorithms.RESIDUAL
 
     # Initialize SIR particle filter: resample every time step
     particle_filter_sir = ParticleFilterSIR(
