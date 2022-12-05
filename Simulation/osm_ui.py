@@ -45,7 +45,7 @@ def plot_xy(data_x, data_y, x_label, y_label, title, symbol=None, nro_fig=None):
     gg.set_ylabel(y_label)
     gg.set_title(title)
     gg.grid(True)
-    #plt.pause(0.01)
+    # plt.pause(0.00001)
     return gg
 
 def plot_xy_add(gg, data_x, data_y, symbol=None):

@@ -28,10 +28,11 @@ def normalize_weights(weighted_samples):
 
     # Check if weights are non-zero
     if np.sum(weighted_samples[0]) < 1e-15:
+        sum_weights = np.sum(weighted_samples[0])
         print("Weight normalization failed: sum of all weights is {} (weights will be reinitialized)".format(sum_weights))
 
         # Set uniform weights
-        return [1.0 / weighted_samples[0].shape[0]*np.ones((weighted_samples[0].shape[0],1)), weighted_sample[1]]
+        return [1.0 / weighted_samples[0].shape[0]*np.ones((weighted_samples[0].shape[0],1)), weighted_samples[1]]
 
     # Return normalized weights
     return [weighted_samples[0] / np.sum(weighted_samples[0]), weighted_samples[1]]
