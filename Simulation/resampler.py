@@ -36,8 +36,8 @@ class Resampler:
 
         # As long as the number of new samples is insufficient
         n = 0
-        new_samples = []
-        for _ in range(N):
+        new_samples = [np.zeros((N,1))*1/N,[np.zeros((N,1)), np.zeros((N,1))]]
+        for i in range(N):
 
             # Draw a random sample u
             u = np.random.uniform(0, 1, 1)[0]
@@ -48,11 +48,12 @@ class Resampler:
                 m += 1
 
             # Add copy of the state sample (uniform weights)
-            new_samples.append([1.0/N, samples[1][0][m][0], samples[1][1][m][0]])
+            # new_samples.append([1.0/N, samples[1][0][m][0], samples[1][1][m][0]])
+            new_samples[1][0][i,0] = samples[1][0][m][0]
+            new_samples[1][1][i,0] = samples[1][1][m][0]
 
-
-        new_samples = np.array(new_samples)
-        new_samples = [new_samples[:,0].reshape(N,1), [new_samples[:,1].reshape(N,1), new_samples[:,2].reshape(N,1)]]
+        # new_samples = np.array(new_samples)
+        # new_samples = [new_samples[:,0].reshape(N,1), [new_samples[:,1].reshape(N,1), new_samples[:,2].reshape(N,1)]]
 
         # Q = np.cumsum(weights).reshape(-1,1)*np.ones((weights.shape[0],weights.shape[0]))
         # u = np.random.uniform(0, 1, weights.shape[0]).reshape(-1,1)

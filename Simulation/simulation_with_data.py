@@ -123,9 +123,12 @@ if __name__ == '__main__':
     import time
     import PIL.Image as Image
     import osm_ui
+    import sys
 
-    n_particles = 1000 #int(input("Number of particles: "))
-    n_sec = 1000# int(input("Number of seconds: "))
+    n_particles = int(input("Number of particles: "))
+    steps = int(input("number of steps between measures ? "))
+    bool_display = str(input("Display the particles ? [Y/]"))
+    bool_display = bool_display=="Y"
     x_gps_min, y_gps_min = np.min(coord2cart((LAT, LON))[0,:]), np.min(coord2cart((LAT, LON))[1,:])
     x_gps_max, y_gps_max = np.max(coord2cart((LAT, LON))[0,:]), np.max(coord2cart((LAT, LON))[1,:])
     bounds = [[x_gps_min, x_gps_max], [y_gps_min, y_gps_max]]
@@ -147,19 +150,17 @@ if __name__ == '__main__':
 
     # lac = Image.open("./imgs/ortho_sat_2016_guerledan.tif")
     # # axes = osm_ui.plot_map(lac, (-3.118111, -2.954274), (48.183105, 48.237852), "Mis à l'eau de l'AUV")
-    # lac_coords_min = coord2cart((3.118111, 48.183105)).flatten()
-    # lac_coords_max = coord2cart((-2.954274, 48.237852)).flatten()
+    # lac_coords_min = coord2cart((48.183105, -3.118111)).flatten()
+    # lac_coords_max = coord2cart((48.237852, -2.954274)).flatten()
     # axes = osm_ui.plot_map(lac, (lac_coords_min[0], lac_coords_max[0]), (lac_coords_min[1], lac_coords_max[1]), "Mis à l'eau de l'AUV")
-    # osm_ui.plot_xy_add(axes, LON, LAT)
-    # axes.legend(("ins",))
+    # # axes.legend(("ins",))
 
     plt.ion()
 
-    TIME = []; ERR = []
+    TIME = []; ERR = []; BAR = []
 
     print("Start to display the log..")
     from tqdm import tqdm
-    steps = 10
     for i in tqdm(range(0,LON.shape[0],steps)):
         #Coordinates in cartesian
         px_gps, py_gps = coord2cart((lat,lon)).flatten()
@@ -182,8 +183,7 @@ if __name__ == '__main__':
 
         measurements = distance_to_bottom(x_gps, y_gps)
 
-        meas_model_distance_std = steps*np.sqrt(lat_std**2 + lon_std**2)
-        # meas_model_angle_std = 0.3
+        meas_model_distance_std = steps*np.sqrt(lat_std**2 + lon_std**2) # On estime que l'erreur en z est le même que celui en lat, lon, ce qui est faux
         measurements_noise = [meas_model_distance_std] ### Attention, std est en mètres !
 
         motion_model_forward_std = steps*np.sqrt(v_x_std**2+v_y_std**2)
@@ -192,33 +192,46 @@ if __name__ == '__main__':
         # motion_model_turn_std = np.abs(np.arctan2((v_py_std-v_y_std),(v_px_std-v_x_std)))
         motion_model_turn_std = 0.2
         process_noise = [motion_model_forward_std, motion_model_turn_std]
-        # print(f"process_noise={process_noise}")
         t0 = time.time()
         particles = update(robot_forward_motion, robot_angular_motion, measurements, measurements_noise, process_noise, particles, resampling_threshold, resampler)
-        # print("Temps de calcul: ",time.time() - t0)
 
-        # #Affichage
-        #
-        # t1 = time.time()
-        # plt.title("Particle filter with {} particles".format(n_particles))
-        # plt.xlim([x_gps_min,x_gps_max])
-        # plt.ylim([y_gps_min,y_gps_max])
-        # plt.scatter(x_gps, y_gps ,color='blue', label = 'True position panopée')
-        # # for i in range(n_particles):
-        # #     plt.scatter(particles[1][0][i], particles[1][1][i], color = 'red')
-        # plt.scatter(get_average_state(particles)[0],get_average_state(particles)[1], color = 'red', label = 'Approximation of particles')
-        # plt.legend()
-        # plt.pause(0.00001)
-        # plt.clf()
-        # print("Temps d'affichage: ",time.time()-t1,"\n")
+        #Affichage
+        if bool_display:
+            print("Temps de calcul: ",time.time() - t0)
+            t1 = time.time()
+            plt.plot(coord2cart((LAT,LON))[0,:], coord2cart((LAT,LON))[1,:])
+            plt.title("Particle filter with {} particles with z = {}m".format(n_particles, measurements))
+            plt.xlim([x_gps_min,x_gps_max])
+            plt.ylim([y_gps_min,y_gps_max])
+            plt.scatter(x_gps, y_gps ,color='blue', label = 'True position panopée')
+            # for i in range(n_particles):
+            #     plt.scatter(particles[1][0][i], particles[1][1][i], color = 'red')
+            plt.scatter(get_average_state(particles)[0],get_average_state(particles)[1], color = 'red', label = 'Approximation of particles')
+            plt.legend()
+            plt.pause(0.00001)
+            plt.clf()
+            print("Temps d'affichage: ",time.time()-t1,"\n")
 
         TIME.append(t)
         ERR.append(np.sqrt((x_gps - get_average_state(particles)[0])**2 + (y_gps - get_average_state(particles)[1])**2))
+        BAR.append([get_average_state(particles)[0],get_average_state(particles)[1]])
 
-    plt.figure()
-    plt.title(f"Error function with {n_particles} particles")
-    plt.plot(TIME, ERR)
-    plt.xlabel("time [s]")
-    plt.ylabel("error (m)")
+    plt.close()
+    fig,ax = plt.subplots(1,2)
+    ax[0].set_title(f"Error function with\n{n_particles} particles\n{steps} steps between measures.")
+    ax[0].set_xlabel("time [s]")
+    ax[0].set_ylabel("error (m)")
+
+    ax[1].set_title("Barycentre")
+    ax[1].set_xlabel("x [m]")
+    ax[1].set_ylabel("y [m]")
+    ax[1].plot(coord2cart((LAT,LON))[0,:], coord2cart((LAT,LON))[1,:],label='true position')
+
+    for i in range(len(TIME)):
+        if i == 0:
+            ax[1].scatter(BAR[i][0], BAR[i][1], color='b', label='barycentre of the particle')
+        if i % steps == 0:
+            ax[0].scatter(TIME[i], ERR[i], color = 'b')
+            ax[1].scatter(BAR[i][0], BAR[i][1], color='b',s = 0.5)
     plt.show()
-    plt.pause(100)
+    plt.pause(100000)
