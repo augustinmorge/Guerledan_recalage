@@ -30,7 +30,7 @@ V_Z_STD = np.float64(data[:,10])
 
 """ Import DVL """
 ## TODO:
-print("End of the importation..")
+print("End of the importation.")
 
 
 

@@ -27,8 +27,8 @@ def distance_to_bottom(x,y):
 def initialize_particles_uniform(n_particles, bounds):
     weight = 1/n_particles
     particles = [weight*np.ones((n_particles,1)),[ \
-                           np.random.uniform(bounds[0][0], bounds[0][1], n_particles).reshape(n_particles,1),
-                           np.random.uniform(bounds[1][0], bounds[1][1], n_particles).reshape(n_particles,1)]]
+                           np.random.uniform(bounds[0][0], bounds[0][1], n_particles).reshape(-1,1),
+                           np.random.uniform(bounds[1][0], bounds[1][1], n_particles).reshape(-1,1)]]
     return(particles)
 
 def get_max_weight(particles):
@@ -57,12 +57,13 @@ def propagate_sample(samples, forward_motion, angular_motion, process_noise):
     # print(propagated_sample)
     # Compute forward motion by combining deterministic forward motion with additive zero mean Gaussian noise
     n_particles = samples[0].shape[0]
-    forward_displacement = np.random.normal(forward_motion, process_noise[0], n_particles).reshape(n_particles,1)
-    angular_motion = np.random.normal(angular_motion, process_noise[1],n_particles).reshape(n_particles,1)
+    forward_displacement = np.random.normal(forward_motion, process_noise[0], n_particles).reshape(-1,1)
+    # forward_displacement_y = np.random.normal(forward_motion, process_noise[0], n_particles).reshape(n_particles,1)
+    angular_motion = np.random.normal(angular_motion, process_noise[1],n_particles).reshape(-1,1)
 
     # 2. move forward
-    propagated_samples[1][0] += forward_displacement*np.cos(angular_motion)
-    propagated_samples[1][1] += forward_displacement*np.sin(angular_motion)
+    propagated_samples[1][0] += forward_displacement*np.sin(angular_motion)
+    propagated_samples[1][1] += forward_displacement*np.cos(angular_motion)
 
     # Make sure we stay within cyclic world
     return (propagated_samples)
@@ -138,71 +139,78 @@ if __name__ == '__main__':
     resampler = Resampler()
     resampling_threshold = 0.5*n_particles
 
-    t = T[0,]
+    t = T[0,].split(":")
+    t[2] = t[2].split(".")
+    t = float(t[0])*60*60+float(t[1])*60+float(t[2][0]) + float(t[2][1])/1000.
     v_x = V_X[0,]
     v_y = V_Y[0,]
+    v_z = V_Z[0,]
     lat = LAT[0,]
     lon = LON[0,]
     lat_std = LAT_STD[0,]
     lon_std = LON_STD[0,]
     v_x_std = V_X_STD[0,]
     v_y_std = V_Y_STD[0,]
-
-    # lac = Image.open("./imgs/ortho_sat_2016_guerledan.tif")
-    # # axes = osm_ui.plot_map(lac, (-3.118111, -2.954274), (48.183105, 48.237852), "Mis à l'eau de l'AUV")
-    # lac_coords_min = coord2cart((48.183105, -3.118111)).flatten()
-    # lac_coords_max = coord2cart((48.237852, -2.954274)).flatten()
-    # axes = osm_ui.plot_map(lac, (lac_coords_min[0], lac_coords_max[0]), (lac_coords_min[1], lac_coords_max[1]), "Mis à l'eau de l'AUV")
-    # # axes.legend(("ins",))
+    v_z_std = V_Z_STD[0,]
 
     plt.ion()
 
     TIME = []; ERR = []; BAR = []
 
-    print("Start to display the log..")
+    print("Processing..")
     from tqdm import tqdm
+    # for i in (range(0,LON.shape[0],steps)):
     for i in tqdm(range(0,LON.shape[0],steps)):
         #Coordinates in cartesian
         px_gps, py_gps = coord2cart((lat,lon)).flatten()
+        pv_x, pv_y, pv_z = v_x, v_y, v_z
+        pv_x_std, pv_y_std, pv_z_std = v_x_std, v_y_std, v_z_std
+        pt = t
 
-        #Update data
-        t = T[i,]
+        """Update data"""
+        t = T[i,].split(":")
+        t[2] = t[2].split(".")
+        # print(f"T[i,] = {t}")
+        t = float(t[0])*60*60+float(t[1])*60+float(t[2][0]) + float(t[2][1])/1000.
+        dt = t - pt
+        # print(f"t = {t} and dt = {dt}")
+        # print(dt)
         v_x = V_X[i,]
         v_y = V_Y[i,]
+        v_z = V_Z[i,]
         lat = LAT[i,]
         lon = LON[i,]
         x_gps, y_gps = coord2cart((lat,lon)).flatten()
+        measurements = distance_to_bottom(x_gps, y_gps)
         lat_std = LAT_STD[i,]
         lon_std = LON_STD[i,]
         v_x_std = V_X_STD[i,]
         v_y_std = V_Y_STD[i,]
+        v_z_std = V_Z_STD[i,]
 
-        robot_forward_motion = np.sqrt((x_gps - px_gps)**2 + (y_gps - py_gps)**2)
-        robot_angular_motion = np.arctan2((y_gps - py_gps),(x_gps - px_gps))
-
-
-        measurements = distance_to_bottom(x_gps, y_gps)
-
+        """ Processing error on measures""" ## TODO: need to change the angular motion
+        robot_forward_motion =  dt*np.sqrt(pv_x**2 + pv_y**2 + pv_z**2)#[dt*pv_x, dt*pv_y] #2*[np.sqrt((x_gps - px_gps)**2 + (y_gps - py_gps)**2)] #
+        robot_angular_motion = np.arctan2((pv_y),(pv_x)) #np.arctan2((y_gps - py_gps),(x_gps - px_gps)) #
         meas_model_distance_std = steps*np.sqrt(lat_std**2 + lon_std**2) # On estime que l'erreur en z est le même que celui en lat, lon, ce qui est faux
         measurements_noise = [meas_model_distance_std] ### Attention, std est en mètres !
 
-        motion_model_forward_std = steps*np.sqrt(v_x_std**2+v_y_std**2)
-        # v_px_std = V_X_STD[max(0,steps*(i-1)),]
-        # v_py_std = V_Y_STD[max(0,steps*(i-1)),]
-        # motion_model_turn_std = np.abs(np.arctan2((v_py_std-v_y_std),(v_px_std-v_x_std)))
-        motion_model_turn_std = 0.2
+        """ Processing error on algorithm"""
+        motion_model_forward_std = steps*np.sqrt(pv_y_std**2 + pv_x_std**2 + pv_z_std**2) #2*[steps*np.sqrt(pv_x_std**2+pv_y_std**2)]
+        motion_model_turn_std = steps*np.abs(np.arctan2((pv_y + pv_y_std),(pv_x)) - np.arctan2((pv_y),(pv_x+pv_x_std))) #0.2
         process_noise = [motion_model_forward_std, motion_model_turn_std]
+
         t0 = time.time()
+        """Process the update"""
         particles = update(robot_forward_motion, robot_angular_motion, measurements, measurements_noise, process_noise, particles, resampling_threshold, resampler)
 
-        #Affichage
+        """ Affichage en temps réel """
         if bool_display:
             print("Temps de calcul: ",time.time() - t0)
             t1 = time.time()
             plt.plot(coord2cart((LAT,LON))[0,:], coord2cart((LAT,LON))[1,:])
             plt.title("Particle filter with {} particles with z = {}m".format(n_particles, measurements))
-            plt.xlim([x_gps_min,x_gps_max])
-            plt.ylim([y_gps_min,y_gps_max])
+            plt.xlim([x_gps_min - 100,x_gps_max + 100])
+            plt.ylim([y_gps_min - 100,y_gps_max + 100])
             plt.scatter(x_gps, y_gps ,color='blue', label = 'True position panopée')
             # for i in range(n_particles):
             #     plt.scatter(particles[1][0][i], particles[1][1][i], color = 'red')
@@ -215,9 +223,18 @@ if __name__ == '__main__':
         TIME.append(t)
         ERR.append(np.sqrt((x_gps - get_average_state(particles)[0])**2 + (y_gps - get_average_state(particles)[1])**2))
         BAR.append([get_average_state(particles)[0],get_average_state(particles)[1]])
+        if ERR[-1] > 500:
+            print(f"dt = {dt}")
+            print(f"noise = {process_noise, measurements_noise}")
+            print(f"V = {v_x, v_y, v_z}")
+            print(f"pos_std = {lat_std, lon_std}")
+            print(f"speed_std = {pv_x_std, pv_y_std, pv_z_std}")
+            break
 
+    """ Affichage final """
     plt.close()
     fig,ax = plt.subplots(1,2)
+    print("Display the error and the final result..")
     ax[0].set_title(f"Error function with\n{n_particles} particles\n{steps} steps between measures.")
     ax[0].set_xlabel("time [s]")
     ax[0].set_ylabel("error (m)")
@@ -229,9 +246,11 @@ if __name__ == '__main__':
 
     for i in range(len(TIME)):
         if i == 0:
-            ax[1].scatter(BAR[i][0], BAR[i][1], color='b', label='barycentre of the particle')
+            ax[1].scatter(BAR[i][0], BAR[i][1], color='red', label='barycentre of the particle')
         if i % steps == 0:
             ax[0].scatter(TIME[i], ERR[i], color = 'b')
-            ax[1].scatter(BAR[i][0], BAR[i][1], color='b',s = 0.5)
+            ax[1].scatter(BAR[i][0], BAR[i][1], color='red', s = 1.2)
+    plt.legend()
     plt.show()
+    print("End the program.")
     plt.pause(100000)
