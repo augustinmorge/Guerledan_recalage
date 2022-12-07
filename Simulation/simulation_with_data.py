@@ -137,6 +137,17 @@ def test_diverge(ERR, err_max=500):
         return True #Alors on arrete
     return(False)
 
+def set_dt(ti, pti = T[0,]):
+    t = ti.split(":")
+    t[2] = t[2].split(".")
+    t = float(t[0])*60*60+float(t[1])*60+float(t[2][0]) + float(t[2][1])/1000.
+
+    pt = pti.split(":")
+    pt[2] = pt[2].split(".")
+    pt = float(pt[0])*60*60+float(pt[1])*60+float(pt[2][0]) + float(pt[2][1])/1000.
+
+    return(t - pt, t)
+
 if __name__ == '__main__':
     import PIL.Image as Image
     import osm_ui
@@ -147,9 +158,9 @@ if __name__ == '__main__':
     # bool_display = str(input("Display the particles ? [Y/]"))
     # bool_display = bool_display=="Y"
     n_particles = 1000
-    steps = 25
+    steps = 50
     bool_display = False
-    
+
     x_gps_min, y_gps_min = np.min(coord2cart((LAT, LON))[0,:]), np.min(coord2cart((LAT, LON))[1,:])
     x_gps_max, y_gps_max = np.max(coord2cart((LAT, LON))[0,:]), np.max(coord2cart((LAT, LON))[1,:])
     bounds = [[x_gps_min, x_gps_max], [y_gps_min, y_gps_max]]
@@ -159,9 +170,8 @@ if __name__ == '__main__':
     resampler = Resampler()
     resampling_threshold = 0.5*n_particles
 
-    t = T[0,].split(":")
-    t[2] = t[2].split(".")
-    t = float(t[0])*60*60+float(t[1])*60+float(t[2][0]) + float(t[2][1])/1000.
+    dt, t = set_dt(T[steps,], T[0,])
+
     v_x = V_X[0,]
     v_y = V_Y[0,]
     v_z = V_Z[0,]
@@ -179,22 +189,15 @@ if __name__ == '__main__':
 
     print("Processing..")
     from tqdm import tqdm
-    # for i in (range(0,LON.shape[0],steps)):
     for i in tqdm(range(0,LON.shape[0],steps)):
         #Coordinates in cartesian
         px_gps, py_gps = coord2cart((lat,lon)).flatten()
         pv_x, pv_y, pv_z = v_x, v_y, v_z
         pv_x_std, pv_y_std, pv_z_std = v_x_std, v_y_std, v_z_std
-        pt = t
 
         """Update data"""
-        t = T[i,].split(":")
-        t[2] = t[2].split(".")
-        # print(f"T[i,] = {t}")
-        t = float(t[0])*60*60+float(t[1])*60+float(t[2][0]) + float(t[2][1])/1000.
-        dt = t - pt
-        # print(f"t = {t} and dt = {dt}")
-        # print(dt)
+        _, t = set_dt(T[i,]) #même dt pour tout t
+
         v_x = V_X[i,]
         v_y = V_Y[i,]
         v_z = V_Z[i,]
@@ -208,16 +211,15 @@ if __name__ == '__main__':
         v_y_std = V_Y_STD[i,]
         v_z_std = V_Z_STD[i,]
 
-        """ Processing error on measures""" ## TODO: need to change the angular motion
-        robot_forward_motion =  dt*np.sqrt(pv_x**2 + pv_y**2 + pv_z**2)#[dt*pv_x, dt*pv_y] #2*[np.sqrt((x_gps - px_gps)**2 + (y_gps - py_gps)**2)] #
-        #Je sais pas pourquoi il faut inverser ici..
-        robot_angular_motion = np.arctan2(pv_x,pv_y) #np.arctan2((y_gps - py_gps),(x_gps - px_gps)) #
+        """ Processing error on measures"""
+        robot_forward_motion =  dt*np.sqrt(pv_x**2 + pv_y**2 + pv_z**2)
+        robot_angular_motion = np.arctan2(pv_x,pv_y) #Je sais pas pourquoi c'est à l'envers
         meas_model_distance_std = steps*np.sqrt(lat_std**2 + lon_std**2) # On estime que l'erreur en z est le même que celui en lat, lon, ce qui est faux
         measurements_noise = [meas_model_distance_std] ### Attention, std est en mètres !
 
         """ Processing error on algorithm"""
-        motion_model_forward_std = steps*np.sqrt(pv_y_std**2 + pv_x_std**2 + pv_z_std**2) #2*[steps*np.sqrt(pv_x_std**2+pv_y_std**2)]
-        motion_model_turn_std = steps*np.abs(np.arctan2((pv_y + pv_y_std),(pv_x)) - np.arctan2((pv_y),(pv_x+pv_x_std))) #0.2
+        motion_model_forward_std = steps*np.sqrt(pv_y_std**2 + pv_x_std**2 + pv_z_std**2)
+        motion_model_turn_std = steps*np.abs(np.arctan2((pv_y + pv_y_std),(pv_x)) - np.arctan2((pv_y),(pv_x+pv_x_std)))
         process_noise = [motion_model_forward_std, motion_model_turn_std]
 
         t0 = time.time()
@@ -245,7 +247,7 @@ if __name__ == '__main__':
         ERR.append(np.sqrt((x_gps - get_average_state(particles)[0])**2 + (y_gps - get_average_state(particles)[1])**2))
         BAR.append([get_average_state(particles)[0],get_average_state(particles)[1]])
 
-        if test_diverge(ERR) : break #Permet de voir si l'algorithme diverge et pourquoi ?
+        if test_diverge(ERR) : break #Permet de voir si l'algorithme diverge et pourquoi.
 
     print(f"Temps de calcul total = {(time.time() - T_start)}s")
     """ Affichage final """
@@ -261,12 +263,11 @@ if __name__ == '__main__':
     ax[1].set_ylabel("y [m]")
     ax[1].plot(coord2cart((LAT,LON))[0,:], coord2cart((LAT,LON))[1,:],label='true position')
 
-    for i in range(len(TIME)):
-        if i == 0:
-            ax[1].scatter(BAR[i][0], BAR[i][1], color='red', label='barycentre of the particle')
-        if i % steps == 0:
-            ax[0].scatter(TIME[i], ERR[i], color = 'b')
-            ax[1].scatter(BAR[i][0], BAR[i][1], color='red', s = 1.2)
+    print("Computing the diagrams..")
+
+    BAR = np.array(BAR)
+    ax[0].plot(TIME, ERR, color = 'b')
+    ax[1].scatter(BAR[:,0], BAR[:,1], color='red', s = 1.2, label='barycentre of the particle')
     plt.legend()
     plt.show()
     print("End the program.")
