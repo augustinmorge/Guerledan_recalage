@@ -120,3 +120,40 @@ class Resampler:
         weighted_new_samples = [1.0/N*np.ones((N,1)), [new_x, new_y]]
 
         return weighted_new_samples
+
+
+# # Importer les bibliothèques nécessaires
+# import numpy as np
+#
+# # Fonction de resampling pour un filtre particulaire
+# def resample_particle_filter(particles, weights):
+#   # Calculer la somme des poids
+#   weight_sum = np.sum(weights)
+#
+#   # Calculer les poids normalisés
+#   normalized_weights = weights / weight_sum
+#
+#   # Calculer les limites de resampling pour chaque particule
+#   resampling_limits = np.cumsum(normalized_weights)
+#
+#   # Initialiser le tableau de particules resamplées
+#   resampled_particles = np.zeros(particles.shape)
+#
+#   # Choisir aléatoirement une particule initiale
+#   resampled_particles[0] = np.random.choice(particles, p=normalized_weights)
+#
+#   # Resampler les autres particules en utilisant les limites de resampling
+#   for i in range(1, particles.shape[0]):
+#     # Choisir une particule en utilisant les limites de resampling
+#     resampled_particles[i] = np.random.choice(particles, p=normalized_weights)
+#
+#     # Réinitialiser les poids pour les particules resamplées
+#     weights[resampled_particles == particles[i]] = 1 / particles.shape[0]
+#
+#   return resampled_particles, weights
+#
+# # Tester la fonction
+# particles = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]])
+# weights = np.array([0.25, 0.25, 0.25, 0.25])
+# print(resample_particle_filter(particles, weights))
+# # ([[10, 11, 12], [4, 5, 6], [4, 5, 6], [4, 5, 6]], [0.25, 0.25, 0.25, 0.25])
