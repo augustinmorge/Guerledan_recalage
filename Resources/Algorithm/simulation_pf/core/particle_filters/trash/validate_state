@@ -1,0 +1,30 @@
+# def validate_state(self, state):
+#     """
+#     Validate the state. State values outide allowed ranges will be corrected for assuming a 'cyclic world'.
+#
+#     :param state: Input particle state.
+#     :return: Validated particle state.
+#     """
+#
+#     # Make sure state does not exceed allowed limits (cyclic world)
+#     while state[0] < self.x_min:
+#         state[0] += (self.x_max - self.x_min)
+#     while state[0] > self.x_max:
+#         state[0] -= (self.x_max - self.x_min)
+#
+#     while state[1] < self.y_min:
+#         state[1] += (self.y_max - self.y_min)
+#     while state[1] > self.y_max:
+#         state[1] -= (self.y_max - self.y_min)
+#
+#     while state[2] < self.z_min:
+#         state[2] += (self.z_max - self.z_min)
+#     while state[2] > self.z_max:
+#         state[2] -= (self.z_max - self.z_min)
+#
+#     while state[3] < self.v_min:
+#         state[3] += (self.v_max - self.v_min)
+#     while state[3] > self.v_max:
+#         state[3] -= (self.v_max - self.v_min)
+#
+#     return state
