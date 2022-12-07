@@ -185,7 +185,7 @@ if __name__ == '__main__':
 
     plt.ion()
 
-    TIME = []; ERR = []; BAR = []
+    TIME = []; ERR = []; BAR = []; SPEED = []
 
     print("Processing..")
     from tqdm import tqdm
@@ -246,29 +246,41 @@ if __name__ == '__main__':
         TIME.append(t)
         ERR.append(np.sqrt((x_gps - get_average_state(particles)[0])**2 + (y_gps - get_average_state(particles)[1])**2))
         BAR.append([get_average_state(particles)[0],get_average_state(particles)[1]])
-
+        SPEED.append(np.sqrt(pv_x**2 + pv_y**2 + pv_z**2))
         if test_diverge(ERR) : break #Permet de voir si l'algorithme diverge et pourquoi.
 
     print(f"Temps de calcul total = {(time.time() - T_start)}s")
     """ Affichage final """
-    plt.close()
-    fig,ax = plt.subplots(1,2)
-    print("Display the error and the final result..")
-    ax[0].set_title(f"Error function with\n{n_particles} particles\n{steps} steps between measures.")
-    ax[0].set_xlabel("time [s]")
-    ax[0].set_ylabel("error (m)")
+    BAR = np.array(BAR)
 
-    ax[1].set_title("Barycentre")
-    ax[1].set_xlabel("x [m]")
-    ax[1].set_ylabel("y [m]")
-    ax[1].plot(coord2cart((LAT,LON))[0,:], coord2cart((LAT,LON))[1,:],label='true position')
+    plt.figure()
+    plt.title(f"Algorithm with\n{n_particles} particles\n{steps} steps between measures")
+    ax1 = plt.subplot2grid((2, 2), (0, 0), rowspan=2)
+    ax2 = plt.subplot2grid((2, 2), (0, 1))
+    ax3 = plt.subplot2grid((2, 2), (1, 1))
+
+    print("Display the error and the final result..")
+    ax1.set_title("Barycentre")
+    ax1.set_xlabel("x [m]")
+    ax1.set_ylabel("y [m]")
+    ax1.plot(coord2cart((LAT,LON))[0,:], coord2cart((LAT,LON))[1,:],label='true position')
+    ax1.scatter(BAR[:,0], BAR[:,1], color='red', s = 1.2, label='barycentre of the particle')
+    ax1.legend()
+
+    ax2.set_title("Error function.")
+    ax2.set_xlabel("time [s]")
+    ax2.set_ylabel("error (m)")
+    ax2.plot(TIME, ERR, color = 'b', label = 'erreur')
+    ax2.legend()
+
+    ax3.set_title("Vitesse")
+    ax3.set_xlabel("v_x [m/s]")
+    ax3.set_ylabel("v_y [m/s]")
+    ax3.plot(TIME, SPEED, label = 'speed')
+    ax3.legend()
 
     print("Computing the diagrams..")
 
-    BAR = np.array(BAR)
-    ax[0].plot(TIME, ERR, color = 'b')
-    ax[1].scatter(BAR[:,0], BAR[:,1], color='red', s = 1.2, label='barycentre of the particle')
-    plt.legend()
     plt.show()
     print("End the program.")
     plt.pause(100000)
