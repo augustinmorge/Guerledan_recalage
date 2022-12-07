@@ -254,7 +254,7 @@ if __name__ == '__main__':
     BAR = np.array(BAR)
 
     plt.figure()
-    plt.title(f"Algorithm with\n{n_particles} particles\n{steps} steps between measures")
+    plt.suptitle(f"Algorithm with\n{n_particles} particles\n{steps} steps between measures")
     ax1 = plt.subplot2grid((2, 2), (0, 0), rowspan=2)
     ax2 = plt.subplot2grid((2, 2), (0, 1))
     ax3 = plt.subplot2grid((2, 2), (1, 1))
