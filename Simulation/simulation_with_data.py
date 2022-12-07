@@ -228,9 +228,9 @@ if __name__ == '__main__':
         particles = update(robot_forward_motion, robot_angular_motion, measurements, measurements_noise, process_noise, particles, resampling_threshold, resampler)
 
         """ Affichage en temps réel """
-        if ERR != []:
-            if ERR[-1] > 40:
-                if bool_display:
+        if bool_display:
+            if ERR != []:
+                if ERR[-1] > 40:
                     ax.cla()
                     print("Temps de calcul: ",time.time() - t0)
                     t1 = time.time()
