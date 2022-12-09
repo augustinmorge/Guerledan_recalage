@@ -12,7 +12,6 @@ import sys
 from tqdm import tqdm
 from matplotlib.patches import Ellipse
 from ellipse_lib import *
-from scipy.spatial import cKDTree
 
 wpt_ponton = (48.1989495, -3.0148023)
 def coord2cart(coords,coords_ref=wpt_ponton):
@@ -57,36 +56,82 @@ def cart2coord(pos_x, pos_y ,coords_ref=wpt_ponton):
 # 	else:
 # 		return mnt[i_pos][2]
 
+# from scipy.spatial import cKDTree
+# def distance_to_bottom(xy,mnt):
+#     x = xy[:,0]
+#     y = xy[:,1]
+#     lat, lon = cart2coord(x, y)
+#     point = np.vstack((lat, lon)).T
+#
+#     lat_mnt = mnt[:,0]
+#     lon_mnt = mnt[:,1]
+#     vec_mnt = np.vstack((lat_mnt, lon_mnt)).T
+#     Z = np.zeros(point.shape)
+#
+#     # Crée un arbre KD pour la mnt
+#     kd_tree = cKDTree(vec_mnt)
+#
+#     # Pour chaque point du mnt, trouve le point des particule ou autre le plus proche
+#     for i in range(point.shape[0]):
+#         xy = point[i,:]
+#         dist, i_pos = kd_tree.query(xy)
+#         Z[i,0] = mnt[i_pos][2]
+#
+#     return(Z)
+
+# def distance_to_bottom(xy,mnt):
+#     x = xy[:,0]
+#     y = xy[:,1]
+#     lat, lon = cart2coord(x, y)
+#     point = np.vstack((lat, lon)).T
+#
+#     lat_mnt = mnt[:,0]
+#     lon_mnt = mnt[:,1]
+#     vec_mnt = np.vstack((lat_mnt, lon_mnt)).T
+#
+#     # Transforme la fonction cKDTree en une fonction vectorisée
+#     vec_cKDTree = np.vectorize(cKDTree)
+#
+#     # Vérifie que les données sont en deux dimensions
+#     assert len(vec_mnt.shape) == 2, "Les données doivent être en deux dimensions"
+#
+#     # Vérifie que les données sont des nombres
+#     assert np.issubdtype(vec_mnt.dtype, np.number), "Les données doivent être des nombres"
+#
+#     # Utilise les données pour créer un arbre KD
+#     kd_tree = cKDTree(vec_mnt)
+#
+#     # Calcul les distances pour chaque point
+#     distances = kd_tree.query(point)[1]
+#
+#     # Vérifie que l'indice est un entier ou un tableau d'entiers
+#     assert isinstance(distances, (int, np.ndarray)), "L'indice doit être un entier ou un tableau d'entiers"
+#
+#     # Récupère les altitudes des points les plus proches
+#     Z = mnt[distances,2]
+#
+#     return Z
+
+from sklearn.neighbors import KDTree
+
+lat_mnt = MNT[:,0]
+lon_mnt = MNT[:,1]
+vec_mnt = np.vstack((lat_mnt, lon_mnt)).T
+kd_tree = KDTree(vec_mnt, metric="euclidean")
+
 def distance_to_bottom(xy,mnt):
     x = xy[:,0]
     y = xy[:,1]
     lat, lon = cart2coord(x, y)
     point = np.vstack((lat, lon)).T
 
-    lat_mnt = mnt[:,0]
-    lon_mnt = mnt[:,1]
-    vec_mnt = np.vstack((lat_mnt, lon_mnt)).T
-    Z = np.zeros(point.shape)
+    # Utilise KDTree pour calculer les distances
+    distances, indices = kd_tree.query(point)
 
-    # Crée un arbre KD pour la mnt
-    kd_tree = cKDTree(vec_mnt)
+    # Récupère les altitudes des points les plus proches
+    Z = mnt[indices,2]
 
-    # Pour chaque point du mnt, trouve le point des particule ou autre le plus proche
-    for i in range(point.shape[0]):
-        xy = point[i,:]
-        dist, i_pos = kd_tree.query(xy)
-        Z[i,0] = mnt[i_pos][2]
-
-        # if lat_mnt[i_pos]-lat<=0 and lon_mnt[i_pos]-lon<=0:
-        # 	Z[i,0] = (mnt[i_pos][2] + mnt[i_pos+1][2])/2
-        #
-        # elif lat_mnt[i_pos]-lat>=0 and lon_mnt[i_pos]-lon>=0:
-        # 	Z[i,0] = (mnt[i_pos-1][2] + mnt[i_pos][2])/2
-        #
-        # else:
-        #     Z[i,0] = mnt[i_pos][2]
-
-    return(Z)
+    return Z
 
 
 def initialize_particles_uniform(n_particles, bounds):
@@ -217,7 +262,7 @@ if __name__ == '__main__':
     # bool_display = str(input("Display the particles ? [Y/]"))
     # bool_display = bool_display=="Y"
     n_particles = 1000
-    steps = 50
+    steps = 25
     bool_display = False
 
     x_gps_min, y_gps_min = np.min(coord2cart((LAT, LON))[0,:]), np.min(coord2cart((LAT, LON))[1,:])
