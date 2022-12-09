@@ -11,7 +11,7 @@ import PIL.Image as Image
 import sys
 from tqdm import tqdm
 from matplotlib.patches import Ellipse
-from test import *
+from ellipse_lib import *
 
 wpt_ponton = (48.1989495, -3.0148023)
 def coord2cart(coords,coords_ref=wpt_ponton):
@@ -126,7 +126,7 @@ def get_average_state(particles):
 
     return [avg_x, avg_y]
 
-def test_diverge(ERR, err_max=250):
+def test_diverge(ERR, err_max=500):
     if ERR[-1] > err_max: #Si l'erreur est de plus de 500m il y a un probleme
         print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         print("Divergence of the algorithm")
@@ -153,13 +153,13 @@ def set_dt(ti, pti = T[0,]):
 
 if __name__ == '__main__':
 
-    # n_particles = int(input("Number of particles: "))
-    # steps = int(input("number of steps between measures ? "))
-    # bool_display = str(input("Display the particles ? [Y/]"))
-    # bool_display = bool_display=="Y"
-    n_particles = 1000
-    steps = 50
-    bool_display = True
+    n_particles = int(input("Number of particles: "))
+    steps = int(input("number of steps between measures ? "))
+    bool_display = str(input("Display the particles ? [Y/]"))
+    bool_display = bool_display=="Y"
+    # n_particles = 1000
+    # steps = 50
+    # bool_display = True
 
     x_gps_min, y_gps_min = np.min(coord2cart((LAT, LON))[0,:]), np.min(coord2cart((LAT, LON))[1,:])
     x_gps_max, y_gps_max = np.max(coord2cart((LAT, LON))[0,:]), np.max(coord2cart((LAT, LON))[1,:])
@@ -189,16 +189,13 @@ if __name__ == '__main__':
 
     print("Processing..")
     fig, ax = plt.subplots()
-    # for i in tqdm(range(0,LON.shape[0],steps)):
-    for i in (range(0,LON.shape[0],steps)):
-        #Coordinates in cartesian
-        px_gps, py_gps = coord2cart((lat,lon)).flatten()
-        pv_x, pv_y, pv_z = v_x, v_y, v_z
-        pv_x_std, pv_y_std, pv_z_std = v_x_std, v_y_std, v_z_std
 
-        """Update data"""
+    if bool_display: r = range(0,LON.shape[0],steps)
+    else : r = tqdm(range(0,LON.shape[0],steps))
+
+    for i in r:
+        """Set data"""
         _, t = set_dt(T[i,]) #même dt pour tout t
-
         v_x = V_X[i,]
         v_y = V_Y[i,]
         v_z = V_Z[i,]
@@ -213,18 +210,18 @@ if __name__ == '__main__':
         v_z_std = V_Z_STD[i,]
 
         """ Processing error on measures"""
-        robot_forward_motion =  dt*np.sqrt(pv_x**2 + pv_y**2 + pv_z**2)
-        robot_angular_motion = np.arctan2(pv_x,pv_y) #Je sais pas pourquoi c'est à l'envers
+        robot_forward_motion =  dt*np.sqrt(v_x**2 + v_y**2 + v_z**2)
+        robot_angular_motion = np.arctan2(v_x,v_y) #Je sais pas pourquoi c'est à l'envers
         meas_model_distance_std = steps*np.sqrt(lat_std**2 + lon_std**2) # On estime que l'erreur en z est le même que celui en lat, lon, ce qui est faux
         measurements_noise = [meas_model_distance_std] ### Attention, std est en mètres !
 
         """ Processing error on algorithm"""
-        motion_model_forward_std = steps*np.sqrt(pv_y_std**2 + pv_x_std**2 + pv_z_std**2)
-        motion_model_turn_std = steps*np.abs(np.arctan2((pv_y + pv_y_std),(pv_x)) - np.arctan2((pv_y),(pv_x+pv_x_std)))
+        motion_model_forward_std = steps*np.sqrt(v_y_std**2 + v_x_std**2 + v_z_std**2)
+        motion_model_turn_std = steps*np.abs(np.arctan2((v_y + v_y_std),(v_x)) - np.arctan2((v_y),(v_x+v_x_std)))
         process_noise = [motion_model_forward_std, motion_model_turn_std]
 
-        t0 = time.time()
         """Process the update"""
+        t0 = time.time()
         particles = update(robot_forward_motion, robot_angular_motion, measurements, measurements_noise, process_noise, particles, resampling_threshold, resampler)
 
         """ Affichage en temps réel """
@@ -257,7 +254,7 @@ if __name__ == '__main__':
         TIME.append(t)
         ERR.append(np.sqrt((x_gps - get_average_state(particles)[0])**2 + (y_gps - get_average_state(particles)[1])**2))
         BAR.append([get_average_state(particles)[0],get_average_state(particles)[1]])
-        SPEED.append(np.sqrt(pv_x**2 + pv_y**2 + pv_z**2))
+        SPEED.append(np.sqrt(v_x**2 + v_y**2 + v_z**2))
         if test_diverge(ERR) : break #Permet de voir si l'algorithme diverge et pourquoi.
 
     plt.close()
