@@ -1,5 +1,5 @@
 import numpy as np 
-
+import time
 
 
 def interpolation(lat, lon, mnt):
@@ -23,9 +23,8 @@ def interpolation(lat, lon, mnt):
 def interpolation2(lat, lon, mnt):
 	lat_mnt = mnt[:,0]
 	lon_mnt = mnt[:,1]
-	points = np.vstack((lat_mnt, lon_mnt)).T
 
-	min_dist = 1e5
+	min_dist = 1e10
 	for i in range(len(lat_mnt)):
 		if np.sqrt((lat_mnt[i]-lat)**2+(lon_mnt[i]-lon)**2)<=min_dist:
 			min_dist = np.sqrt((lat_mnt[i]-lat)**2+(lon_mnt[i]-lon)**2)
@@ -49,6 +48,9 @@ if __name__ == "__main__":
 		MNT.append(i.split(','))
 		MNT[-1] = [np.float64(MNT[-1][0]), np.float64(MNT[-1][1]), np.float64(MNT[-1][2]+'.'+MNT[-1][3])] 
 	MNT = np.array(MNT)
+	t0 = time.time()
 	print(interpolation(48.1989495, -3.0148023, MNT))
-	# print(interpolation2(48.1989495, -3.0148023, MNT))
-
+	print(time.time()-t0)
+	t1 = time.time()
+	print(interpolation2(48.1989495, -3.0148023, MNT))
+	print(time.time()-t1)
