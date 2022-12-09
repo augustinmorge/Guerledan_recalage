@@ -42,15 +42,18 @@ def interpolation2(lat, lon, mnt):
 
 
 if __name__ == "__main__":
+	print("\nLoading data ...")
 	AimeNT = np.loadtxt("./resources/guerledan_EDF_2013-06_MNT1m.tiff.txt", dtype = str)
 	MNT = []
 	for i in AimeNT:
 		MNT.append(i.split(','))
 		MNT[-1] = [np.float64(MNT[-1][0]), np.float64(MNT[-1][1]), np.float64(MNT[-1][2]+'.'+MNT[-1][3])] 
 	MNT = np.array(MNT)
+	print("Data loaded, ready to interpole !\n")
+
 	t0 = time.time()
-	print(interpolation(48.1989495, -3.0148023, MNT))
-	print(time.time()-t0)
+	interpolation(48.1989495, -3.0148023, MNT)
+	print("Temps avec numpy : ", time.time()-t0)
 	t1 = time.time()
-	print(interpolation2(48.1989495, -3.0148023, MNT))
-	print(time.time()-t1)
+	interpolation2(48.1989495, -3.0148023, MNT)
+	print("Temps avec boucle : ", time.time()-t1)
