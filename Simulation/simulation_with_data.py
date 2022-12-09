@@ -2,13 +2,16 @@
 
 import time
 T_start = time.time()
-# from roblib import *  # available at https://www.ensta-bretagne.fr/jaulin/roblib.py
 import numpy as np
-from numpy import sin, cos
 import matplotlib.pyplot as plt
 import copy
 from resampler import Resampler
 from data_import import *
+import PIL.Image as Image
+import sys
+from tqdm import tqdm
+from matplotlib.patches import Ellipse
+from test import *
 
 wpt_ponton = (48.1989495, -3.0148023)
 def coord2cart(coords,coords_ref=wpt_ponton):
@@ -123,7 +126,7 @@ def get_average_state(particles):
 
     return [avg_x, avg_y]
 
-def test_diverge(ERR, err_max=500):
+def test_diverge(ERR, err_max=250):
     if ERR[-1] > err_max: #Si l'erreur est de plus de 500m il y a un probleme
         print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         print("Divergence of the algorithm")
@@ -149,9 +152,6 @@ def set_dt(ti, pti = T[0,]):
     return(t - pt, t)
 
 if __name__ == '__main__':
-    import PIL.Image as Image
-    import osm_ui
-    import sys
 
     # n_particles = int(input("Number of particles: "))
     # steps = int(input("number of steps between measures ? "))
@@ -159,7 +159,7 @@ if __name__ == '__main__':
     # bool_display = bool_display=="Y"
     n_particles = 1000
     steps = 50
-    bool_display = False
+    bool_display = True
 
     x_gps_min, y_gps_min = np.min(coord2cart((LAT, LON))[0,:]), np.min(coord2cart((LAT, LON))[1,:])
     x_gps_max, y_gps_max = np.max(coord2cart((LAT, LON))[0,:]), np.max(coord2cart((LAT, LON))[1,:])
@@ -188,8 +188,9 @@ if __name__ == '__main__':
     TIME = []; ERR = []; BAR = []; SPEED = []
 
     print("Processing..")
-    from tqdm import tqdm
-    for i in tqdm(range(0,LON.shape[0],steps)):
+    fig, ax = plt.subplots()
+    # for i in tqdm(range(0,LON.shape[0],steps)):
+    for i in (range(0,LON.shape[0],steps)):
         #Coordinates in cartesian
         px_gps, py_gps = coord2cart((lat,lon)).flatten()
         pv_x, pv_y, pv_z = v_x, v_y, v_z
@@ -228,20 +229,30 @@ if __name__ == '__main__':
 
         """ Affichage en temps réel """
         if bool_display:
-            print("Temps de calcul: ",time.time() - t0)
-            t1 = time.time()
-            plt.plot(coord2cart((LAT,LON))[0,:], coord2cart((LAT,LON))[1,:])
-            plt.title("Particle filter with {} particles with z = {}m".format(n_particles, measurements))
-            plt.xlim([x_gps_min - 100,x_gps_max + 100])
-            plt.ylim([y_gps_min - 100,y_gps_max + 100])
-            plt.scatter(x_gps, y_gps ,color='blue', label = 'True position panopée')
-            # for i in range(n_particles):
-            #     plt.scatter(particles[1][0][i], particles[1][1][i], color = 'red')
-            plt.scatter(get_average_state(particles)[0],get_average_state(particles)[1], color = 'red', label = 'Approximation of particles')
-            plt.legend()
-            plt.pause(0.00001)
-            plt.clf()
-            print("Temps d'affichage: ",time.time()-t1,"\n")
+            if ERR != []:
+                if ERR[-1] > 40:
+                    ax.cla()
+                    print("Temps de calcul: ",time.time() - t0)
+                    t1 = time.time()
+                    ax.plot(coord2cart((LAT,LON))[0,:], coord2cart((LAT,LON))[1,:])
+                    ax.set_title("Particle filter with {} particles with z = {}m".format(n_particles, measurements))
+                    ax.set_xlim([x_gps_min - 100,x_gps_max + 100])
+                    ax.set_ylim([y_gps_min - 100,y_gps_max + 100])
+                    ax.scatter(x_gps, y_gps ,color='blue', label = 'True position panopée')
+                    # for i in range(n_particles):
+                    #     ax.scatter(particles[1][0][i], particles[1][1][i], color = 'red')
+                    ax.scatter(get_average_state(particles)[0],get_average_state(particles)[1], color = 'red', label = 'Approximation of particles')
+
+                    """ Afficher une estimation des particules """
+                    xx = particles[1][0]
+                    yy = particles[1][1]
+                    vec = ls_ellipse(xx, yy)
+                    center,axes = polyToParams(vec)
+                    ellipse = Ellipse(center, axes[0], axes[1], fill=False)
+                    ax.add_patch(ellipse)
+                    ax.legend()
+                    plt.pause(0.00001)
+                    print("Temps d'affichage: ",time.time()-t1,"\n")
 
         TIME.append(t)
         ERR.append(np.sqrt((x_gps - get_average_state(particles)[0])**2 + (y_gps - get_average_state(particles)[1])**2))
@@ -249,6 +260,7 @@ if __name__ == '__main__':
         SPEED.append(np.sqrt(pv_x**2 + pv_y**2 + pv_z**2))
         if test_diverge(ERR) : break #Permet de voir si l'algorithme diverge et pourquoi.
 
+    plt.close()
     print(f"Temps de calcul total = {(time.time() - T_start)}s")
     """ Affichage final """
     BAR = np.array(BAR)
@@ -274,8 +286,8 @@ if __name__ == '__main__':
     ax2.legend()
 
     ax3.set_title("Vitesse")
-    ax3.set_xlabel("v_x [m/s]")
-    ax3.set_ylabel("v_y [m/s]")
+    ax3.set_xlabel("time [s]")
+    ax3.set_ylabel("||v|| [m/s]")
     ax3.plot(TIME, SPEED, label = 'speed')
     ax3.legend()
 
