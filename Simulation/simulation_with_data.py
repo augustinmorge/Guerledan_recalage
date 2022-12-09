@@ -190,7 +190,7 @@ if __name__ == '__main__':
     print("Processing..")
     fig, ax = plt.subplots()
 
-    if bool_display: r = (range(0,LON.shape[0],steps))
+    if bool_display: r = range(0,LON.shape[0],steps)
     else : r = tqdm(range(0,LON.shape[0],steps))
 
     for i in r:
