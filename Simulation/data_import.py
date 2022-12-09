@@ -30,10 +30,18 @@ V_Z_STD = np.float64(data[:,10])
 
 """ Import DVL """
 ## TODO:
+
+
+# """ Import the MNT """
+# AimeNT = np.loadtxt("./resources/guerledan_EDF_2013-06_MNT1m.tiff.txt", dtype = str)
+# MNT = []
+# for i in AimeNT:
+#     MNT.append(i.split(','))
+#     MNT[-1] = [np.float64(MNT[-1][0]), np.float64(MNT[-1][1]), np.float64(MNT[-1][2]+'.'+MNT[-1][3])]
+# MNT = np.array(MNT)
+
+
 print("End of the importation.")
-
-
-
 
 if __name__ == '__main__':
     import PIL.Image as Image

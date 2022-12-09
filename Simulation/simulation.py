@@ -3,6 +3,7 @@
 import numpy as np
 from numpy import sin, cos
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 import copy
 from resampler import Resampler
 
@@ -11,14 +12,16 @@ def distance_to_bottom(x,y):
     return(z)
 
 def GPS_point(t):
-    return(4.*cos(0.25*t),
-           4.*sin(0.5*t))
+    return(120.*cos(0.25*t),
+           120.*sin(0.25*t))
+    # return(0.,
+    #        0.)
 
 def initialize_particles_uniform(n_particles):
     weight = 1/n_particles
     particles = [weight*np.ones((n_particles,1)),[ \
-                           np.random.uniform(-5, 5, n_particles).reshape(n_particles,1),
-                           np.random.uniform(-5, 5, n_particles).reshape(n_particles,1)]]
+                           np.random.uniform(-120, 120, n_particles).reshape(n_particles,1),
+                           np.random.uniform(-120, 120, n_particles).reshape(n_particles,1)]]
     return(particles)
 
 def get_max_weight(particles):
@@ -112,8 +115,8 @@ def get_average_state(particles):
 if __name__ == '__main__':
     import time
 
-    n_particles = int(input("Number of particles: "))
-    n_sec = int(input("Number of seconds: "))
+    n_particles = 1000#int(input("Number of particles: "))
+    n_sec = 1000#int(input("Number of seconds: "))
     particles = initialize_particles_uniform(n_particles)
 
     x_gps, y_gps = GPS_point(0)[0], GPS_point(0)[1]
@@ -122,6 +125,50 @@ if __name__ == '__main__':
     plt.ion()
     t_ini = time.time()
     ERR = []; TIME = []
+
+    x = np.linspace(-120, 120, 100)
+    y = np.linspace(-120, 120, 100)
+    X, Y = np.meshgrid(x, y)
+
+    # Calcul des valeurs de z
+    Z = distance_to_bottom(X, Y)
+    mult = 2
+    extent = (-mult*120, mult*120, -mult*120, mult*120)
+    N = 10
+    min_z = np.min(Z)
+    max_z = np.max(Z)
+    print(min_z,max_z)
+    d = lambda k : min_z + k*(max_z - min_z)*1/N
+    levels = [d(k) for k in range(N)]
+    fig, ax = plt.subplots()
+
+    im = ax.imshow(Z, interpolation='bilinear', origin='lower',
+    cmap=cm.gray, extent = extent)
+
+    CS = ax.contour(Z, levels, origin='lower', cmap='flag', extend='both',
+    linewidths=2, extent = extent)
+
+    # Thicken the zero contour.
+    CS.collections[6].set_linewidth(4)
+
+    ax.clabel(CS, levels[1::2],  # label every second level
+    inline=True, fmt='%1.1f', fontsize=14)
+
+    # make a colorbar for the contour lines
+    CB = fig.colorbar(CS, shrink=0.8)
+
+    ax.set_title('Lines with colorbar')
+
+    # We can still add a colorbar for the image, too.
+    CBI = fig.colorbar(im, orientation='horizontal', shrink=0.8)
+
+    # This makes the original colorbar look a bit out of place,
+    # so let's improve its position.
+
+    l, b, w, h = ax.get_position().bounds
+    ll, bb, ww, hh = CB.ax.get_position().bounds
+
+
     while(time.time() - t_ini < n_sec):
         t = time.time() - t_ini
         robot_forward_motion = np.sqrt((GPS_point(t)[0] - x_gps)**2 + (GPS_point(t)[1] - y_gps)**2)
@@ -140,16 +187,30 @@ if __name__ == '__main__':
 
         #Affichage
         t1 = time.time()
-        plt.title("Particle filter with {} particles".format(n_particles))
-        plt.xlim([-10,10])
-        plt.ylim([-10,10])
-        plt.scatter(x_gps,y_gps,color='blue', label = 'True position')
+        ax.set_title("Particle filter with {} particles".format(n_particles))
+        # ax.set_xlim([-1200,120])
+        # ax.set_ylim([-1200,120])
+        ax.set_xlim([x_gps - 120,x_gps + 120])
+        ax.set_ylim([y_gps - 120,y_gps + 120])
+        ax.scatter(x_gps,y_gps,color='blue', label = 'True position')
         # for i in range(n_particles):
-        #     plt.scatter(particles[1][0][i], particles[1][1][i], color = 'red')
-        plt.scatter(get_average_state(particles)[0],get_average_state(particles)[1], color = 'red', label = 'Approximation of particles')
-        plt.legend()
+        #     ax.scatter(particles[1][0][i], particles[1][1][i], color = 'red')
+        ax.scatter(get_average_state(particles)[0],get_average_state(particles)[1], color = 'red', label = 'Approximation of particles')
+
+        # Tracé des isobates
+        # plt.contour(X, Y, Z, levels)
+
+        im = ax.imshow(Z, interpolation='bilinear', origin='lower',
+        cmap=cm.gray, extent = extent)
+
+        CS = ax.contour(Z, levels, origin='lower', cmap='flag', extend='both',
+        linewidths=2, extent = extent)
+
+        CB.ax.set_position([ll, b + 0.1*h, ww, h*0.8])
+
+        ax.legend()
         plt.pause(0.00001)
-        plt.clf()
+        ax.cla()
         print("Temps d'affichage: ",time.time()-t1,"\n")
         TIME.append(t)
         ERR.append(np.sqrt((x_gps - get_average_state(particles)[0])**2 + (y_gps - get_average_state(particles)[1])**2))
