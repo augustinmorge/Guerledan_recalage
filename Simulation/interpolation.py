@@ -1,8 +1,9 @@
 import numpy as np 
 import time
+from scipy.spatial import cKDTree
 
 
-def interpolation(lat, lon, mnt):
+def interpolation_float(lat, lon, mnt):
 	lat_mnt = mnt[:,0]
 	lon_mnt = mnt[:,1]
 	points = np.vstack((lat_mnt, lon_mnt)).T
@@ -20,25 +21,21 @@ def interpolation(lat, lon, mnt):
 	else: 
 		return mnt[i_pos][2]
 
-def interpolation2(lat, lon, mnt):
+def interpolation(lat, lon, mnt):
 	lat_mnt = mnt[:,0]
 	lon_mnt = mnt[:,1]
+	points = np.vstack((lat_mnt, lon_mnt)).T
 
-	min_dist = 1e10
-	for i in range(len(lat_mnt)):
-		if np.sqrt((lat_mnt[i]-lat)**2+(lon_mnt[i]-lon)**2)<=min_dist:
-			min_dist = np.sqrt((lat_mnt[i]-lat)**2+(lon_mnt[i]-lon)**2)
-			i_pos = i
-
-	if lat_mnt[i_pos]-lat<=0 and lon_mnt[i_pos]-lon<=0:
-		return (mnt[i_pos][2] + mnt[i_pos+1][2])/2
-
-	elif lat_mnt[i_pos]-lat>=0 and lon_mnt[i_pos]-lon>=0:
-		return (mnt[i_pos-1][2] + mnt[i_pos][2])/2
-
-	else: 
-		return mnt[i_pos][2]
-
+	if type(lat) == float:
+		return interpolation_float(lat ,lon, mnt)
+	
+	else:
+		print("Pour le nuage de particules")
+		particules = np.vstack((lat, lon)).T
+		kd_tree = cKDTree(points)
+		for particule in particules:
+			dist, i_pos = kd_tree.query(particule)
+		return(mnt[i_pos][2])
 
 
 if __name__ == "__main__":
@@ -51,9 +48,10 @@ if __name__ == "__main__":
 	MNT = np.array(MNT)
 	print("Data loaded, ready to interpole !\n")
 
+	lat, lon = np.arange(0,1000,1), np.arange(0,1000,1)
 	t0 = time.time()
 	interpolation(48.1989495, -3.0148023, MNT)
 	print("Temps avec numpy : ", time.time()-t0)
 	t1 = time.time()
-	interpolation2(48.1989495, -3.0148023, MNT)
-	print("Temps avec boucle : ", time.time()-t1)
+	interpolation(lat, lon, MNT)
+	print("Temps avec cKDTree : ", time.time()-t1)
