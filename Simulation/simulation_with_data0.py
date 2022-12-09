@@ -6,12 +6,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 import copy
 from resampler import Resampler
-from data_import import *
+from npz.data_import import *
 import PIL.Image as Image
 import sys
 from tqdm import tqdm
 from matplotlib.patches import Ellipse
 from ellipse_lib import *
+from scipy.spatial import cKDTree
 
 wpt_ponton = (48.1989495, -3.0148023)
 def coord2cart(coords,coords_ref=wpt_ponton):
@@ -26,9 +27,67 @@ def coord2cart(coords,coords_ref=wpt_ponton):
 
     return np.array([x_tilde,y_tilde])
 
-def distance_to_bottom(x,y):
-    z = np.sqrt((x/2)**2 + (y/2)**2) + np.sin(x/2) + np.cos((x + y)/2)*np.cos(x/2)
-    return(z)
+def cart2coord(pos_x, pos_y ,coords_ref=wpt_ponton):
+    R = 6372800
+    x,y = pos_x, pos_y
+    lym,lxm = coords_ref
+    ly = 180*y/(R*np.pi) + lym
+    lx = lxm + 180*x/(np.pi*R*np.cos(ly*np.pi/180))
+    return (ly,lx)
+
+# def distance_to_bottom(x, y, mnt):
+#
+#     lat, lon = cart2coord(x, y)
+#     point = np.array([lat, lon])
+#
+# 	lat_mnt = mnt[:,0]
+# 	lon_mnt = mnt[:,1]
+# 	points = np.vstack((lat_mnt, lon_mnt)).T
+#
+#
+# 	distances = np.linalg.norm(points - point, axis=1)
+# 	i_pos = np.argmin(distances)
+#
+# 	if lat_mnt[i_pos]-lat<=0 and lon_mnt[i_pos]-lon<=0:
+# 		return (mnt[i_pos][2] + mnt[i_pos+1][2])/2
+#
+# 	elif lat_mnt[i_pos]-lat>=0 and lon_mnt[i_pos]-lon>=0:
+# 		return (mnt[i_pos-1][2] + mnt[i_pos][2])/2
+#
+# 	else:
+# 		return mnt[i_pos][2]
+
+def distance_to_bottom(xy,mnt):
+    x = xy[:,0]
+    y = xy[:,1]
+    lat, lon = cart2coord(x, y)
+    point = np.vstack((lat, lon)).T
+
+    lat_mnt = mnt[:,0]
+    lon_mnt = mnt[:,1]
+    vec_mnt = np.vstack((lat_mnt, lon_mnt)).T
+    Z = np.zeros(point.shape)
+
+    # Crée un arbre KD pour la mnt
+    kd_tree = cKDTree(vec_mnt)
+
+    # Pour chaque point du mnt, trouve le point des particule ou autre le plus proche
+    for i in range(point.shape[0]):
+        xy = point[i,:]
+        dist, i_pos = kd_tree.query(xy)
+        Z[i,0] = mnt[i_pos][2]
+
+        # if lat_mnt[i_pos]-lat<=0 and lon_mnt[i_pos]-lon<=0:
+        # 	Z[i,0] = (mnt[i_pos][2] + mnt[i_pos+1][2])/2
+        #
+        # elif lat_mnt[i_pos]-lat>=0 and lon_mnt[i_pos]-lon>=0:
+        # 	Z[i,0] = (mnt[i_pos-1][2] + mnt[i_pos][2])/2
+        #
+        # else:
+        #     Z[i,0] = mnt[i_pos][2]
+
+    return(Z)
+
 
 def initialize_particles_uniform(n_particles, bounds):
     weight = 1/n_particles
@@ -83,7 +142,7 @@ def compute_likelihood(samples, measurements, measurements_noise):
     # Map difference true and expected distance measurement to probability
     beta = 0.1
     # distance = np.sqrt(((samples[1][0]-measurement[0])**2)+(samples[1][1]-measurement[1])**2)
-    z_mbes_particule = distance_to_bottom(samples[1][0],samples[1][1])
+    z_mbes_particule = distance_to_bottom(np.hstack((samples[1][0],samples[1][1])),MNT)
     distance = np.abs(z_mbes_particule - measurements)
     p_z_given_x_distance = np.exp(-beta*distance/(2*measurements_noise[0]**2))
 
@@ -153,13 +212,13 @@ def set_dt(ti, pti = T[0,]):
 
 if __name__ == '__main__':
 
-    n_particles = int(input("Number of particles: "))
-    steps = int(input("number of steps between measures ? "))
-    bool_display = str(input("Display the particles ? [Y/]"))
-    bool_display = bool_display=="Y"
-    # n_particles = 1000
-    # steps = 50
-    # bool_display = True
+    # n_particles = int(input("Number of particles: "))
+    # steps = int(input("number of steps between measures ? "))
+    # bool_display = str(input("Display the particles ? [Y/]"))
+    # bool_display = bool_display=="Y"
+    n_particles = 1000
+    steps = 50
+    bool_display = False
 
     x_gps_min, y_gps_min = np.min(coord2cart((LAT, LON))[0,:]), np.min(coord2cart((LAT, LON))[1,:])
     x_gps_max, y_gps_max = np.max(coord2cart((LAT, LON))[0,:]), np.max(coord2cart((LAT, LON))[1,:])
@@ -183,14 +242,49 @@ if __name__ == '__main__':
     v_y_std = V_Y_STD[0,]
     v_z_std = V_Z_STD[0,]
 
-    plt.ion()
-
     TIME = []; ERR = []; BAR = []; SPEED = []
+    if bool_display:
+        """ Création des isobates """
+        plt.ion()
 
-    print("Processing..")
-    fig, ax = plt.subplots()
 
-    if bool_display: r = range(0,LON.shape[0],steps)
+        x = np.linspace(-np.min(LON), 120, 100)
+        y = np.linspace(-120, 120, 100)
+        X, Y = np.meshgrid(x, y)
+
+        # # Calcul des valeurs de z
+        # Z = distance_to_bottom(X, Y, MNT)
+        # mult = 2
+        # extent = (-mult*120, mult*120, -mult*120, mult*120)
+        # nb_isobates = 10
+        # min_z = np.min(Z)
+        # max_z = np.max(Z)
+        # d = lambda k : min_z + k*(max_z - min_z)*1/nb_isobates
+        # levels = [d(k) for k in range(N)]
+        # im = ax.imshow(Z, interpolation='bilinear', origin='lower',
+        # cmap=cm.gray, extent = extent)
+        # CS = ax.contour(Z, levels, origin='lower', cmap='flag', extend='both',
+        # linewidths=2, extent = extent)
+        # # Thicken the zero contour.
+        # CS.collections[6].set_linewidth(4)
+        # ax.clabel(CS, levels[1::2],  # label every second level
+        # inline=True, fmt='%1.1f', fontsize=14)
+        # # make a colorbar for the contour lines
+        # CB = fig.colorbar(CS, shrink=0.8)
+        # ax.set_title('Lines with colorbar')
+        # # We can still add a colorbar for the image, too.
+        # CBI = fig.colorbar(im, orientation='horizontal', shrink=0.8)
+        # # This makes the original colorbar look a bit out of place,
+        # # so let's improve its position.
+        # l, b, w, h = ax.get_position().bounds
+        # ll, bb, ww, hh = CB.ax.get_position().bounds
+
+
+        print("Processing..")
+        fig, ax = plt.subplots()
+
+        r = range(0,LON.shape[0],steps)
+
     else : r = tqdm(range(0,LON.shape[0],steps))
 
     for i in r:
@@ -202,7 +296,7 @@ if __name__ == '__main__':
         lat = LAT[i,]
         lon = LON[i,]
         x_gps, y_gps = coord2cart((lat,lon)).flatten()
-        measurements = distance_to_bottom(x_gps, y_gps)
+        measurements = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)
         lat_std = LAT_STD[i,]
         lon_std = LON_STD[i,]
         v_x_std = V_X_STD[i,]
@@ -247,6 +341,17 @@ if __name__ == '__main__':
                     center,axes = polyToParams(vec)
                     ellipse = Ellipse(center, axes[0], axes[1], fill=False)
                     ax.add_patch(ellipse)
+
+                    # """ Ajout des isobates """
+                    # im = ax.imshow(Z, interpolation='bilinear', origin='lower',
+                    # cmap=cm.gray, extent = extent)
+                    #
+                    # CS = ax.contour(Z, levels, origin='lower', cmap='flag', extend='both',
+                    # linewidths=2, extent = extent)
+                    #
+                    # CB.ax.set_position([ll, b + 0.1*h, ww, h*0.8])
+
+
                     ax.legend()
                     plt.pause(0.00001)
                     print("Temps d'affichage: ",time.time()-t1,"\n")

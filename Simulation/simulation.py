@@ -12,8 +12,9 @@ def distance_to_bottom(x,y):
     return(z)
 
 def GPS_point(t):
-    return(120.*cos(0.25*t),
-           120.*sin(0.25*t))
+    alpha = 0.0001
+    return(120.*cos(0.25*alpha*t),
+           120.*sin(0.5*alpha*t))
     # return(0.,
     #        0.)
 
@@ -144,27 +145,19 @@ if __name__ == '__main__':
 
     im = ax.imshow(Z, interpolation='bilinear', origin='lower',
     cmap=cm.gray, extent = extent)
-
     CS = ax.contour(Z, levels, origin='lower', cmap='flag', extend='both',
     linewidths=2, extent = extent)
-
     # Thicken the zero contour.
     CS.collections[6].set_linewidth(4)
-
     ax.clabel(CS, levels[1::2],  # label every second level
     inline=True, fmt='%1.1f', fontsize=14)
-
     # make a colorbar for the contour lines
     CB = fig.colorbar(CS, shrink=0.8)
-
     ax.set_title('Lines with colorbar')
-
     # We can still add a colorbar for the image, too.
     CBI = fig.colorbar(im, orientation='horizontal', shrink=0.8)
-
     # This makes the original colorbar look a bit out of place,
     # so let's improve its position.
-
     l, b, w, h = ax.get_position().bounds
     ll, bb, ww, hh = CB.ax.get_position().bounds
 

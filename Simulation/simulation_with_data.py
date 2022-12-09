@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import copy
 from resampler import Resampler
-from data_import import *
+from npz.data_import import *
 import PIL.Image as Image
 import sys
 from tqdm import tqdm
@@ -24,28 +24,11 @@ def coord2cart(coords,coords_ref=wpt_ponton):
     x_tilde = R * np.cos(ly*np.pi/180)*(lx-lxm)*np.pi/180
     y_tilde = R * (ly-lym)*np.pi/180
 
-    return x_tilde,y_tilde
+    return np.array([x_tilde,y_tilde])
 
-# def distance_to_bottom(x,y):
-#     z = np.sqrt((x/2)**2 + (y/2)**2) + np.sin(x/2) + np.cos((x + y)/2)*np.cos(x/2)
-#     return(z)
-
-def distance_to_bottom(lat, lon, mnt):
-    lat_mnt = mnt[:,0]
-    lon_mnt = mnt[:,1]
-    points = np.vstack((lat_mnt, lon_mnt)).T
-    point = np.array([lat, lon])
-    distances = np.linalg.norm(points - point, axis=1)
-    i_pos = np.argmin(distances)
-
-    if lat_mnt[i_pos]-lat<=0 and lon_mnt[i_pos]-lon<=0:
-    	return (mnt[i_pos][2] + mnt[i_pos+1][2])/2
-
-    elif lat_mnt[i_pos]-lat>=0 and lon_mnt[i_pos]-lon>=0:
-    	return (mnt[i_pos-1][2] + mnt[i_pos][2])/2
-
-    else:
-    	return mnt[i_pos][2]
+def distance_to_bottom(x,y):
+    z = np.sqrt((x/2)**2 + (y/2)**2) + np.sin(x/2) + np.cos((x + y)/2)*np.cos(x/2)
+    return(z)
 
 def initialize_particles_uniform(n_particles, bounds):
     weight = 1/n_particles
@@ -100,8 +83,7 @@ def compute_likelihood(samples, measurements, measurements_noise):
     # Map difference true and expected distance measurement to probability
     beta = 0.1
     # distance = np.sqrt(((samples[1][0]-measurement[0])**2)+(samples[1][1]-measurement[1])**2)
-    for i in tqdm(range(n_particles)):
-        z_mbes_particule = distance_to_bottom(samples[1][0][i,0],samples[1][1][i,0], MNT)
+    z_mbes_particule = distance_to_bottom(samples[1][0],samples[1][1])
     distance = np.abs(z_mbes_particule - measurements)
     p_z_given_x_distance = np.exp(-beta*distance/(2*measurements_noise[0]**2))
 
@@ -176,11 +158,11 @@ if __name__ == '__main__':
     # bool_display = str(input("Display the particles ? [Y/]"))
     # bool_display = bool_display=="Y"
     n_particles = 1000
-    steps = 50
+    steps = 25
     bool_display = False
 
-    x_gps_min, y_gps_min = np.min(coord2cart((LAT, LON))[0]), np.min(coord2cart((LAT, LON))[1])
-    x_gps_max, y_gps_max = np.max(coord2cart((LAT, LON))[0]), np.max(coord2cart((LAT, LON))[1])
+    x_gps_min, y_gps_min = np.min(coord2cart((LAT, LON))[0,:]), np.min(coord2cart((LAT, LON))[1,:])
+    x_gps_max, y_gps_max = np.max(coord2cart((LAT, LON))[0,:]), np.max(coord2cart((LAT, LON))[1,:])
     bounds = [[x_gps_min, x_gps_max], [y_gps_min, y_gps_max]]
     particles = initialize_particles_uniform(n_particles, bounds)
 
@@ -200,11 +182,6 @@ if __name__ == '__main__':
     v_x_std = V_X_STD[0,]
     v_y_std = V_Y_STD[0,]
     v_z_std = V_Z_STD[0,]
-    #Conversion du MNT en carthésien
-    mnt_x = np.squeeze(coord2cart((MNT[:,0].reshape(-1,1), MNT[:,1].reshape(-1,1)))[0])
-    mnt_y = np.squeeze(coord2cart((MNT[:,0].reshape(-1,1), MNT[:,1].reshape(-1,1)))[1])
-    print(mnt_x.shape, MNT[:,0].shape)
-    MNT[:,0], MNT[:,1] = mnt_x, mnt_y
 
     plt.ion()
 
@@ -224,8 +201,8 @@ if __name__ == '__main__':
         v_z = V_Z[i,]
         lat = LAT[i,]
         lon = LON[i,]
-        x_gps, y_gps = coord2cart((lat,lon))
-        measurements = distance_to_bottom(x_gps, y_gps, MNT) ### MNT in data_import
+        x_gps, y_gps = coord2cart((lat,lon)).flatten()
+        measurements = distance_to_bottom(x_gps, y_gps)
         lat_std = LAT_STD[i,]
         lon_std = LON_STD[i,]
         v_x_std = V_X_STD[i,]
@@ -254,7 +231,7 @@ if __name__ == '__main__':
                     ax.cla()
                     print("Temps de calcul: ",time.time() - t0)
                     t1 = time.time()
-                    ax.plot(coord2cart((LAT,LON))[0], coord2cart((LAT,LON))[1])
+                    ax.plot(coord2cart((LAT,LON))[0,:], coord2cart((LAT,LON))[1,:])
                     ax.set_title("Particle filter with {} particles with z = {}m".format(n_particles, measurements))
                     ax.set_xlim([x_gps_min - 100,x_gps_max + 100])
                     ax.set_ylim([y_gps_min - 100,y_gps_max + 100])
@@ -295,7 +272,7 @@ if __name__ == '__main__':
     ax1.set_title("Barycentre")
     ax1.set_xlabel("x [m]")
     ax1.set_ylabel("y [m]")
-    ax1.plot(coord2cart((LAT,LON))[0], coord2cart((LAT,LON))[1],label='true position')
+    ax1.plot(coord2cart((LAT,LON))[0,:], coord2cart((LAT,LON))[1,:],label='true position')
     ax1.scatter(BAR[:,0], BAR[:,1], color='red', s = 1.2, label='barycentre of the particle')
     ax1.legend()
 
