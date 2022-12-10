@@ -12,6 +12,7 @@ import sys
 from tqdm import tqdm
 from matplotlib.patches import Ellipse
 from ellipse_lib import *
+from resources.geodesy import DegDecToLambert93, Lambert93ToDegDec
 
 wpt_ponton = (48.1989495, -3.0148023)
 def coord2cart(coords,coords_ref=wpt_ponton):
@@ -158,8 +159,8 @@ if __name__ == '__main__':
     # bool_display = str(input("Display the particles ? [Y/]"))
     # bool_display = bool_display=="Y"
     n_particles = 1000
-    steps = 25
-    bool_display = False
+    steps = 50
+    bool_display = True
 
     x_gps_min, y_gps_min = np.min(coord2cart((LAT, LON))[0,:]), np.min(coord2cart((LAT, LON))[1,:])
     x_gps_max, y_gps_max = np.max(coord2cart((LAT, LON))[0,:]), np.max(coord2cart((LAT, LON))[1,:])
@@ -226,30 +227,31 @@ if __name__ == '__main__':
 
         """ Affichage en temps réel """
         if bool_display:
-            if ERR != []:
-                if ERR[-1] > 40:
-                    ax.cla()
-                    print("Temps de calcul: ",time.time() - t0)
-                    t1 = time.time()
-                    ax.plot(coord2cart((LAT,LON))[0,:], coord2cart((LAT,LON))[1,:])
-                    ax.set_title("Particle filter with {} particles with z = {}m".format(n_particles, measurements))
-                    ax.set_xlim([x_gps_min - 100,x_gps_max + 100])
-                    ax.set_ylim([y_gps_min - 100,y_gps_max + 100])
-                    ax.scatter(x_gps, y_gps ,color='blue', label = 'True position panopée')
-                    # for i in range(n_particles):
-                    #     ax.scatter(particles[1][0][i], particles[1][1][i], color = 'red')
-                    ax.scatter(get_average_state(particles)[0],get_average_state(particles)[1], color = 'red', label = 'Approximation of particles')
+            # if ERR != []:
+            #     if ERR[-1] > 40:
+            ax.cla()
+            print("Temps de calcul: ",time.time() - t0)
+            t1 = time.time()
+            ax.plot(coord2cart((LAT,LON))[0,:], coord2cart((LAT,LON))[1,:])
+            ax.set_title("Particle filter with {} particles with z = {}m".format(n_particles, measurements))
+            ax.set_xlim([x_gps_min - 100,x_gps_max + 100])
+            ax.set_ylim([y_gps_min - 100,y_gps_max + 100])
+            ax.scatter(x_gps, y_gps ,color='blue', label = 'True position panopée')
+            ax.scatter(particles[1][0], particles[1][1], color = 'red')
+            bx, by = get_average_state(particles)[0],get_average_state(particles)[1]
+            ax.scatter(bx, by , color = 'red', label = 'Approximation of particles')
 
-                    """ Afficher une estimation des particules """
-                    xx = particles[1][0]
-                    yy = particles[1][1]
-                    vec = ls_ellipse(xx, yy)
-                    center,axes = polyToParams(vec)
-                    ellipse = Ellipse(center, axes[0], axes[1], fill=False)
-                    ax.add_patch(ellipse)
-                    ax.legend()
-                    plt.pause(0.00001)
-                    print("Temps d'affichage: ",time.time()-t1,"\n")
+            # """ Afficher une estimation des particules """
+            # xx = particles[1][0]
+            # yy = particles[1][1]
+            # vec = ls_ellipse(xx, yy)
+            # center,axes = polyToParams(vec)
+            # ellipse = Ellipse(center, axes[0], axes[1], fill=False)
+            # ax.add_patch(ellipse)
+
+            ax.legend()
+            plt.pause(0.00001)
+            print("Temps d'affichage: ",time.time()-t1,"\n")
 
         TIME.append(t)
         ERR.append(np.sqrt((x_gps - get_average_state(particles)[0])**2 + (y_gps - get_average_state(particles)[1])**2))

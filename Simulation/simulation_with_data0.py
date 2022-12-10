@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-
+import warnings
+# Suppress all warning messages
+warnings.filterwarnings('ignore')
 import time
 T_start = time.time()
 import numpy as np
@@ -12,18 +14,18 @@ import sys
 from tqdm import tqdm
 from matplotlib.patches import Ellipse
 from ellipse_lib import *
-
+from sklearn.neighbors import KDTree
+from pyproj.transformer import transform
+import pyproj
+# Définit les coordonnées de référence
 wpt_ponton = (48.1989495, -3.0148023)
+
 def coord2cart(coords,coords_ref=wpt_ponton):
     R = 6372800
-
     ly,lx = coords
     lym,lxm = coords_ref
-
-
     x_tilde = R * np.cos(ly*np.pi/180)*(lx-lxm)*np.pi/180
     y_tilde = R * (ly-lym)*np.pi/180
-
     return np.array([x_tilde,y_tilde])
 
 def cart2coord(pos_x, pos_y ,coords_ref=wpt_ponton):
@@ -34,100 +36,22 @@ def cart2coord(pos_x, pos_y ,coords_ref=wpt_ponton):
     lx = lxm + 180*x/(np.pi*R*np.cos(ly*np.pi/180))
     return (ly,lx)
 
-# def distance_to_bottom(x, y, mnt):
-#
-#     lat, lon = cart2coord(x, y)
-#     point = np.array([lat, lon])
-#
-# 	lat_mnt = mnt[:,0]
-# 	lon_mnt = mnt[:,1]
-# 	points = np.vstack((lat_mnt, lon_mnt)).T
-#
-#
-# 	distances = np.linalg.norm(points - point, axis=1)
-# 	i_pos = np.argmin(distances)
-#
-# 	if lat_mnt[i_pos]-lat<=0 and lon_mnt[i_pos]-lon<=0:
-# 		return (mnt[i_pos][2] + mnt[i_pos+1][2])/2
-#
-# 	elif lat_mnt[i_pos]-lat>=0 and lon_mnt[i_pos]-lon>=0:
-# 		return (mnt[i_pos-1][2] + mnt[i_pos][2])/2
-#
-# 	else:
-# 		return mnt[i_pos][2]
-
-# from scipy.spatial import cKDTree
-# def distance_to_bottom(xy,mnt):
-#     x = xy[:,0]
-#     y = xy[:,1]
-#     lat, lon = cart2coord(x, y)
-#     point = np.vstack((lat, lon)).T
-#
-#     lat_mnt = mnt[:,0]
-#     lon_mnt = mnt[:,1]
-#     vec_mnt = np.vstack((lat_mnt, lon_mnt)).T
-#     Z = np.zeros(point.shape)
-#
-#     # Crée un arbre KD pour la mnt
-#     kd_tree = cKDTree(vec_mnt)
-#
-#     # Pour chaque point du mnt, trouve le point des particule ou autre le plus proche
-#     for i in range(point.shape[0]):
-#         xy = point[i,:]
-#         dist, i_pos = kd_tree.query(xy)
-#         Z[i,0] = mnt[i_pos][2]
-#
-#     return(Z)
-
-# def distance_to_bottom(xy,mnt):
-#     x = xy[:,0]
-#     y = xy[:,1]
-#     lat, lon = cart2coord(x, y)
-#     point = np.vstack((lat, lon)).T
-#
-#     lat_mnt = mnt[:,0]
-#     lon_mnt = mnt[:,1]
-#     vec_mnt = np.vstack((lat_mnt, lon_mnt)).T
-#
-#     # Transforme la fonction cKDTree en une fonction vectorisée
-#     vec_cKDTree = np.vectorize(cKDTree)
-#
-#     # Vérifie que les données sont en deux dimensions
-#     assert len(vec_mnt.shape) == 2, "Les données doivent être en deux dimensions"
-#
-#     # Vérifie que les données sont des nombres
-#     assert np.issubdtype(vec_mnt.dtype, np.number), "Les données doivent être des nombres"
-#
-#     # Utilise les données pour créer un arbre KD
-#     kd_tree = cKDTree(vec_mnt)
-#
-#     # Calcul les distances pour chaque point
-#     distances = kd_tree.query(point)[1]
-#
-#     # Vérifie que l'indice est un entier ou un tableau d'entiers
-#     assert isinstance(distances, (int, np.ndarray)), "L'indice doit être un entier ou un tableau d'entiers"
-#
-#     # Récupère les altitudes des points les plus proches
-#     Z = mnt[distances,2]
-#
-#     return Z
-
-from sklearn.neighbors import KDTree
-
-lat_mnt = MNT[:,0]
-lon_mnt = MNT[:,1]
+print("Building KDTree..")
+x_mnt = MNT[:,0]
+y_mnt = MNT[:,1]
+gcs = pyproj.Proj(init='epsg:4326') # Define the WGS84 GCS
+proj = pyproj.Proj(init='epsg:2154') # Define the Lambert 93 projection
+lon_mnt, lat_mnt = pyproj.transform(proj, gcs, x_mnt, y_mnt) # Convert x and y values to latitude and longitude values
 vec_mnt = np.vstack((lat_mnt, lon_mnt)).T
 kd_tree = KDTree(vec_mnt, metric="euclidean")
 
 def distance_to_bottom(xy,mnt):
-    x = xy[:,0]
-    y = xy[:,1]
-    lat, lon = cart2coord(x, y)
+
+    lat, lon = cart2coord(xy[:,0], xy[:,1])
     point = np.vstack((lat, lon)).T
 
     # Utilise KDTree pour calculer les distances
     distances, indices = kd_tree.query(point)
-
     # Récupère les altitudes des points les plus proches
     Z = mnt[indices,2]
 
@@ -239,7 +163,7 @@ def test_diverge(ERR, err_max=500):
         print(f"measurements_noise = {measurements_noise}")
         print(f"V = {v_x, v_y, v_z}")
         print(f"pos_std = {lat_std, lon_std}")
-        print(f"speed_std = {pv_x_std, pv_y_std, pv_z_std}")
+        print(f"speed_std = {v_x_std, v_y_std, v_z_std}")
         print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         return True #Alors on arrete
     return(False)
@@ -297,34 +221,6 @@ if __name__ == '__main__':
         y = np.linspace(-120, 120, 100)
         X, Y = np.meshgrid(x, y)
 
-        # # Calcul des valeurs de z
-        # Z = distance_to_bottom(X, Y, MNT)
-        # mult = 2
-        # extent = (-mult*120, mult*120, -mult*120, mult*120)
-        # nb_isobates = 10
-        # min_z = np.min(Z)
-        # max_z = np.max(Z)
-        # d = lambda k : min_z + k*(max_z - min_z)*1/nb_isobates
-        # levels = [d(k) for k in range(N)]
-        # im = ax.imshow(Z, interpolation='bilinear', origin='lower',
-        # cmap=cm.gray, extent = extent)
-        # CS = ax.contour(Z, levels, origin='lower', cmap='flag', extend='both',
-        # linewidths=2, extent = extent)
-        # # Thicken the zero contour.
-        # CS.collections[6].set_linewidth(4)
-        # ax.clabel(CS, levels[1::2],  # label every second level
-        # inline=True, fmt='%1.1f', fontsize=14)
-        # # make a colorbar for the contour lines
-        # CB = fig.colorbar(CS, shrink=0.8)
-        # ax.set_title('Lines with colorbar')
-        # # We can still add a colorbar for the image, too.
-        # CBI = fig.colorbar(im, orientation='horizontal', shrink=0.8)
-        # # This makes the original colorbar look a bit out of place,
-        # # so let's improve its position.
-        # l, b, w, h = ax.get_position().bounds
-        # ll, bb, ww, hh = CB.ax.get_position().bounds
-
-
         print("Processing..")
         fig, ax = plt.subplots()
 
@@ -333,6 +229,7 @@ if __name__ == '__main__':
     else : r = tqdm(range(0,LON.shape[0],steps))
 
     for i in r:
+
         """Set data"""
         _, t = set_dt(T[i,]) #même dt pour tout t
         v_x = V_X[i,]
@@ -347,6 +244,7 @@ if __name__ == '__main__':
         v_x_std = V_X_STD[i,]
         v_y_std = V_Y_STD[i,]
         v_z_std = V_Z_STD[i,]
+
 
         """ Processing error on measures"""
         robot_forward_motion =  dt*np.sqrt(v_x**2 + v_y**2 + v_z**2)
@@ -375,27 +273,9 @@ if __name__ == '__main__':
                     ax.set_xlim([x_gps_min - 100,x_gps_max + 100])
                     ax.set_ylim([y_gps_min - 100,y_gps_max + 100])
                     ax.scatter(x_gps, y_gps ,color='blue', label = 'True position panopée')
-                    # for i in range(n_particles):
-                    #     ax.scatter(particles[1][0][i], particles[1][1][i], color = 'red')
-                    ax.scatter(get_average_state(particles)[0],get_average_state(particles)[1], color = 'red', label = 'Approximation of particles')
-
-                    """ Afficher une estimation des particules """
-                    xx = particles[1][0]
-                    yy = particles[1][1]
-                    vec = ls_ellipse(xx, yy)
-                    center,axes = polyToParams(vec)
-                    ellipse = Ellipse(center, axes[0], axes[1], fill=False)
-                    ax.add_patch(ellipse)
-
-                    # """ Ajout des isobates """
-                    # im = ax.imshow(Z, interpolation='bilinear', origin='lower',
-                    # cmap=cm.gray, extent = extent)
-                    #
-                    # CS = ax.contour(Z, levels, origin='lower', cmap='flag', extend='both',
-                    # linewidths=2, extent = extent)
-                    #
-                    # CB.ax.set_position([ll, b + 0.1*h, ww, h*0.8])
-
+                    ax.scatter(particles[1][0], particles[1][1], color = 'red') # Affiche toutes les particules
+                    bx, by = get_average_state(particles)[0], get_average_state(particles)[1] #barycentre des particules
+                    ax.scatter(bx, by , color = 'red', label = 'Approximation of particles')
 
                     ax.legend()
                     plt.pause(0.00001)
