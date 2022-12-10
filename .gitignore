@@ -1,5 +1,6 @@
 __pycache__
 _DATA_ref
-AUV_localisation/Algorithm/Simulation/particle-filter-tutorial/
 Data_G1
-
+*.npz
+Simulation/npz/ins.npz
+Simulation/npz/mnt.npz
