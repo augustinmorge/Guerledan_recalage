@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+
+print("Starting the program..")
 import warnings
 # Suppress all warning messages
 warnings.filterwarnings('ignore')
@@ -60,14 +62,15 @@ def cart2coord(pos_x, pos_y ,coords_ref=wpt_ponton):
 # Linear = use Delaunay triangulation to linearly interpolate data, no extrapolation out of reference bounds
 # Cubic = cubic spline to interplate, higher time computation but often better results, extrapolate out of bounds
 
-print("Building KDTree..")
 x_mnt = MNT[:,0]
 y_mnt = MNT[:,1]
 gcs = pyproj.Proj(init='epsg:4326') # Define the WGS84 GCS
 proj = pyproj.Proj(init='epsg:2154') # Define the Lambert 93 projection
 lon_mnt, lat_mnt = pyproj.transform(proj, gcs, x_mnt, y_mnt) # Convert x and y values to latitude and longitude values
 vec_mnt = np.vstack((lat_mnt, lon_mnt)).T
+print("Building KDTree..")
 kd_tree = KDTree(vec_mnt, metric="euclidean")
+print("Built KDTree.")
 
 def distance_to_bottom(xy,mnt):
 
@@ -96,7 +99,7 @@ def normalize_weights(weighted_samples):
     # Check if weights are non-zero
     if np.sum(weighted_samples[0]) < 1e-15:
         sum_weights = np.sum(weighted_samples[0])
-        # print("Weight normalization failed: sum of all weights is {} (weights will be reinitialized)".format(sum_weights))
+        print("Weight normalization failed: sum of all weights is {} (weights will be reinitialized)".format(sum_weights))
 
         # Set uniform weights
         return [1.0 / weighted_samples[0].shape[0]*np.ones((weighted_samples[0].shape[0],1)), weighted_samples[1]]
@@ -111,7 +114,6 @@ def propagate_sample(samples, forward_motion, angular_motion, process_noise):
 
     # 1. rotate by given amount plus additive noise sample (index 1 is angular noise standard deviation)
     propagated_samples = copy.deepcopy(samples)
-    # print(propagated_sample)
     # Compute forward motion by combining deterministic forward motion with additive zero mean Gaussian noise
     n_particles = samples[0].shape[0]
     forward_displacement = np.random.normal(forward_motion, process_noise[0], n_particles).reshape(-1,1)
@@ -162,7 +164,6 @@ def update(robot_forward_motion, robot_angular_motion, measurements, measurement
 
     # Resample if needed
     if needs_resampling(resampling_threshold):
-        # print("Ressempling..")
         particles = resampler.resample(particles, n_particles) #1 = MULTINOMIAL
 
     return(particles)
@@ -205,7 +206,6 @@ if __name__ == '__main__':
     n_particles = int(input("Number of particles: "))
     steps = int(input("number of steps between measures ? "))
     bool_display = (str(input("Display the particles ? [Y/]"))=="Y")
-    print(bool_display)
     # n_particles = 1000
     # steps = 25
     # bool_display = False
@@ -268,13 +268,14 @@ if __name__ == '__main__':
         v_y_std = V_Y_STD[i,]
         v_z_std = V_Z_STD[i,]
 
-
-        """ Processing error on measures"""
+        """Processing the motion of the robot """
         robot_forward_motion =  dt*np.sqrt(v_x**2 + v_y**2 + v_z**2)
         robot_angular_motion = np.arctan2(v_x,v_y) #Je sais pas pourquoi c'est à l'envers
+
+        """ Processing error on measures"""
         meas_model_distance_std = steps*np.sqrt(lat_std**2 + lon_std**2) # On estime que l'erreur en z est le même que celui en lat, lon, ce qui est faux
         measurements_noise = [meas_model_distance_std] ### Attention, std est en mètres !
-
+        
         """ Processing error on algorithm"""
         motion_model_forward_std = steps*np.sqrt(v_y_std**2 + v_x_std**2 + v_z_std**2)
         motion_model_turn_std = steps*np.abs(np.arctan2((v_y + v_y_std),(v_x)) - np.arctan2((v_y),(v_x+v_x_std)))
@@ -288,8 +289,6 @@ if __name__ == '__main__':
 
         """ Affichage en temps réel """
         if bool_display:
-            # if ERR != []:
-            #     if ERR[-1] > 40:
             ax.cla()
             print("Temps de calcul: ",time.time() - t0)
             t1 = time.time()
@@ -348,4 +347,4 @@ if __name__ == '__main__':
 
     plt.show()
 
-    print("End the program.")
+print("End the program.")
