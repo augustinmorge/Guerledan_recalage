@@ -36,6 +36,30 @@ def cart2coord(pos_x, pos_y ,coords_ref=wpt_ponton):
     lx = lxm + 180*x/(np.pi*R*np.cos(ly*np.pi/180))
     return (ly,lx)
 
+
+# from scipy.interpolate import griddata
+#
+# def distance_to_bottom(xy, mnt):
+#     """
+#     Given a reference MNT (x_mnt, y_mnt, z_mnt) of N points, interpolate Z at n * (xi, yi) coordinates.
+#     :param xi: ndarray(n) of first coordinates
+#     :param yi: ndarray(n) of second coordinates
+#     :param x_mnt: ndarray(N) of first coordinates reference
+#     :param y_mnt: ndarray(N) of second coordinates reference
+#     :param z_mnt: ndarray(N) of measures reference
+#     :return: zi: ndarray(n) of interpolated measures at points (xi, yi)
+#     """
+#     xi, yi = xy[:,0], xy[:,1]
+#     points = np.hstack((mnt[:,0], mnt[:,1]))
+#     z_mnt = mnt[:,2]
+#     zi = griddata(points, z_mnt, (xi, yi), method='linear')  # method = linear / cubic / nearest
+#     return zi
+
+# About method choice for griddata :
+# Nearest = nearest reference point gives the interpolated value : worst results
+# Linear = use Delaunay triangulation to linearly interpolate data, no extrapolation out of reference bounds
+# Cubic = cubic spline to interplate, higher time computation but often better results, extrapolate out of bounds
+
 print("Building KDTree..")
 x_mnt = MNT[:,0]
 y_mnt = MNT[:,1]
@@ -56,7 +80,6 @@ def distance_to_bottom(xy,mnt):
     Z = mnt[indices,2]
 
     return Z
-
 
 def initialize_particles_uniform(n_particles, bounds):
     weight = 1/n_particles
@@ -102,15 +125,13 @@ def propagate_sample(samples, forward_motion, angular_motion, process_noise):
     # Make sure we stay within cyclic world
     return (propagated_samples)
 
-def compute_likelihood(samples, measurements, measurements_noise):
+def compute_likelihood(samples, measurements, measurements_noise, beta):
 
     # meas_model_distance_std = 0.4
     # meas_model_angle_std = 0.3
     # measurements_noise = [meas_model_distance_std, meas_model_angle_std]
 
     # Map difference true and expected distance measurement to probability
-    beta = 0.1
-    # distance = np.sqrt(((samples[1][0]-measurement[0])**2)+(samples[1][1]-measurement[1])**2)
     z_mbes_particule = distance_to_bottom(np.hstack((samples[1][0],samples[1][1])),MNT)
     distance = np.abs(z_mbes_particule - measurements)
     p_z_given_x_distance = np.exp(-beta*distance/(2*measurements_noise[0]**2))
@@ -124,13 +145,13 @@ def needs_resampling(resampling_threshold):
 
     return 1.0 / max_weight < resampling_threshold
 
-def update(robot_forward_motion, robot_angular_motion, measurements, measurements_noise, process_noise, particles,resampling_threshold, resampler):
+def update(robot_forward_motion, robot_angular_motion, measurements, measurements_noise, process_noise, particles,resampling_threshold, resampler, beta):
 
     # Propagate the particle state according to the current particle
     propagated_states = propagate_sample(particles, robot_forward_motion, robot_angular_motion, process_noise)
 
     # Compute current particle's weight
-    weights = particles[0] * compute_likelihood(propagated_states, measurements, measurements_noise)
+    weights = particles[0] * compute_likelihood(propagated_states, measurements, measurements_noise, beta)
 
     # Store
     propagated_states[0] = weights
@@ -181,13 +202,13 @@ def set_dt(ti, pti = T[0,]):
 
 if __name__ == '__main__':
 
-    # n_particles = int(input("Number of particles: "))
-    # steps = int(input("number of steps between measures ? "))
-    # bool_display = str(input("Display the particles ? [Y/]"))
-    # bool_display = bool_display=="Y"
-    n_particles = 1000
-    steps = 25
-    bool_display = False
+    n_particles = int(input("Number of particles: "))
+    steps = int(input("number of steps between measures ? "))
+    bool_display = (str(input("Display the particles ? [Y/]"))=="Y")
+    print(bool_display)
+    # n_particles = 1000
+    # steps = 25
+    # bool_display = False
 
     x_gps_min, y_gps_min = np.min(coord2cart((LAT, LON))[0,:]), np.min(coord2cart((LAT, LON))[1,:])
     x_gps_max, y_gps_max = np.max(coord2cart((LAT, LON))[0,:]), np.max(coord2cart((LAT, LON))[1,:])
@@ -200,6 +221,9 @@ if __name__ == '__main__':
 
     dt, t = set_dt(T[steps,], T[0,])
 
+    t_i = T.shape[0]//2
+    t_f = T.shape[0]
+
     v_x = V_X[0,]
     v_y = V_Y[0,]
     v_z = V_Z[0,]
@@ -211,7 +235,6 @@ if __name__ == '__main__':
     v_y_std = V_Y_STD[0,]
     v_z_std = V_Z_STD[0,]
 
-    TIME = []; ERR = []; BAR = []; SPEED = []
     if bool_display:
         """ Création des isobates """
         plt.ion()
@@ -222,12 +245,12 @@ if __name__ == '__main__':
         X, Y = np.meshgrid(x, y)
 
         print("Processing..")
-        fig, ax = plt.subplots()
+        r = range(t_i,t_f,steps)
 
-        r = range(0,LON.shape[0],steps)
+    else : r = tqdm(range(t_i,t_f,steps))
 
-    else : r = tqdm(range(0,LON.shape[0],steps))
-
+    fig, ax = plt.subplots()
+    TIME = []; BAR = []; SPEED = []; ERR = []
     for i in r:
 
         """Set data"""
@@ -259,27 +282,30 @@ if __name__ == '__main__':
 
         """Process the update"""
         t0 = time.time()
-        particles = update(robot_forward_motion, robot_angular_motion, measurements, measurements_noise, process_noise, particles, resampling_threshold, resampler)
+        particles = update(robot_forward_motion, robot_angular_motion, measurements,\
+                           measurements_noise, process_noise, particles,\
+                            resampling_threshold, resampler, beta = 0.5)
 
         """ Affichage en temps réel """
         if bool_display:
-            if ERR != []:
-                if ERR[-1] > 40:
-                    ax.cla()
-                    print("Temps de calcul: ",time.time() - t0)
-                    t1 = time.time()
-                    ax.plot(coord2cart((LAT,LON))[0,:], coord2cart((LAT,LON))[1,:])
-                    ax.set_title("Particle filter with {} particles with z = {}m".format(n_particles, measurements))
-                    ax.set_xlim([x_gps_min - 100,x_gps_max + 100])
-                    ax.set_ylim([y_gps_min - 100,y_gps_max + 100])
-                    ax.scatter(x_gps, y_gps ,color='blue', label = 'True position panopée')
-                    ax.scatter(particles[1][0], particles[1][1], color = 'red') # Affiche toutes les particules
-                    bx, by = get_average_state(particles)[0], get_average_state(particles)[1] #barycentre des particules
-                    ax.scatter(bx, by , color = 'red', label = 'Approximation of particles')
+            # if ERR != []:
+            #     if ERR[-1] > 40:
+            if i % 100 == 0:
+                ax.cla()
+                print("Temps de calcul: ",time.time() - t0)
+                t1 = time.time()
+                ax.plot(coord2cart((LAT,LON))[0,:], coord2cart((LAT,LON))[1,:])
+                ax.set_title("Particle filter with {} particles with z = {}m".format(n_particles, measurements))
+                ax.set_xlim([x_gps_min - 100,x_gps_max + 100])
+                ax.set_ylim([y_gps_min - 100,y_gps_max + 100])
+                ax.scatter(x_gps, y_gps ,color='blue', label = 'True position panopée', s = 100)
+                ax.scatter(particles[1][0], particles[1][1], color = 'red', s = 0.8, label = "particles") # Affiche toutes les particules
+                bx, by = get_average_state(particles)[0], get_average_state(particles)[1] #barycentre des particules
+                ax.scatter(bx, by , color = 'green', label = 'Estimation of particles')
 
-                    ax.legend()
-                    plt.pause(0.00001)
-                    print("Temps d'affichage: ",time.time()-t1,"\n")
+                ax.legend()
+                plt.pause(0.00001)
+                print("Temps d'affichage: ",time.time()-t1,"\n")
 
         TIME.append(t)
         ERR.append(np.sqrt((x_gps - get_average_state(particles)[0])**2 + (y_gps - get_average_state(particles)[1])**2))
@@ -287,12 +313,12 @@ if __name__ == '__main__':
         SPEED.append(np.sqrt(v_x**2 + v_y**2 + v_z**2))
         if test_diverge(ERR) : break #Permet de voir si l'algorithme diverge et pourquoi.
 
-    plt.close()
-    print(f"Temps de calcul total = {(time.time() - T_start)}s")
+
+    DT = time.time() - T_start
+    print(f"Temps de calcul total = {int(DT/60)}min et {int(DT-DT//60*60)}s")
     """ Affichage final """
     BAR = np.array(BAR)
 
-    plt.figure()
     plt.suptitle(f"Algorithm with\n{n_particles} particles\n{steps} steps between measures")
     ax1 = plt.subplot2grid((2, 2), (0, 0), rowspan=2)
     ax2 = plt.subplot2grid((2, 2), (0, 1))
@@ -321,5 +347,5 @@ if __name__ == '__main__':
     print("Computing the diagrams..")
 
     plt.show()
+
     print("End the program.")
-    plt.pause(100000)

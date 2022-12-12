@@ -1,9 +1,13 @@
 #!/usr/bin/python3
 import numpy as np
 import os
+
 file_path = os.path.dirname(os.path.abspath(__file__))
 
-def load_first_time_data():
+bool_txt = False
+bool_npz = True
+
+if bool_txt:
     print("Importing the log file..")
     """ Import INS """
     # """ Change the log """
@@ -32,7 +36,6 @@ def load_first_time_data():
     V_Z_STD = np.float64(data[:,10])
 
 
-
     """ Import DVL """
     ## TODO:
 
@@ -46,52 +49,40 @@ def load_first_time_data():
     MNT = np.array(MNT)
 
     """ Save the data """
-    np.savez("ins.npz", T=T, LAT=LAT, LON=LON, V_X=V_X, V_Y=V_Y, V_Z=V_Z,\
-    LAT_STD=LAT_STD, LON_STD=LON_STD, V_X_STD=V_X_STD,\
-    V_Y_STD=V_Y_STD, V_Z_STD=V_Z_STD,\
-    dtype = np.float64, precision = 16)
-    np.savez("mnt.npz", MNT=MNT, dtype = np.float64, precision = 16)
+    # np.savez("ins.npz", T=T, LAT=LAT, LON=LON, V_X=V_X, V_Y=V_Y, V_Z=V_Z,\
+    # LAT_STD=LAT_STD, LON_STD=LON_STD, V_X_STD=V_X_STD,\
+    # V_Y_STD=V_Y_STD, V_Z_STD=V_Z_STD,\
+    # dtype = np.float64, precision = 16)
+    # np.savez("mnt.npz", MNT=MNT, dtype = np.float64, precision = 16)
 
     print("End of the importation.")
 
+if bool_npz:
+    """ Load the data from npy file """
 
+    ins = np.load(file_path + "/ins.npz")
+    T = ins['T']
+    LAT = ins['LAT']
+    LON = ins['LON']
+    V_X = ins['V_X']
+    V_Y = ins['V_Y']
+    V_Z = ins['V_Y']
+    LAT_STD = ins['LAT_STD']
+    LON_STD = ins['LON_STD']
+    V_X_STD = ins['V_X_STD']
+    V_Y_STD = ins['V_Y_STD']
+    V_Z_STD = ins['V_Z_STD']
 
+    mnt = np.load(file_path + "/mnt.npz")
+    MNT = mnt['MNT']
 
-# load_first_time_data()
-""" Load the data from npy file """
-
-ins = np.load(file_path + "/ins.npz")
-T = ins['T']
-LAT = ins['LAT']
-LON = ins['LON']
-V_X = ins['V_X']
-V_Y = ins['V_Y']
-V_Z = ins['V_Y']
-LAT_STD = ins['LAT_STD']
-LON_STD = ins['LON_STD']
-V_X_STD = ins['V_X_STD']
-V_Y_STD = ins['V_Y_STD']
-V_Z_STD = ins['V_Z_STD']
-
-mnt = np.load(file_path + "/mnt.npz")
-MNT = mnt['MNT']
-
-
-# if __name__ == '__main__':
-#     import PIL.Image as Image
-#     import osm_ui
-#     import matplotlib.pyplot as plt
-#     lac = Image.open("./imgs/ortho_sat_2016_guerledan.tif")
-#     axes = osm_ui.plot_map(lac, (-3.118111, -2.954274), (48.183105, 48.237852), "Mis à l'eau de l'AUV")
-#     osm_ui.plot_xy_add(axes, LON, LAT)
-#     axes.legend(("ins",))
-#     print("Start to display the log..")
-#     plt.ion()
-#     for i in range(0,LON.shape[0],10000):
-#         if i == 0:
-#             point = plt.scatter(LON[i,], LAT[i,], color = "red", label = "Panopée")
-#         point = plt.scatter(LON[i,], LAT[i,], color = "red")
-#         plt.pause(0.001)
-#         plt.legend()
-#         plt.show()
-#         print(i)
+if __name__ == '__main__':
+    import pyproj
+    x_mnt = MNT[:,0]
+    y_mnt = MNT[:,1]
+    gcs = pyproj.Proj(init='epsg:4326') # Define the WGS84 GCS
+    proj = pyproj.Proj(init='epsg:2154') # Define the Lambert 93 projection
+    lon_mnt, lat_mnt = pyproj.transform(proj, gcs, x_mnt, y_mnt) # Convert x and y values to latitude and longitude values
+    with open("data_mnt_2013.csv","w") as data:
+        for i in range(lon_mnt.shape[0]):
+            data.write(str(lon_mnt[i,])+";"+str(lat_mnt[i,])+"\n")
