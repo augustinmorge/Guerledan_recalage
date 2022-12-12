@@ -202,13 +202,13 @@ def set_dt(ti, pti = T[0,]):
 
 if __name__ == '__main__':
 
-    # n_particles = int(input("Number of particles: "))
-    # steps = int(input("number of steps between measures ? "))
-    # bool_display = (str(input("Display the particles ? [Y/]"))=="Y")
-    # print(bool_display)
-    n_particles = 1000
+    n_particles = int(input("Number of particles: "))
+    steps = int(input("number of steps between measures ? "))
+    bool_display = (str(input("Display the particles ? [Y/]"))=="Y")
+    print(bool_display)
+    # n_particles = 1000
     # steps = 25
-    bool_display = False
+    # bool_display = False
 
     x_gps_min, y_gps_min = np.min(coord2cart((LAT, LON))[0,:]), np.min(coord2cart((LAT, LON))[1,:])
     x_gps_max, y_gps_max = np.max(coord2cart((LAT, LON))[0,:]), np.max(coord2cart((LAT, LON))[1,:])
@@ -219,6 +219,7 @@ if __name__ == '__main__':
     resampler = Resampler()
     resampling_threshold = 0.5*n_particles
 
+    dt, t = set_dt(T[steps,], T[0,])
 
     t_i = T.shape[0]//2
     t_f = T.shape[0]
@@ -244,123 +245,107 @@ if __name__ == '__main__':
         X, Y = np.meshgrid(x, y)
 
         print("Processing..")
-        # r = range(t_i,t_f,steps)
+        r = range(t_i,t_f,steps)
+
+    else : r = tqdm(range(t_i,t_f,steps))
+
+    fig, ax = plt.subplots()
+    TIME = []; BAR = []; SPEED = []; ERR = []
+    for i in r:
+
+        """Set data"""
+        _, t = set_dt(T[i,]) #même dt pour tout t
+        v_x = V_X[i,]
+        v_y = V_Y[i,]
+        v_z = V_Z[i,]
+        lat = LAT[i,]
+        lon = LON[i,]
+        x_gps, y_gps = coord2cart((lat,lon)).flatten()
+        measurements = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)
+        lat_std = LAT_STD[i,]
+        lon_std = LON_STD[i,]
+        v_x_std = V_X_STD[i,]
+        v_y_std = V_Y_STD[i,]
+        v_z_std = V_Z_STD[i,]
 
 
-    B = np.arange(0.1,5,0.1)
-    S = [150, 1, 10, 101]
-    for steps in S:
-        dt, t = set_dt(T[steps,], T[0,])
-        r = tqdm(range(t_i,t_f,steps))
-        M_ERR = []
-        print(f"steps = {steps}")
-        for beta in B:
-            print(f"beta={beta}")
-            fig, ax = plt.subplots()
-            TIME = []; BAR = []; SPEED = []; ERR = []
-            for i in r:
+        """ Processing error on measures"""
+        robot_forward_motion =  dt*np.sqrt(v_x**2 + v_y**2 + v_z**2)
+        robot_angular_motion = np.arctan2(v_x,v_y) #Je sais pas pourquoi c'est à l'envers
+        meas_model_distance_std = steps*np.sqrt(lat_std**2 + lon_std**2) # On estime que l'erreur en z est le même que celui en lat, lon, ce qui est faux
+        measurements_noise = [meas_model_distance_std] ### Attention, std est en mètres !
 
-                """Set data"""
-                _, t = set_dt(T[i,]) #même dt pour tout t
-                v_x = V_X[i,]
-                v_y = V_Y[i,]
-                v_z = V_Z[i,]
-                lat = LAT[i,]
-                lon = LON[i,]
-                x_gps, y_gps = coord2cart((lat,lon)).flatten()
-                measurements = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)
-                lat_std = LAT_STD[i,]
-                lon_std = LON_STD[i,]
-                v_x_std = V_X_STD[i,]
-                v_y_std = V_Y_STD[i,]
-                v_z_std = V_Z_STD[i,]
+        """ Processing error on algorithm"""
+        motion_model_forward_std = steps*np.sqrt(v_y_std**2 + v_x_std**2 + v_z_std**2)
+        motion_model_turn_std = steps*np.abs(np.arctan2((v_y + v_y_std),(v_x)) - np.arctan2((v_y),(v_x+v_x_std)))
+        process_noise = [motion_model_forward_std, motion_model_turn_std]
 
+        """Process the update"""
+        t0 = time.time()
+        particles = update(robot_forward_motion, robot_angular_motion, measurements,\
+                           measurements_noise, process_noise, particles,\
+                            resampling_threshold, resampler, beta = 0.5)
 
-                """ Processing error on measures"""
-                robot_forward_motion =  dt*np.sqrt(v_x**2 + v_y**2 + v_z**2)
-                robot_angular_motion = np.arctan2(v_x,v_y) #Je sais pas pourquoi c'est à l'envers
-                meas_model_distance_std = steps*np.sqrt(lat_std**2 + lon_std**2) # On estime que l'erreur en z est le même que celui en lat, lon, ce qui est faux
-                measurements_noise = [meas_model_distance_std] ### Attention, std est en mètres !
+        """ Affichage en temps réel """
+        if bool_display:
+            # if ERR != []:
+            #     if ERR[-1] > 40:
+            ax.cla()
+            print("Temps de calcul: ",time.time() - t0)
+            t1 = time.time()
+            ax.plot(coord2cart((LAT,LON))[0,:], coord2cart((LAT,LON))[1,:])
+            ax.set_title("Particle filter with {} particles with z = {}m".format(n_particles, measurements))
+            ax.set_xlim([x_gps_min - 100,x_gps_max + 100])
+            ax.set_ylim([y_gps_min - 100,y_gps_max + 100])
+            ax.scatter(x_gps, y_gps ,color='blue', label = 'True position panopée', s = 100)
+            ax.scatter(particles[1][0], particles[1][1], color = 'red', s = 0.8, label = "particles") # Affiche toutes les particules
+            bx, by = get_average_state(particles)[0], get_average_state(particles)[1] #barycentre des particules
+            ax.scatter(bx, by , color = 'green', label = 'Estimation of particles')
 
-                """ Processing error on algorithm"""
-                motion_model_forward_std = steps*np.sqrt(v_y_std**2 + v_x_std**2 + v_z_std**2)
-                motion_model_turn_std = steps*np.abs(np.arctan2((v_y + v_y_std),(v_x)) - np.arctan2((v_y),(v_x+v_x_std)))
-                process_noise = [motion_model_forward_std, motion_model_turn_std]
+            ax.legend()
+            plt.pause(0.00001)
+            print("Temps d'affichage: ",time.time()-t1,"\n")
 
-                """Process the update"""
-                t0 = time.time()
-                particles = update(robot_forward_motion, robot_angular_motion, measurements,\
-                                   measurements_noise, process_noise, particles,\
-                                    resampling_threshold, resampler, beta = 0.5)
-
-                """ Affichage en temps réel """
-                if bool_display:
-                    # if ERR != []:
-                    #     if ERR[-1] > 40:
-                    ax.cla()
-                    print("Temps de calcul: ",time.time() - t0)
-                    t1 = time.time()
-                    ax.plot(coord2cart((LAT,LON))[0,:], coord2cart((LAT,LON))[1,:])
-                    ax.set_title("Particle filter with {} particles with z = {}m".format(n_particles, measurements))
-                    ax.set_xlim([x_gps_min - 100,x_gps_max + 100])
-                    ax.set_ylim([y_gps_min - 100,y_gps_max + 100])
-                    ax.scatter(x_gps, y_gps ,color='blue', label = 'True position panopée', s = 100)
-                    ax.scatter(particles[1][0], particles[1][1], color = 'red', s = 0.8, label = "particles") # Affiche toutes les particules
-                    bx, by = get_average_state(particles)[0], get_average_state(particles)[1] #barycentre des particules
-                    ax.scatter(bx, by , color = 'green', label = 'Estimation of particles')
-
-                    ax.legend()
-                    plt.pause(0.00001)
-                    print("Temps d'affichage: ",time.time()-t1,"\n")
-
-                TIME.append(t)
-                ERR.append(np.sqrt((x_gps - get_average_state(particles)[0])**2 + (y_gps - get_average_state(particles)[1])**2))
-                BAR.append([get_average_state(particles)[0],get_average_state(particles)[1]])
-                SPEED.append(np.sqrt(v_x**2 + v_y**2 + v_z**2))
-                if test_diverge(ERR) : break #Permet de voir si l'algorithme diverge et pourquoi.
+        TIME.append(t)
+        ERR.append(np.sqrt((x_gps - get_average_state(particles)[0])**2 + (y_gps - get_average_state(particles)[1])**2))
+        BAR.append([get_average_state(particles)[0],get_average_state(particles)[1]])
+        SPEED.append(np.sqrt(v_x**2 + v_y**2 + v_z**2))
+        if test_diverge(ERR) : break #Permet de voir si l'algorithme diverge et pourquoi.
 
 
-            # DT = time.time() - T_start
-            # print(f"Temps de calcul total = {int(DT/60)}min et {int(DT-DT//60*60)}s")
-            # """ Affichage final """
-            # BAR = np.array(BAR)
-            # LAT, LON = LAT[t_i:t_f,], LON[t_i:t_f,]
-            #
-            # plt.suptitle(f"Algorithm with\n{n_particles} particles\n{steps} steps between measures")
-            # ax1 = plt.subplot2grid((2, 2), (0, 0), rowspan=2)
-            # ax2 = plt.subplot2grid((2, 2), (0, 1))
-            # ax3 = plt.subplot2grid((2, 2), (1, 1))
-            #
-            # print("Display the error and the final result..")
-            # ax1.set_title("Barycentre")
-            # ax1.set_xlabel("x [m]")
-            # ax1.set_ylabel("y [m]")
-            # ax1.plot(coord2cart((LAT,LON))[0,:], coord2cart((LAT,LON))[1,:],label='true position')
-            # ax1.scatter(BAR[:,0], BAR[:,1], color='red', s = 1.2, label='barycentre of the particle')
-            # ax1.legend()
-            #
-            # ax2.set_title("Error function.")
-            # ax2.set_xlabel("time [s]")
-            # ax2.set_ylabel("error (m)")
-            # ax2.plot(TIME, ERR, color = 'b', label = 'erreur')
-            # ax2.legend()
-            #
-            # ax3.set_title("Vitesse")
-            # ax3.set_xlabel("time [s]")
-            # ax3.set_ylabel("||v|| [m/s]")
-            # ax3.plot(TIME, SPEED, label = 'speed')
-            # ax3.legend()
-            #
-            # # print("Computing the diagrams..")
-            # #
-            # # plt.show()
-            # #
-            # # print("End the program.")
+    DT = time.time() - T_start
+    print(f"Temps de calcul total = {int(DT/60)}min et {int(DT-DT//60*60)}s")
+    """ Affichage final """
+    BAR = np.array(BAR)
+    LAT, LON = LAT[t_i:t_f,], LON[t_i:t_f,]
 
-            M_ERR.append(np.mean(ERR))
+    plt.suptitle(f"Algorithm with\n{n_particles} particles\n{steps} steps between measures")
+    ax1 = plt.subplot2grid((2, 2), (0, 0), rowspan=2)
+    ax2 = plt.subplot2grid((2, 2), (0, 1))
+    ax3 = plt.subplot2grid((2, 2), (1, 1))
 
-        plt.title("variation of beta")
-        plt.xlabel("beta")
-        plt.ylabel("error")
-        plt.plot(B, M_ERR)
-        plt.savefig(f"imgs/test_error_{steps}")
+    print("Display the error and the final result..")
+    ax1.set_title("Barycentre")
+    ax1.set_xlabel("x [m]")
+    ax1.set_ylabel("y [m]")
+    ax1.plot(coord2cart((LAT,LON))[0,:], coord2cart((LAT,LON))[1,:],label='true position')
+    ax1.scatter(BAR[:,0], BAR[:,1], color='red', s = 1.2, label='barycentre of the particle')
+    ax1.legend()
+
+    ax2.set_title("Error function.")
+    ax2.set_xlabel("time [s]")
+    ax2.set_ylabel("error (m)")
+    ax2.plot(TIME, ERR, color = 'b', label = 'erreur')
+    ax2.legend()
+
+    ax3.set_title("Vitesse")
+    ax3.set_xlabel("time [s]")
+    ax3.set_ylabel("||v|| [m/s]")
+    ax3.plot(TIME, SPEED, label = 'speed')
+    ax3.legend()
+
+    print("Computing the diagrams..")
+
+    plt.show()
+
+    print("End the program.")

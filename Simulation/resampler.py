@@ -11,7 +11,7 @@ import copy
 
 # Helper functions
 from resampling_helpers import *
-
+import bisect
 
 class ResamplingAlgorithms(Enum):
     MULTINOMIAL = 1
@@ -42,28 +42,12 @@ class Resampler:
             # Draw a random sample u
             u = np.random.uniform(0, 1, 1)[0]
 
-            # Naive search (alternative: binary search)
-            m = 0
-            while Q[m] < u:
-                m += 1
+            # Binary search
+            m = bisect.bisect_left(Q, u)
 
             # Add copy of the state sample (uniform weights)
-            # new_samples.append([1.0/N, samples[1][0][m][0], samples[1][1][m][0]])
             new_samples[1][0][i,0] = samples[1][0][m][0]
             new_samples[1][1][i,0] = samples[1][1][m][0]
-
-        # new_samples = np.array(new_samples)
-        # new_samples = [new_samples[:,0].reshape(N,1), [new_samples[:,1].reshape(N,1), new_samples[:,2].reshape(N,1)]]
-
-        # Q = np.cumsum(weights).reshape(-1,1)*np.ones((weights.shape[0],weights.shape[0]))
-        # u = np.random.uniform(0, 1, weights.shape[0]).reshape(-1,1)
-        # print(f"Q={Q} and\n u = {u}")
-        # print(f"Q.T>u = {Q.T>u}")
-        # idx = [(Q.T>u)[i,:].tolist().index(True) for i in range(N)]
-        # I = np.zeros((N, weights.shape[0]))
-        # for i in range(len(idx)):
-        #     I[i,idx[i]] = 1
-        # new_samples = [1.0/N*np.ones((N,1)), [I@samples[1][0], I@samples[1][1]]]
 
         return new_samples
 
@@ -81,15 +65,10 @@ class Resampler:
         # Copy sample and ease of writing
         wm, xm = copy.deepcopy(samples)
 
+
         # Compute replication
         Nm = np.floor(N * wm)
-
-        # Store weight adjusted sample (and avoid division of integers)
-        weight_adjusted_samples = [wm - Nm.astype(float)/N, xm]
-
-        # Store sample to be used for replication
         Nm = Nm.astype(int)
-        replication_samples = [xm, Nm]
 
         # Replicate samples
         new_samples_deterministic = []
@@ -107,6 +86,9 @@ class Resampler:
         new_samples_deterministic.append(val_x)
         new_samples_deterministic.append(val_y)
 
+        # Store weight adjusted sample (and avoid division of integers)
+        weight_adjusted_samples = [wm - Nm.astype(float)/N, xm]
+
         # Normalize new weights if needed
         if N != Nt:
             weight_adjusted_samples[0] *= float(N) / (N - Nt)
@@ -120,38 +102,3 @@ class Resampler:
         weighted_new_samples = [1.0/N*np.ones((N,1)), [new_x, new_y]]
 
         return weighted_new_samples
-
-
-    # # Fonction de resampling pour un filtre particulaire
-    # def __multinomial(self, particles, N):
-    #   # Calculer la somme des poids
-    #   weights = particles[0]
-    #   weight_sum = np.sum(weights)
-    #
-    #   # Calculer les poids normalisés
-    #   normalized_weights = weights / weight_sum
-    #
-    #   # Calculer les limites de resampling pour chaque particule
-    #   resampling_limits = np.cumsum(normalized_weights)
-    #
-    #   # Initialiser le tableau de particules resamplées
-    #   resampled_particles = np.zeros(N)
-    #
-    #   # Choisir aléatoirement une particule initiale
-    #   resampled_particles[0] = np.random.choice(particles[1], p=normalized_weights)
-    #
-    #   # Resampler les autres particules en utilisant les limites de resampling
-    #   for i in range(1, N):
-    #     # Choisir une particule en utilisant les limites de resampling
-    #     resampled_particles[1][i] = np.random.choice(particles[1], p=normalized_weights)
-    #
-    #     # Réinitialiser les poids pour les particules resamplées
-    #     weights[resampled_particles[1] == particles[1][i]] = 1 / N
-    #
-    #   return resampled_particles, weights
-    # #
-    # # # Tester la fonction
-    # # particles = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]])
-    # # weights = np.array([0.25, 0.25, 0.25, 0.25])
-    # # print(resample_particle_filter(particles, weights))
-    # # # ([[10, 11, 12], [4, 5, 6], [4, 5, 6], [4, 5, 6]], [0.25, 0.25, 0.25, 0.25])
