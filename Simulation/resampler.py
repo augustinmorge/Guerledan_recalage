@@ -42,6 +42,7 @@ class Resampler:
             # Draw a random sample u
             u = np.random.uniform(0, 1, 1)[0]
 
+
             # Binary search
             m = bisect.bisect_left(Q, u)
 
@@ -51,7 +52,7 @@ class Resampler:
 
         return new_samples
 
-    def resample(self, samples, N):
+    def resample(self, samples, N): #residual
         """
         Particles should at least be present floor(wi/N) times due to first deterministic loop. First Nt new samples are
         always the same (when running the function with the same input multiple times).

@@ -2,7 +2,6 @@
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from data_import import *
-
 import matplotlib.pyplot as plt
 
 def display_mnt(mnt):
@@ -26,6 +25,8 @@ def display_mnt(mnt):
     ax.set_xlabel('x')
     ax.set_ylabel('y')
 
+    plt.plot(LON,LAT)
+
     # Show the plot
     plt.show()
 
@@ -33,20 +34,20 @@ def display_mnt(mnt):
 if __name__ == '__main__':
     display_mnt(MNT)
 
-    import PIL.Image as Image
-    import osm_ui
-    import matplotlib.pyplot as plt
-    lac = Image.open("./imgs/ortho_sat_2016_guerledan.tif")
-    axes = osm_ui.plot_map(lac, (-3.118111, -2.954274), (48.183105, 48.237852), "Mis à l'eau de l'AUV")
-    osm_ui.plot_xy_add(axes, LON, LAT)
-    axes.legend(("ins",))
-    print("Start to display the log..")
-    plt.ion()
-    for i in range(0,LON.shape[0],10000):
-        if i == 0:
-            point = plt.scatter(LON[i,], LAT[i,], color = "red", label = "Panopée")
-        point = plt.scatter(LON[i,], LAT[i,], color = "red")
-        plt.pause(0.001)
-        plt.legend()
-        plt.show()
-        print(i)
+    # import PIL.Image as Image
+    # import osm_ui
+    # import matplotlib.pyplot as plt
+    # lac = Image.open("../imgs/ortho_sat_2016_guerledan.tif")
+    # axes = osm_ui.plot_map(lac, (-3.118111, -2.954274), (48.183105, 48.237852), "Mis à l'eau de l'AUV")
+    # osm_ui.plot_xy_add(axes, LON, LAT)
+    # axes.legend(("ins",))
+    # print("Start to display the log..")
+    # plt.ion()
+    # for i in range(0,LON.shape[0],10000):
+    #     if i == 0:
+    #         point = plt.scatter(LON[i,], LAT[i,], color = "red", label = "Panopée")
+    #     point = plt.scatter(LON[i,], LAT[i,], color = "red")
+    #     plt.pause(0.001)
+    #     plt.legend()
+    #     plt.show()
+    #     print(i)

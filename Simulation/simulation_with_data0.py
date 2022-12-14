@@ -60,12 +60,13 @@ def cart2coord(pos_x, pos_y ,coords_ref=wpt_ponton):
 # Linear = use Delaunay triangulation to linearly interpolate data, no extrapolation out of reference bounds
 # Cubic = cubic spline to interplate, higher time computation but often better results, extrapolate out of bounds
 
+# x_mnt = MNT[:,0]
+# y_mnt = MNT[:,1]
+# gcs = pyproj.Proj(init='epsg:4326') # Define the WGS84 GCS
+# proj = pyproj.Proj(init='epsg:2154') # Define the Lambert 93 projection
+# lon_mnt, lat_mnt = pyproj.transform(proj, gcs, x_mnt, y_mnt) # Convert x and y values to latitude and longitude values
 print("Building KDTree..")
-x_mnt = MNT[:,0]
-y_mnt = MNT[:,1]
-gcs = pyproj.Proj(init='epsg:4326') # Define the WGS84 GCS
-proj = pyproj.Proj(init='epsg:2154') # Define the Lambert 93 projection
-lon_mnt, lat_mnt = pyproj.transform(proj, gcs, x_mnt, y_mnt) # Convert x and y values to latitude and longitude values
+lon_mnt, lat_mnt = MNT[:,0], MNT[:,1]
 vec_mnt = np.vstack((lat_mnt, lon_mnt)).T
 kd_tree = KDTree(vec_mnt, metric="euclidean")
 
@@ -207,7 +208,7 @@ if __name__ == '__main__':
     # bool_display = (str(input("Display the particles ? [Y/]"))=="Y")
     # print(bool_display)
     n_particles = 1000
-    # steps = 25
+    # steps = 50
     bool_display = False
 
     x_gps_min, y_gps_min = np.min(coord2cart((LAT, LON))[0,:]), np.min(coord2cart((LAT, LON))[1,:])
@@ -220,7 +221,7 @@ if __name__ == '__main__':
     resampling_threshold = 0.5*n_particles
 
 
-    t_i = T.shape[0]//2
+    t_i = 0# T.shape[0]//2
     t_f = T.shape[0]
 
     v_x = V_X[0,]
@@ -247,8 +248,8 @@ if __name__ == '__main__':
         # r = range(t_i,t_f,steps)
 
 
-    B = np.arange(0.1,5,0.1)
-    S = [150, 1, 10, 101]
+    B = np.arange(0.001,3,0.1)
+    S = [50]
     for steps in S:
         dt, t = set_dt(T[steps,], T[0,])
         r = tqdm(range(t_i,t_f,steps))
@@ -279,7 +280,7 @@ if __name__ == '__main__':
                 """ Processing error on measures"""
                 robot_forward_motion =  dt*np.sqrt(v_x**2 + v_y**2 + v_z**2)
                 robot_angular_motion = np.arctan2(v_x,v_y) #Je sais pas pourquoi c'est à l'envers
-                meas_model_distance_std = steps*np.sqrt(lat_std**2 + lon_std**2) # On estime que l'erreur en z est le même que celui en lat, lon, ce qui est faux
+                meas_model_distance_std = np.sqrt(lat_std**2 + lon_std**2) # On estime que l'erreur en z est le même que celui en lat, lon, ce qui est faux
                 measurements_noise = [meas_model_distance_std] ### Attention, std est en mètres !
 
                 """ Processing error on algorithm"""
@@ -351,11 +352,12 @@ if __name__ == '__main__':
             # ax3.plot(TIME, SPEED, label = 'speed')
             # ax3.legend()
             #
-            # # print("Computing the diagrams..")
-            # #
-            # # plt.show()
-            # #
-            # # print("End the program.")
+            # print("Computing the diagrams..")
+            #
+            # plt.show()
+            # plt.pause(10)
+            #
+            # print("End the program.")
 
             M_ERR.append(np.mean(ERR))
 

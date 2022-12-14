@@ -1,14 +1,15 @@
 #!/usr/bin/python3
 import numpy as np
 import os
+import pyproj
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 
-bool_txt = False
-bool_npz = True
+bool_txt = True
+bool_npz = False
 
 if bool_txt:
-    print("Importing the log file..")
+    print("Importing the DVL-TXT file..")
     """ Import INS """
     # """ Change the log """
     # file = open("./resources/sbgCenterExport.txt", "r")
@@ -40,13 +41,26 @@ if bool_txt:
     ## TODO:
 
 
+    print("Importing the MNT-TXT file..")
     """ Import the MNT """
+    data_cropped = True #((str(input("cropped ?[Y/] "))) == "Y")
     AimeNT = np.loadtxt(file_path+"/../resources/guerledan_EDF_2013-06_MNT1m.tiff.txt", dtype = str)
+    if data_cropped:
+        AimeNT = np.loadtxt(file_path+"/../resources/guerledan_cropped.txt", dtype = str)
     MNT = []
     for i in AimeNT:
         MNT.append(i.split(','))
-        MNT[-1] = [np.float64(MNT[-1][0]), np.float64(MNT[-1][1]), np.float64(MNT[-1][2]+'.'+MNT[-1][3])]
+        if data_cropped:
+            MNT[-1] = [np.float64(MNT[-1][0]), np.float64(MNT[-1][1]), np.float64(MNT[-1][2])]
+        else:
+            MNT[-1] = [np.float64(MNT[-1][0]), np.float64(MNT[-1][1]), np.float64(MNT[-1][2]+'.'+MNT[-1][3])]
     MNT = np.array(MNT)
+
+    if not data_cropped:
+        gcs = pyproj.Proj(init='epsg:4326') # Define the WGS84 GCS
+        proj = pyproj.Proj(init='epsg:2154') # Define the Lambert 93 projection
+        lon_mnt, lat_mnt = pyproj.transform(proj, gcs, MNT[:,0], MNT[:,1]) # Convert x and y values to latitude and longitude values
+        MNT[:,0], MNT[:,1] = lon_mnt, lat_mnt
 
     """ Save the data """
     # np.savez("ins.npz", T=T, LAT=LAT, LON=LON, V_X=V_X, V_Y=V_Y, V_Z=V_Z,\
@@ -76,13 +90,13 @@ if bool_npz:
     mnt = np.load(file_path + "/mnt.npz")
     MNT = mnt['MNT']
 
-if __name__ == '__main__':
-    import pyproj
-    x_mnt = MNT[:,0]
-    y_mnt = MNT[:,1]
-    gcs = pyproj.Proj(init='epsg:4326') # Define the WGS84 GCS
-    proj = pyproj.Proj(init='epsg:2154') # Define the Lambert 93 projection
-    lon_mnt, lat_mnt = pyproj.transform(proj, gcs, x_mnt, y_mnt) # Convert x and y values to latitude and longitude values
-    with open("data_mnt_2013.csv","w") as data:
-        for i in range(lon_mnt.shape[0]):
-            data.write(str(lon_mnt[i,])+";"+str(lat_mnt[i,])+"\n")
+# if __name__ == '__main__':
+#     import pyproj
+#     x_mnt = MNT[:,0]
+#     y_mnt = MNT[:,1]
+#     gcs = pyproj.Proj(init='epsg:4326') # Define the WGS84 GCS
+#     proj = pyproj.Proj(init='epsg:2154') # Define the Lambert 93 projection
+#     lon_mnt, lat_mnt = pyproj.transform(proj, gcs, x_mnt, y_mnt) # Convert x and y values to latitude and longitude values
+#     with open("data_mnt_2013.csv","w") as data:
+#         for i in range(lon_mnt.shape[0]):
+#             data.write(str(lon_mnt[i,])+";"+str(lat_mnt[i,])+"\n")
