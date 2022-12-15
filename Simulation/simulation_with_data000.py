@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 
-print("Starting the program..")
+n_particles = int(input("Number of particles: "))
+steps = int(input("number of steps between measures ? "))
+bool_display = (str(input("Display the particles ? [Y/]"))=="Y")
+
 import warnings
 # Suppress all warning messages
 warnings.filterwarnings('ignore')
@@ -10,15 +13,18 @@ import numpy as np
 import matplotlib.pyplot as plt
 import copy
 from resampler import Resampler
-from npz.data_import import *
+from storage.data_import import *
 import PIL.Image as Image
 import sys
 from tqdm import tqdm
 from matplotlib.patches import Ellipse
 from ellipse_lib import *
-from sklearn.neighbors import KDTree
+# from sklearn.neighbors import KDTree
+import pickle
 from pyproj.transformer import transform
 import pyproj
+file_path = os.path.dirname(os.path.abspath(__file__))
+
 # Définit les coordonnées de référence
 wpt_ponton = (48.1989495, -3.0148023)
 
@@ -37,43 +43,6 @@ def cart2coord(pos_x, pos_y ,coords_ref=wpt_ponton):
     ly = 180*y/(R*np.pi) + lym
     lx = lxm + 180*x/(np.pi*R*np.cos(ly*np.pi/180))
     return (ly,lx)
-
-
-# from scipy.interpolate import griddata
-#
-# def distance_to_bottom(xy, mnt):
-#     """
-#     Given a reference MNT (x_mnt, y_mnt, z_mnt) of N points, interpolate Z at n * (xi, yi) coordinates.
-#     :param xi: ndarray(n) of first coordinates
-#     :param yi: ndarray(n) of second coordinates
-#     :param x_mnt: ndarray(N) of first coordinates reference
-#     :param y_mnt: ndarray(N) of second coordinates reference
-#     :param z_mnt: ndarray(N) of measures reference
-#     :return: zi: ndarray(n) of interpolated measures at points (xi, yi)
-#     """
-#     xi, yi = xy[:,0], xy[:,1]
-#     points = np.hstack((mnt[:,0], mnt[:,1]))
-#     z_mnt = mnt[:,2]
-#     zi = griddata(points, z_mnt, (xi, yi), method='linear')  # method = linear / cubic / nearest
-#     return zi
-
-# About method choice for griddata :
-# Nearest = nearest reference point gives the interpolated value : worst results
-# Linear = use Delaunay triangulation to linearly interpolate data, no extrapolation out of reference bounds
-# Cubic = cubic spline to interplate, higher time computation but often better results, extrapolate out of bounds
-
-# x_mnt = MNT[:,0]
-# y_mnt = MNT[:,1]
-# gcs = pyproj.Proj(init='epsg:4326') # Define the WGS84 GCS
-# proj = pyproj.Proj(init='epsg:2154') # Define the Lambert 93 projection
-# lon_mnt, lat_mnt = pyproj.transform(proj, gcs, x_mnt, y_mnt) # Convert x and y values to latitude and longitude values
-lon_mnt, lat_mnt = MNT[:,0], MNT[:,1]
-nx_mnt, ny_mnt = coord2cart((lat_mnt,lon_mnt))
-# vec_mnt = np.vstack((lat_mnt, lon_mnt)).T
-vec_mnt = np.vstack((nx_mnt, ny_mnt)).T
-print("Building KDTree..")
-kd_tree = KDTree(vec_mnt, metric="euclidean")
-print("Built KDTree.")
 
 def distance_to_bottom(xy,mnt):
 
@@ -113,9 +82,6 @@ def normalize_weights(weighted_samples):
     return [weighted_samples[0] / np.sum(weighted_samples[0]), weighted_samples[1]]
 
 def propagate_sample(samples, forward_motion, angular_motion, process_noise):
-    # motion_model_forward_std = 0.1
-    # motion_model_turn_std = 0.20
-    # process_noise = [motion_model_forward_std, motion_model_turn_std]
 
     # 1. rotate by given amount plus additive noise sample (index 1 is angular noise standard deviation)
     propagated_samples = copy.deepcopy(samples)
@@ -134,14 +100,12 @@ def propagate_sample(samples, forward_motion, angular_motion, process_noise):
 
 def compute_likelihood(samples, measurements, measurements_noise, beta):
 
-    # meas_model_distance_std = 0.4
-    # meas_model_angle_std = 0.3
-    # measurements_noise = [meas_model_distance_std, meas_model_angle_std]
-
     # Map difference true and expected distance measurement to probability
     d_mnt, z_mbes_particule = distance_to_bottom(np.hstack((samples[1][0],samples[1][1])),MNT)
-    distance = np.abs(z_mbes_particule - measurements)
+    distance = np.abs(z_mbes_particule - measurements)**2
     p_z_given_x_distance = np.exp(-beta*distance/(2*measurements_noise[0]**2))
+    # distance = (z_mbes_particule - measurements)**2
+    # p_z_given_x_distance = np.exp(-beta*distance)
 
     # Return importance weight based on all landmarks
     return p_z_given_x_distance
@@ -181,7 +145,7 @@ def get_average_state(particles):
 
     return [avg_x, avg_y]
 
-def test_diverge(ERR, err_max=500):
+def test_diverge(ERR, err_max=200):
     if ERR[-1] > err_max: #Si l'erreur est de plus de 500m il y a un probleme
         print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         print("Divergence of the algorithm")
@@ -206,15 +170,11 @@ def set_dt(ti, pti = T[0,]):
 
     return(t - pt, t)
 
-
 if __name__ == '__main__':
-    print("Staring the algorithm..")
-    # n_particles = int(input("Number of particles: "))
-    # steps = int(input("number of steps between measures ? "))
-    # bool_display = (str(input("Display the particles ? [Y/]"))=="Y")
-    n_particles = 1000
-    steps = 25
-    bool_display = False
+    print("Starting the algorithm..")
+    # n_particles = 500
+    # steps = 10
+    # bool_display = False
 
     x_gps_min, y_gps_min = np.min(coord2cart((LAT, LON))[0,:]), np.min(coord2cart((LAT, LON))[1,:])
     x_gps_max, y_gps_max = np.max(coord2cart((LAT, LON))[0,:]), np.max(coord2cart((LAT, LON))[1,:])
@@ -227,7 +187,7 @@ if __name__ == '__main__':
 
     dt, t = set_dt(T[steps,], T[0,])
 
-    t_i = T.shape[0]//2
+    t_i = int(1/3*T.shape[0])
     t_f = T.shape[0]
 
     v_x = V_X[0,]
@@ -277,15 +237,15 @@ if __name__ == '__main__':
         v_z_std = V_Z_STD[i,]
 
         """Processing the motion of the robot """
-        robot_forward_motion =  dt*np.sqrt(v_x**2 + v_y**2 + v_z**2)
+        robot_forward_motion =  dt*np.sqrt(v_x**2 + v_y**2)# + v_z**2)
         robot_angular_motion = np.arctan2(v_x,v_y) #Je sais pas pourquoi c'est à l'envers
 
         """ Processing error on measures"""
-        meas_model_distance_std = steps*(np.sqrt(lat_std**2 + lon_std**2)) # On estime que l'erreur en z est le même que celui en lat, lon, ce qui est faux
+        meas_model_distance_std = 1 #50*steps*(np.sqrt(lat_std**2 + lon_std**2)) # On estime que l'erreur en z est le même que celui en lat, lon, ce qui est faux
         measurements_noise = [meas_model_distance_std] ### Attention, std est en mètres !
 
         """ Processing error on algorithm"""
-        motion_model_forward_std = steps*np.sqrt(v_y_std**2 + v_x_std**2 + v_z_std**2)
+        motion_model_forward_std = steps*np.sqrt(v_y_std**2 + v_x_std**2)# + v_z_std**2)
         motion_model_turn_std = steps*np.abs(np.arctan2((v_y + v_y_std),(v_x)) - np.arctan2((v_y),(v_x+v_x_std)))
         process_noise = [motion_model_forward_std, motion_model_turn_std]
 
@@ -293,7 +253,7 @@ if __name__ == '__main__':
         t0 = time.time()
         particles = update(robot_forward_motion, robot_angular_motion, measurements,\
                            measurements_noise, process_noise, particles,\
-                            resampling_threshold, resampler, beta = 0.5)
+                            resampling_threshold, resampler, beta = 0.1)
 
         """ Affichage en temps réel """
         if bool_display:
@@ -317,7 +277,7 @@ if __name__ == '__main__':
         ERR.append(np.sqrt((x_gps - get_average_state(particles)[0])**2 + (y_gps - get_average_state(particles)[1])**2))
         BAR.append([get_average_state(particles)[0],get_average_state(particles)[1]])
         SPEED.append(np.sqrt(v_x**2 + v_y**2 + v_z**2))
-        if test_diverge(ERR) : break #Permet de voir si l'algorithme diverge et pourquoi.
+        # if test_diverge(ERR) : break #Permet de voir si l'algorithme diverge et pourquoi.
 
 
     DT = time.time() - T_start

@@ -2,11 +2,13 @@
 import numpy as np
 import os
 import pyproj
+import pickle
+from sklearn.neighbors import KDTree
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 
-bool_txt = True
-bool_npz = False
+bool_txt = False
+bool_compress = True
 
 if bool_txt:
     print("Importing the DVL-TXT file..")
@@ -57,10 +59,27 @@ if bool_txt:
     MNT = np.array(MNT)
 
     if not data_cropped:
-        gcs = pyproj.Proj(init='epsg:4326') # Define the WGS84 GCS
-        proj = pyproj.Proj(init='epsg:2154') # Define the Lambert 93 projection
+        # gcs = pyproj.Proj(init='epsg:4326') # Define the WGS84 GCS
+        gcs = pyproj.CRS('epsg:4326')
+        # proj = pyproj.Proj(init='epsg:2154') # Define the Lambert 93 projection
+        proj = pyproj.CRS('epsg:2154')
         lon_mnt, lat_mnt = pyproj.transform(proj, gcs, MNT[:,0], MNT[:,1]) # Convert x and y values to latitude and longitude values
         MNT[:,0], MNT[:,1] = lon_mnt, lat_mnt
+
+
+    wpt_ponton = (48.1989495, -3.0148023)
+    def coord2cart(coords,coords_ref=wpt_ponton):
+        R = 6372800
+        ly,lx = coords
+        lym,lxm = coords_ref
+        x_tilde = R * np.cos(ly*np.pi/180)*(lx-lxm)*np.pi/180
+        y_tilde = R * (ly-lym)*np.pi/180
+        return np.array([x_tilde,y_tilde])
+
+    print("Building KDTree..")
+    nx_mnt, ny_mnt = coord2cart((MNT[:,1],MNT[:,0]))
+    vec_mnt = np.vstack((nx_mnt, ny_mnt)).T
+    kd_tree = KDTree(vec_mnt, metric="euclidean")
 
     """ Save the data """
     # np.savez("ins.npz", T=T, LAT=LAT, LON=LON, V_X=V_X, V_Y=V_Y, V_Z=V_Z,\
@@ -68,12 +87,14 @@ if bool_txt:
     # V_Y_STD=V_Y_STD, V_Z_STD=V_Z_STD,\
     # dtype = np.float64, precision = 16)
     # np.savez("mnt.npz", MNT=MNT, dtype = np.float64, precision = 16)
+    # with open('kd_tree.pkl', 'wb') as f:
+    #     pickle.dump(kd_tree, f)
 
-    print("End of the importation.")
+if bool_compress:
+    """ Load the compressed data """
 
-if bool_npz:
-    """ Load the data from npy file """
-
+    """ Load npz file """
+    print("Loading the compressed data..")
     ins = np.load(file_path + "/ins.npz")
     T = ins['T']
     LAT = ins['LAT']
@@ -90,13 +111,7 @@ if bool_npz:
     mnt = np.load(file_path + "/mnt.npz")
     MNT = mnt['MNT']
 
-# if __name__ == '__main__':
-#     import pyproj
-#     x_mnt = MNT[:,0]
-#     y_mnt = MNT[:,1]
-#     gcs = pyproj.Proj(init='epsg:4326') # Define the WGS84 GCS
-#     proj = pyproj.Proj(init='epsg:2154') # Define the Lambert 93 projection
-#     lon_mnt, lat_mnt = pyproj.transform(proj, gcs, x_mnt, y_mnt) # Convert x and y values to latitude and longitude values
-#     with open("data_mnt_2013.csv","w") as data:
-#         for i in range(lon_mnt.shape[0]):
-#             data.write(str(lon_mnt[i,])+";"+str(lat_mnt[i,])+"\n")
+    """ Load the KD-Tree """
+    # Load the KD tree object from the file
+    with open('storage/kd_tree.pkl', 'rb') as f:
+        kd_tree = pickle.load(f)
