@@ -4,9 +4,6 @@ n_particles = int(input("Number of particles: "))
 steps = int(input("number of steps between measures ? "))
 bool_display = (str(input("Display the particles ? [Y/]"))=="Y")
 
-import warnings
-# Suppress all warning messages
-warnings.filterwarnings('ignore')
 import time
 T_start = time.time()
 import numpy as np
@@ -14,14 +11,8 @@ import matplotlib.pyplot as plt
 import copy
 from resampler import Resampler
 from storage.data_import import *
-import PIL.Image as Image
 import sys
 from tqdm import tqdm
-from matplotlib.patches import Ellipse
-from ellipse_lib import *
-# from sklearn.neighbors import KDTree
-import pickle
-from pyproj.transformer import transform
 import pyproj
 file_path = os.path.dirname(os.path.abspath(__file__))
 
@@ -171,10 +162,7 @@ def set_dt(ti, pti = T[0,]):
     return(t - pt, t)
 
 if __name__ == '__main__':
-    print("Starting the algorithm..")
-    # n_particles = 500
-    # steps = 10
-    # bool_display = False
+    print("~~~Start of the algorithm~~~")
 
     x_gps_min, y_gps_min = np.min(coord2cart((LAT, LON))[0,:]), np.min(coord2cart((LAT, LON))[1,:])
     x_gps_max, y_gps_max = np.max(coord2cart((LAT, LON))[0,:]), np.max(coord2cart((LAT, LON))[1,:])
@@ -187,7 +175,7 @@ if __name__ == '__main__':
 
     dt, t = set_dt(T[steps,], T[0,])
 
-    t_i = int(1/3*T.shape[0])
+    t_i = int(2/3*T.shape[0])
     t_f = T.shape[0]
 
     v_x = V_X[0,]
@@ -279,7 +267,6 @@ if __name__ == '__main__':
         SPEED.append(np.sqrt(v_x**2 + v_y**2 + v_z**2))
         # if test_diverge(ERR) : break #Permet de voir si l'algorithme diverge et pourquoi.
 
-
     DT = time.time() - T_start
     print(f"Temps de calcul total = {int(DT/60)}min et {int(DT-DT//60*60)}s")
     """ Affichage final """
@@ -315,4 +302,4 @@ if __name__ == '__main__':
 
     plt.show()
 
-print("End the program.")
+print("~~~End of the algorithm~~~")
