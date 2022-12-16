@@ -2,8 +2,8 @@
 import numpy as np
 import os
 import pyproj
-import pickle
 from sklearn.neighbors import KDTree
+import joblib
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 
@@ -82,13 +82,15 @@ if bool_txt:
     kd_tree = KDTree(vec_mnt, metric="euclidean")
 
     """ Save the data """
-    # np.savez("ins.npz", T=T, LAT=LAT, LON=LON, V_X=V_X, V_Y=V_Y, V_Z=V_Z,\
-    # LAT_STD=LAT_STD, LON_STD=LON_STD, V_X_STD=V_X_STD,\
-    # V_Y_STD=V_Y_STD, V_Z_STD=V_Z_STD,\
-    # dtype = np.float64, precision = 16)
-    # np.savez("mnt.npz", MNT=MNT, dtype = np.float64, precision = 16)
+    np.savez("ins.npz", T=T, LAT=LAT, LON=LON, V_X=V_X, V_Y=V_Y, V_Z=V_Z,\
+    LAT_STD=LAT_STD, LON_STD=LON_STD, V_X_STD=V_X_STD,\
+    V_Y_STD=V_Y_STD, V_Z_STD=V_Z_STD,\
+    dtype = np.float64, precision = 16)
+    np.savez("mnt.npz", MNT=MNT, dtype = np.float64, precision = 16)
     # with open('kd_tree.pkl', 'wb') as f:
     #     pickle.dump(kd_tree, f)
+    with open('kd_tree.joblib', 'wb') as f:
+        joblib.dump(kd_tree, f)
 
 if bool_compress:
     """ Load the compressed data """
@@ -113,5 +115,7 @@ if bool_compress:
 
     """ Load the KD-Tree """
     # Load the KD tree object from the file
-    with open('storage/kd_tree.pkl', 'rb') as f:
-        kd_tree = pickle.load(f)
+    # with open(file_path+'/kd_tree.pkl', 'rb') as f:
+    #     kd_tree = pickle.load(f)
+    with open(file_path+'/kd_tree.joblib', 'rb') as f:
+        kd_tree = joblib.load(f)

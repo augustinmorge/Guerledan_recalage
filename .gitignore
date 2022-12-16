@@ -5,3 +5,4 @@ Data_G1
 Simulation/storage/ins.npz
 Simulation/storage/mnt.npz
 Simulation/storage/kd_tree.pkl
+Simulation/storage/kd_tree.joblib

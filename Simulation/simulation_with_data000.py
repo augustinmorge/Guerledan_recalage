@@ -27,18 +27,7 @@ def coord2cart(coords,coords_ref=wpt_ponton):
     y_tilde = R * (ly-lym)*np.pi/180
     return np.array([x_tilde,y_tilde])
 
-def cart2coord(pos_x, pos_y ,coords_ref=wpt_ponton):
-    R = 6372800
-    x,y = pos_x, pos_y
-    lym,lxm = coords_ref
-    ly = 180*y/(R*np.pi) + lym
-    lx = lxm + 180*x/(np.pi*R*np.cos(ly*np.pi/180))
-    return (ly,lx)
-
 def distance_to_bottom(xy,mnt):
-
-    # lat, lon = cart2coord(xy[:,0], xy[:,1])
-    # point = np.vstack((lat, lon)).T
     point = np.vstack((xy[:,0], xy[:,1])).T
 
     # Utilise KDTree pour calculer les distances
@@ -72,12 +61,23 @@ def normalize_weights(weighted_samples):
     # Return normalized weights
     return [weighted_samples[0] / np.sum(weighted_samples[0]), weighted_samples[1]]
 
-def propagate_sample(samples, forward_motion, angular_motion, process_noise):
+def validate_state(state, bounds):
+    x_min, x_max = bounds[0][0], bounds[0][1]
+    y_min, y_max = bounds[1][0], bounds[1][1]
+
+    weights = state[0]
+    coords  = state[1]
+    weights[(coords[0] < x_min) | (coords[0] > x_max) | (coords[1] < y_min) | (coords[1] > y_max)] = 0
+    # d_mnt, _ = distance_to_bottom(np.hstack((coords[0],coords[1])),MNT)
+    # weights[d_mnt > 2] = 0 # If we are out of the MNT
+    return(state)
+
+def propagate_sample(samples, forward_motion, angular_motion, process_noise, bounds):
 
     # 1. rotate by given amount plus additive noise sample (index 1 is angular noise standard deviation)
-    propagated_samples = copy.deepcopy(samples)
+    # propagated_samples = copy.deepcopy(samples)
+    propagated_samples = samples
     # Compute forward motion by combining deterministic forward motion with additive zero mean Gaussian noise
-    n_particles = samples[0].shape[0]
     forward_displacement = np.random.normal(forward_motion, process_noise[0], n_particles).reshape(-1,1)
     # forward_displacement_y = np.random.normal(forward_motion, process_noise[0], n_particles).reshape(n_particles,1)
     angular_motion = np.random.normal(angular_motion, process_noise[1],n_particles).reshape(-1,1)
@@ -87,16 +87,14 @@ def propagate_sample(samples, forward_motion, angular_motion, process_noise):
     propagated_samples[1][1] += forward_displacement*np.sin(angular_motion)
 
     # Make sure we stay within cyclic world
-    return (propagated_samples)
+    return validate_state(propagated_samples, bounds)
 
 def compute_likelihood(samples, measurements, measurements_noise, beta):
+    _, z_mbes_particule = distance_to_bottom(np.hstack((samples[1][0],samples[1][1])),MNT)
 
     # Map difference true and expected distance measurement to probability
-    d_mnt, z_mbes_particule = distance_to_bottom(np.hstack((samples[1][0],samples[1][1])),MNT)
     distance = np.abs(z_mbes_particule - measurements)**2
     p_z_given_x_distance = np.exp(-beta*distance/(2*measurements_noise[0]**2))
-    # distance = (z_mbes_particule - measurements)**2
-    # p_z_given_x_distance = np.exp(-beta*distance)
 
     # Return importance weight based on all landmarks
     return p_z_given_x_distance
@@ -107,10 +105,10 @@ def needs_resampling(resampling_threshold):
 
     return 1.0 / max_weight < resampling_threshold
 
-def update(robot_forward_motion, robot_angular_motion, measurements, measurements_noise, process_noise, particles,resampling_threshold, resampler, beta):
+def update(robot_forward_motion, robot_angular_motion, measurements, measurements_noise, process_noise, particles,resampling_threshold, resampler, beta, bounds):
 
     # Propagate the particle state according to the current particle
-    propagated_states = propagate_sample(particles, robot_forward_motion, robot_angular_motion, process_noise)
+    propagated_states = propagate_sample(particles, robot_forward_motion, robot_angular_motion, process_noise, bounds)
 
     # Compute current particle's weight
     weights = particles[0] * compute_likelihood(propagated_states, measurements, measurements_noise, beta)
@@ -175,7 +173,7 @@ if __name__ == '__main__':
 
     dt, t = set_dt(T[steps,], T[0,])
 
-    t_i = int(2/3*T.shape[0])
+    t_i = 0*int(2/3*T.shape[0])
     t_f = T.shape[0]
 
     v_x = V_X[0,]
@@ -225,6 +223,7 @@ if __name__ == '__main__':
         v_z_std = V_Z_STD[i,]
 
         """Processing the motion of the robot """
+        # robot_forward_motion =  dt*np.sqrt(v_x**2 + v_y**2)# + v_z**2)
         robot_forward_motion =  dt*np.sqrt(v_x**2 + v_y**2)# + v_z**2)
         robot_angular_motion = np.arctan2(v_x,v_y) #Je sais pas pourquoi c'est à l'envers
 
@@ -241,14 +240,14 @@ if __name__ == '__main__':
         t0 = time.time()
         particles = update(robot_forward_motion, robot_angular_motion, measurements,\
                            measurements_noise, process_noise, particles,\
-                            resampling_threshold, resampler, beta = 0.1)
+                            resampling_threshold, resampler, beta = 0.1, bounds = bounds)
 
         """ Affichage en temps réel """
         if bool_display:
             ax.cla()
             print("Temps de calcul: ",time.time() - t0)
             t1 = time.time()
-            ax.plot(coord2cart((LAT,LON))[0,:], coord2cart((LAT,LON))[1,:])
+            ax.plot(coord2cart((LAT[t_i:t_f,], LON[t_i:t_f,]))[0,:], coord2cart((LAT[t_i:t_f,], LON[t_i:t_f,]))[1,:])
             ax.set_title("Particle filter with {} particles with z = {}m".format(n_particles, measurements))
             ax.set_xlim([x_gps_min - 100,x_gps_max + 100])
             ax.set_ylim([y_gps_min - 100,y_gps_max + 100])
@@ -264,11 +263,11 @@ if __name__ == '__main__':
         TIME.append(t)
         ERR.append(np.sqrt((x_gps - get_average_state(particles)[0])**2 + (y_gps - get_average_state(particles)[1])**2))
         BAR.append([get_average_state(particles)[0],get_average_state(particles)[1]])
-        SPEED.append(np.sqrt(v_x**2 + v_y**2 + v_z**2))
+        SPEED.append(np.sqrt(v_x**2 + v_y**2))# + v_z**2))
         # if test_diverge(ERR) : break #Permet de voir si l'algorithme diverge et pourquoi.
 
     DT = time.time() - T_start
-    print(f"Temps de calcul total = {int(DT/60)}min et {int(DT-DT//60*60)}s")
+    print(f"Total time: {int(DT/60/60)}h{int(DT/60)}min{int(DT-DT//60*60)}s")
     """ Affichage final """
     BAR = np.array(BAR)
     LAT, LON = LAT[t_i:t_f,], LON[t_i:t_f,]

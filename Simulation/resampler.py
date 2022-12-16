@@ -42,7 +42,6 @@ class Resampler:
             # Draw a random sample u
             u = np.random.uniform(0, 1, 1)[0]
 
-
             # Binary search
             m = bisect.bisect_left(Q, u)
 
