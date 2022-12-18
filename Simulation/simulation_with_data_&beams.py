@@ -89,11 +89,22 @@ def propagate_sample(samples, forward_motion, angular_motion, process_noise, bou
     # Make sure we stay within cyclic world
     return propagated_samples
 
-def compute_likelihood(samples, measurements, measurements_noise, beta):
+def compute_likelihood(samples, measurements_noise, beta):
     d_mnt, z_mbes_particule = distance_to_bottom(np.hstack((samples[1][0],samples[1][1])),MNT)
 
-    # Map difference true and expected distance measurement to probability
-    distance = np.abs(z_mbes_particule - measurements)**2
+    # Calculated with the beams
+    distance = 0
+    # for i in range(-5,6,1):
+    i = 0
+    for d_beam in range(-10,11,1):
+        beams_x = (samples[1][0] + i) + d_beam*np.cos(robot_angular_motion)
+        beams_y = (samples[1][1] + i) + d_beam*np.sin(robot_angular_motion)
+        _, z_mbes_particule_beam = distance_to_bottom(np.hstack((beams_x,beams_y)),MNT)
+        _, measurements = distance_to_bottom(np.array([[(x_gps+i)+d_beam*np.cos(robot_angular_motion),\
+                                                        (y_gps+i)+d_beam*np.sin(robot_angular_motion)]]),\
+                                             MNT)
+        distance += (z_mbes_particule_beam - measurements)**2
+
     p_z_given_x_distance = np.exp(-beta*distance/(2*measurements_noise[0]**2))
 
     # Return importance weight based on all landmarks
@@ -105,13 +116,13 @@ def needs_resampling(resampling_threshold):
 
     return 1.0 / max_weight < resampling_threshold
 
-def update(robot_forward_motion, robot_angular_motion, measurements, measurements_noise, process_noise, particles,resampling_threshold, resampler, beta, bounds):
+def update(robot_forward_motion, robot_angular_motion, measurements_noise, process_noise, particles,resampling_threshold, resampler, beta, bounds):
 
     # Propagate the particle state according to the current particle
     propagated_states = propagate_sample(particles, robot_forward_motion, robot_angular_motion, process_noise, bounds)
 
     # Compute current particle's weight
-    d_mnt, p = compute_likelihood(propagated_states, measurements, measurements_noise, beta)
+    d_mnt, p = compute_likelihood(propagated_states, measurements_noise, beta)
     weights = particles[0] * p
 
     # Store
@@ -215,9 +226,6 @@ if __name__ == '__main__':
         lat = LAT[i,]
         lon = LON[i,]
         x_gps, y_gps = coord2cart((lat,lon)).flatten()
-        d_mnt, measurements = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)
-        if d_mnt > 1:
-            print(t, d_mnt)
         lat_std = LAT_STD[i,]
         lon_std = LON_STD[i,]
         v_x_std = V_X_STD[i,]
@@ -240,7 +248,7 @@ if __name__ == '__main__':
 
         """Process the update"""
         t0 = time.time()
-        particles = update(robot_forward_motion, robot_angular_motion, measurements,\
+        particles = update(robot_forward_motion, robot_angular_motion,\
                            measurements_noise, process_noise, particles,\
                             resampling_threshold, resampler, beta = 0.1, bounds = bounds)
 
@@ -274,7 +282,7 @@ if __name__ == '__main__':
     BAR = np.array(BAR)
     LAT, LON = LAT[t_i:t_f,], LON[t_i:t_f,]
 
-    plt.suptitle(f"Algorithm with\n{n_particles} particles\n{steps} steps between measures")
+    plt.suptitle(f"Algorithm with\n{n_particles} particles\n{steps} steps between measures with beams")
     ax1 = plt.subplot2grid((2, 2), (0, 0), rowspan=2)
     ax2 = plt.subplot2grid((2, 2), (0, 1))
     ax3 = plt.subplot2grid((2, 2), (1, 1))
