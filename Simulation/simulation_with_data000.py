@@ -61,15 +61,15 @@ def normalize_weights(weighted_samples):
     # Return normalized weights
     return [weighted_samples[0] / np.sum(weighted_samples[0]), weighted_samples[1]]
 
-def validate_state(state, bounds):
-    x_min, x_max = bounds[0][0], bounds[0][1]
-    y_min, y_max = bounds[1][0], bounds[1][1]
+def validate_state(state, bounds, d_mnt):
+    x_min, x_max = bounds[0][0] - 10., bounds[0][1] + 10.
+    y_min, y_max = bounds[1][0] - 10., bounds[1][1] + 10.
 
     weights = state[0]
     coords  = state[1]
     weights[(coords[0] < x_min) | (coords[0] > x_max) | (coords[1] < y_min) | (coords[1] > y_max)] = 0
-    # d_mnt, _ = distance_to_bottom(np.hstack((coords[0],coords[1])),MNT)
-    # weights[d_mnt > 2] = 0 # If we are out of the MNT
+    weights[d_mnt > 2] = 0 # If we are out of the MNT
+    if np.sum(weights) == 0: sys.exit()
     return(state)
 
 def propagate_sample(samples, forward_motion, angular_motion, process_noise, bounds):
@@ -87,17 +87,17 @@ def propagate_sample(samples, forward_motion, angular_motion, process_noise, bou
     propagated_samples[1][1] += forward_displacement*np.sin(angular_motion)
 
     # Make sure we stay within cyclic world
-    return validate_state(propagated_samples, bounds)
+    return propagated_samples
 
 def compute_likelihood(samples, measurements, measurements_noise, beta):
-    _, z_mbes_particule = distance_to_bottom(np.hstack((samples[1][0],samples[1][1])),MNT)
+    d_mnt, z_mbes_particule = distance_to_bottom(np.hstack((samples[1][0],samples[1][1])),MNT)
 
     # Map difference true and expected distance measurement to probability
     distance = np.abs(z_mbes_particule - measurements)**2
     p_z_given_x_distance = np.exp(-beta*distance/(2*measurements_noise[0]**2))
 
     # Return importance weight based on all landmarks
-    return p_z_given_x_distance
+    return d_mnt, p_z_given_x_distance
 
 def needs_resampling(resampling_threshold):
 
@@ -111,13 +111,15 @@ def update(robot_forward_motion, robot_angular_motion, measurements, measurement
     propagated_states = propagate_sample(particles, robot_forward_motion, robot_angular_motion, process_noise, bounds)
 
     # Compute current particle's weight
-    weights = particles[0] * compute_likelihood(propagated_states, measurements, measurements_noise, beta)
+    d_mnt, p = compute_likelihood(propagated_states, measurements, measurements_noise, beta)
+    weights = particles[0] * p
 
     # Store
     propagated_states[0] = weights
     new_particles = propagated_states
 
     # Update particles
+    validate_state(new_particles, bounds, d_mnt)
     particles = normalize_weights(new_particles)
 
     # Resample if needed
@@ -173,7 +175,7 @@ if __name__ == '__main__':
 
     dt, t = set_dt(T[steps,], T[0,])
 
-    t_i = 0*int(2/3*T.shape[0])
+    t_i = 1*int(1/3*T.shape[0])
     t_f = T.shape[0]
 
     v_x = V_X[0,]
