@@ -26,5 +26,7 @@ At the end of the loop, the script prints the elapsed time and the estimated pos
 ## How the run the program ?
 ***
 run `./simulation.py` for just a simuation with a lissajou curb
+
 run `./simulation_with_data.py`for the simulation with our data
+
 run `./simulation_with_data_\&beams.py`for a simulation with data using beams
