@@ -94,17 +94,16 @@ def compute_likelihood(samples, measurements_noise, beta):
 
     # Calculated with the beams
     distance = 0
-    # for i in range(-5,6,1):
-    i = 0
-    for d_beam in range(-10,11,1):
-        beams_x = (samples[1][0] + i) + d_beam*np.cos(robot_angular_motion)
-        beams_y = (samples[1][1] + i) + d_beam*np.sin(robot_angular_motion)
-        _, z_mbes_particule_beam = distance_to_bottom(np.hstack((beams_x,beams_y)),MNT)
-        _, measurements = distance_to_bottom(np.array([[(x_gps+i)+d_beam*np.cos(robot_angular_motion),\
-                                                        (y_gps+i)+d_beam*np.sin(robot_angular_motion)]]),\
-                                             MNT)
-        distance += (z_mbes_particule_beam - measurements)**2
-
+    for i in range(-5,6,1):
+        for d_beam in range(-10,11,1):
+            beams_x = (samples[1][0] + i) + d_beam*np.cos(robot_angular_motion)
+            beams_y = (samples[1][1] + i) + d_beam*np.sin(robot_angular_motion)
+            _, z_mbes_particule_beam = distance_to_bottom(np.hstack((beams_x,beams_y)),MNT)
+            _, measurements = distance_to_bottom(np.array([[(x_gps+i)+d_beam*np.cos(robot_angular_motion),\
+                                                            (y_gps+i)+d_beam*np.sin(robot_angular_motion)]]),\
+                                                 MNT)
+            distance += (z_mbes_particule_beam - measurements)**2
+    distance = np.sqrt(distance)
     p_z_given_x_distance = np.exp(-beta*distance/(2*measurements_noise[0]**2))
 
     # Return importance weight based on all landmarks
@@ -258,7 +257,7 @@ if __name__ == '__main__':
             print("Temps de calcul: ",time.time() - t0)
             t1 = time.time()
             ax.plot(coord2cart((LAT[t_i:t_f,], LON[t_i:t_f,]))[0,:], coord2cart((LAT[t_i:t_f,], LON[t_i:t_f,]))[1,:])
-            ax.set_title("Particle filter with {} particles with z = {}m".format(n_particles, measurements))
+            ax.set_title("Particle filter with {} particles".format(n_particles))
             ax.set_xlim([x_gps_min - 100,x_gps_max + 100])
             ax.set_ylim([y_gps_min - 100,y_gps_max + 100])
             ax.scatter(x_gps, y_gps ,color='blue', label = 'True position panopée', s = 100)

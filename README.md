@@ -1,36 +1,39 @@
 # Recalage à l'aide de bathymétrie pour un AUV
 ***
-## Description du projet
+We want to recalibrate the state of the AUV using the bathymetry and particle filter.
 
-Recalage sur une carte MNT d'un AUV à l'aide d'un filtre à particules
+## Folders
+### Documentation
+The bibliography.
+* DVL
+* Particle Filter
+* Subject
 
-## Fichiers
-### AUV_localisation
-Ce fichier regroupe les algorithmes utilisés dans le cadre du sujet
+### Resources
+Existing programs on our subject to run :
+* DVL
+* Particle Filter
+* INS
 
-### References
-Documents utilisés pour ce projet :
-* Documentation du DVL
-* Documentation du filtre particulaire (PF)
-* Sujet du projet
+### Simulation
+Run a simulation using or not the data that we got for the previous Guerledan.
 
-### Liens utiles
-Manuel des différents capteurs utilisés
+## Useful links
+Manual of the different sensors used
 [SOURCE](https://moodle.ensta-bretagne.fr/course/view.php?id=863)
 
-Lien YT d'explication de base pour le filtre à particules
+Youtube link for basic explanation of the particulate filter
 [SOURCE](https://www.youtube.com/watch?v=NrzmH_yerBU&ab_channel=MATLAB)
 
-### TODO
-* Voir comment calibrer le DVL:
-* Syncroniser de vitesse INS/DVL
-* Voir les facteurs de réalignement du DVL lors de la 1ere phase
-* Vérifier le paramétrage -> txt/py
+## TODO
+* Decipher the binary data from the DVL
+* Interpolate the DTM
+* Recover single-beam data
 
 ***
-### Capteurs mis à disposition
-* DVL : Vitesse de fond/distance obliques (pas de Vitesse de courant)
-* INS : gyroscope/Acceleromètre -> Vitesse et position (voir comment faire)
-* GNSS : RTK (à traiter)
-* Multifaisceau MBES : bathymétrie (équi-angle ?)
-* SVP : Célérimètre de coque
+## Sensors available
+* DVL: Bottom speed/distance slant (no current speed)
+* INS: Gyroscope/Accelerometer -> Speed and position (see how to do)
+* GNSS: RTK (to be processed)
+* MBES multibeam: bathymetry (equi-angle?)
+* SVP: Hull velocity meter
