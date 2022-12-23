@@ -18,8 +18,17 @@ The input to the script includes the number of particles, the number of steps be
 * **plot_particles** plots the particles on a map.
 
 The script then reads the data for the digital elevation model (DEM) and generates a KD-tree for fast nearest neighbor search. It also reads the measurement data and converts the coordinates to Cartesian coordinates using the coord2cart function.
-
 The script initializes the particles using the initialize_particles_uniform function and the bounds of the DEM. It then enters a loop to iterate through the measurement steps. At each step, it propagates the particles using the propagate_sample function, calculates the importance weights using the compute_importance function, resamples the particles using the resample_particles function, and plots the particles using the plot_particles function if the display flag is set to True.
+
+The script then enters a loop where it performs the following steps at each iteration:
+
+1. Propagates the particles using the propagate_sample function.
+2. Calculates the distance and altitude of each particle using the distance_to_bottom function.
+3. Calculates the likelihood of each particle using the distance and altitude information.
+4. Resamples the particles using the Resampler class.
+5. Normalizes the weights of the resampled particles using the normalize_weights function.
+6. Validates the state of the particles using the validate_state function.
+7. If the display flag is set, plots the particles and waypoints on a map.
 
 At the end of the loop, the script prints the elapsed time and the estimated position.
 

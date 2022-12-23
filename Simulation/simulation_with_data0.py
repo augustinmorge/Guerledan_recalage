@@ -5,27 +5,103 @@ steps = int(input("number of steps between measures ? "))
 bool_display = (str(input("Display the particles ? [Y/]"))=="Y")
 
 import time
-start_time = time.perf_counter()
+T_start = time.time()
 import numpy as np
 import matplotlib.pyplot as plt
+import copy
 from resampler import Resampler
 from storage.data_import import *
 import sys
 from tqdm import tqdm
+import pyproj
 file_path = os.path.dirname(os.path.abspath(__file__))
 
+# Définit les coordonnées de référence
+wpt_ponton = (48.1989495, -3.0148023)
+
+def coord2cart(coords,coords_ref=wpt_ponton):
+    R = 6372800
+    ly,lx = coords
+    lym,lxm = coords_ref
+    x_tilde = R * np.cos(ly*np.pi/180)*(lx-lxm)*np.pi/180
+    y_tilde = R * (ly-lym)*np.pi/180
+    return np.array([x_tilde,y_tilde])
+
+# import numba
+#
+# @numba.jit
+# def compute_distances(point, kd_tree):
+#     # Compute distances using KDTree
+#     d_mnt, indices = kd_tree.query(point)
+#     return d_mnt, indices
+#
+# def distance_to_bottom(xy,mnt):
+#     point = np.vstack((xy[:,0], xy[:,1])).T
+#
+#     # Utilize compiled function to compute distances
+#     d_mnt, indices = compute_distances(point, kd_tree)
+#
+#     # Récupère les altitudes des points les plus proches
+#     Z = mnt[indices,2]
+#
+#     return d_mnt, Z
+
+
+# # #########
+# # Import Cython and set Cython directive to create C-level loops
+# import cython
+#
+# @cython.cdivision(True)
+# @cython.boundscheck(False)
+# def compute_distances_cython(point, kd_tree):
+#     # Compute distances using KDTree
+#     d_mnt, indices = kd_tree.query(point)
+#     return d_mnt, indices
+#
+# def distance_to_bottom(xy,mnt):
+#     point = np.vstack((xy[:,0], xy[:,1])).T
+#
+#     # Create a pool of worker processes
+#     d_mnt, indices = compute_distances_cython(point, kd_tree)
+#
+#     # Récupère les altitudes des points les plus proches
+#     Z = mnt[indices,2]
+#
+#     return d_mnt, Z
+
+######
 def distance_to_bottom(xy,mnt):
-    d_mnt, indices = kd_tree.query(xy)  #Utilise KDTree pour calculer les distances
-    Z = mnt[indices,2] # Récupère les altitudes des points les plus proches
+    point = np.vstack((xy[:,0], xy[:,1])).T
+
+    # Utilise KDTree pour calculer les distances
+    d_mnt, indices = kd_tree.query(point)
+
+    # Récupère les altitudes des points les plus proches
+    Z = mnt[indices,2]
+
     return d_mnt, Z
 
 def initialize_particles_uniform(n_particles, bounds):
-    particles = [1/n_particles*np.ones((n_particles,1)),[ \
+    weight = 1/n_particles
+    particles = [weight*np.ones((n_particles,1)),[ \
                            np.random.uniform(bounds[0][0], bounds[0][1], n_particles).reshape(-1,1),
                            np.random.uniform(bounds[1][0], bounds[1][1], n_particles).reshape(-1,1)]]
     return(particles)
 
+def get_max_weight(particles):
+    return np.max(weighted_sample[0])
+
 def normalize_weights(weighted_samples):
+
+    # Check if weights are non-zero
+    if np.sum(weighted_samples[0]) < 1e-15:
+        sum_weights = np.sum(weighted_samples[0])
+        print("Weight normalization failed: sum of all weights is {} (weights will be reinitialized)".format(sum_weights))
+
+        # Set uniform weights
+        return [1.0 / weighted_samples[0].shape[0]*np.ones((weighted_samples[0].shape[0],1)), weighted_samples[1]]
+
+    # Return normalized weights
     return [weighted_samples[0] / np.sum(weighted_samples[0]), weighted_samples[1]]
 
 def validate_state(state, bounds, d_mnt):
@@ -35,7 +111,7 @@ def validate_state(state, bounds, d_mnt):
     weights = state[0]
     coords  = state[1]
     weights[(coords[0] < x_min) | (coords[0] > x_max) | (coords[1] < y_min) | (coords[1] > y_max)] = 0
-    weights[d_mnt > 1] = 0 # If we are out of the MNT
+    weights[d_mnt > 2] = 0 # If we are out of the MNT
     if np.sum(weights) == 0: sys.exit()
     return(state)
 
@@ -59,13 +135,17 @@ def compute_likelihood(samples, measurements, measurements_noise, beta):
 
     # Map difference true and expected distance measurement to probability
     distance = np.abs(z_mbes_particule - measurements)
-    p_z_given_x_distance = np.exp(-beta*distance/(measurements_noise[0]**2))
+    # p_z_given_x_distance = np.exp(-beta*distance/(2*measurements_noise[0]**2))
+    p_z_given_x_distance = np.exp(-beta*distance*d_mnt/(2*measurements_noise[0]**2))
 
     # Return importance weight based on all landmarks
     return d_mnt, p_z_given_x_distance
 
 def needs_resampling(resampling_threshold):
-    return 1.0 / np.max(particles[0]) < resampling_threshold
+
+    max_weight = np.max(particles[0])
+
+    return 1.0 / max_weight < resampling_threshold
 
 def update(robot_forward_motion, robot_angular_motion, measurements, measurements_noise, process_noise, particles,resampling_threshold, resampler, beta, bounds):
 
@@ -166,7 +246,7 @@ if __name__ == '__main__':
     else : r = tqdm(range(t_i,t_f,steps))
 
     fig, ax = plt.subplots()
-    TIME = []; BAR = []; SPEED = []; ERR = []
+    TIME = []; BAR = []; SPEED = []; ERR = []; L = []
     for i in r:
 
         """Set data"""
@@ -198,14 +278,42 @@ if __name__ == '__main__':
         """ Processing error on algorithm"""
         motion_model_forward_std = steps*np.sqrt(v_y_std**2 + v_x_std**2)# + v_z_std**2)
         motion_model_turn_std = steps*np.abs(np.arctan2((v_y + v_y_std),(v_x)) - np.arctan2((v_y),(v_x+v_x_std)))
+
+        # v1 = np.array([v_x, v_y + v_y_std]);
+        # v2 = np.array([v_x + v_x_std, v_y]);
+        # if v_x == 0 or v_y == 0:
+        #     v1 = 0
+        #     v2 = 0
+        # else:
+        #     v1 = v1/np.linalg.norm(v1)
+        #     v2 = v2/np.linalg.norm(v2)
+        #
+        # print(f"v_x,v_y={v_x,v_y}")
+        # print(f"v_x_std, v_y_std={v_x_std, v_y_std}")
+        # print(f"v1,v2={v1,v2}")
+        # motion_model_turn_std = np.arctan2(np.linalg.norm(np.cross(v1, v2)), np.dot(v1, v2))
+        # print(f"motion_model_turn_std={motion_model_turn_std*180/np.pi}")
+
+        # # L = []
+        # if v_x_std == 0 or v_y_std == 0:
+        #     motion_model_turn_std = 0
+        # else:
+        #     motion_model_turn_std = np.arctan2(v_y_std,v_x_std)
+        #
+        # if motion_model_turn_std not in L :
+        #     L.append(motion_model_turn_std)
+        #     # print(motion_model_turn_std*180/np.pi)
+        #     print(L)
         process_noise = [motion_model_forward_std, motion_model_turn_std]
 
         """Process the update"""
         t0 = time.time()
         particles = update(robot_forward_motion, robot_angular_motion, measurements,\
                            measurements_noise, process_noise, particles,\
-                            resampling_threshold, resampler, beta = 0.05, bounds = bounds)
+                            resampling_threshold, resampler, beta = 0.5, bounds = bounds) #-2.*np.log(0.99)/0.5
 
+        if i == 0:
+            print(beta)
         """ Affichage en temps réel """
         if bool_display:
             ax.cla()
@@ -230,9 +338,8 @@ if __name__ == '__main__':
         SPEED.append(np.sqrt(v_x**2 + v_y**2))# + v_z**2))
         # if test_diverge(ERR) : break #Permet de voir si l'algorithme diverge et pourquoi.
 
-    elapsed_time = time.perf_counter() - start_time
-    print("Elapsed time: {:.2f} seconds".format(elapsed_time))
-
+    DT = time.time() - T_start
+    print(f"Total time: {int(DT/60/60)}h{int(DT/60)}min{int(DT-DT//60*60)}s")
     """ Affichage final """
     BAR = np.array(BAR)
     LAT, LON = LAT[t_i:t_f,], LON[t_i:t_f,]

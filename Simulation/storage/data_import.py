@@ -10,6 +10,17 @@ file_path = os.path.dirname(os.path.abspath(__file__))
 bool_txt = False
 bool_compress = True
 
+# Définit les coordonnées de référence
+wpt_ponton = (48.1989495, -3.0148023)
+
+def coord2cart(coords,coords_ref=wpt_ponton):
+    R = 6372800
+    ly,lx = coords
+    lym,lxm = coords_ref
+    x_tilde = R * np.cos(ly*np.pi/180)*(lx-lxm)*np.pi/180
+    y_tilde = R * (ly-lym)*np.pi/180
+    return np.array([x_tilde,y_tilde])
+
 if bool_txt:
     print("Importing the DVL-TXT file..")
     """ Import INS """
@@ -65,16 +76,6 @@ if bool_txt:
         proj = pyproj.CRS('epsg:2154')
         lon_mnt, lat_mnt = pyproj.transform(proj, gcs, MNT[:,0], MNT[:,1]) # Convert x and y values to latitude and longitude values
         MNT[:,0], MNT[:,1] = lon_mnt, lat_mnt
-
-
-    wpt_ponton = (48.1989495, -3.0148023)
-    def coord2cart(coords,coords_ref=wpt_ponton):
-        R = 6372800
-        ly,lx = coords
-        lym,lxm = coords_ref
-        x_tilde = R * np.cos(ly*np.pi/180)*(lx-lxm)*np.pi/180
-        y_tilde = R * (ly-lym)*np.pi/180
-        return np.array([x_tilde,y_tilde])
 
     print("Building KDTree..")
     nx_mnt, ny_mnt = coord2cart((MNT[:,1],MNT[:,0]))

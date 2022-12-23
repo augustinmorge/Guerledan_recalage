@@ -185,7 +185,7 @@ if __name__ == '__main__':
 
     dt, t = set_dt(T[steps,], T[0,])
 
-    t_i = 0 #1*int(1/3*T.shape[0])
+    t_i = int(2/3*T.shape[0])
     t_f = T.shape[0]
 
     v_x = V_X[0,]
