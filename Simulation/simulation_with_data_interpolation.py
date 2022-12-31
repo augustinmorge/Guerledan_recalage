@@ -2,7 +2,7 @@
 
 n_particles = 1000 #int(input("Number of particles: "))
 steps = 10# int(input("number of steps between measures ? "))
-bool_display = 0 #(str(input("Display the particles ? [Y/]"))=="Y")
+bool_display = False #(str(input("Display the particles ? [Y/]"))=="Y")
 
 import time
 start_time = time.perf_counter()
@@ -71,14 +71,14 @@ def normalize_weights(weighted_samples):
     return [weighted_samples[0] / np.sum(weighted_samples[0]), weighted_samples[1]]
 
 def validate_state(state, bounds, d_mnt):
-    x_min, x_max = bounds[0][0] - 10., bounds[0][1] + 10.
-    y_min, y_max = bounds[1][0] - 10., bounds[1][1] + 10.
-
-    weights = state[0]
-    coords  = state[1]
-    weights[(coords[0] < x_min) | (coords[0] > x_max) | (coords[1] < y_min) | (coords[1] > y_max)] = 0
-    weights[d_mnt > 5] = 0 # If we are out of the MNT
-    if np.sum(weights) == 0: sys.exit()
+    # x_min, x_max = bounds[0][0] - 10., bounds[0][1] + 10.
+    # y_min, y_max = bounds[1][0] - 10., bounds[1][1] + 10.
+    #
+    # weights = state[0]
+    # coords  = state[1]
+    # weights[(coords[0] < x_min) | (coords[0] > x_max) | (coords[1] < y_min) | (coords[1] > y_max)] = 0
+    # weights[d_mnt > 10] = 0 # If we are out of the MNT
+    # if np.sum(weights) == 0: sys.exit()
     return(state)
 
 def propagate_sample(samples, forward_motion, angular_motion, process_noise, bounds):
