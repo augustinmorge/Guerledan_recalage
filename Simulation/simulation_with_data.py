@@ -14,6 +14,9 @@ import sys
 from tqdm import tqdm
 file_path = os.path.dirname(os.path.abspath(__file__))
 
+def sawtooth(x):
+    return(2*np.arctan(np.tan(x/2)))
+
 def distance_to_bottom(xy,mnt):
     d_mnt, indices = kd_tree.query(xy)  #Utilise KDTree pour calculer les distances
     Z = mnt[indices,2] # Récupère les altitudes des points les plus proches
@@ -59,7 +62,8 @@ def compute_likelihood(samples, measurements, measurements_noise, beta):
 
     # Map difference true and expected distance measurement to probability
     distance = np.abs(z_mbes_particule - measurements)
-    p_z_given_x_distance = np.exp(-beta*distance/(measurements_noise[0]**2))
+    # p_z_given_x_distance = np.exp(-beta*distance/(measurements_noise[0]**2))
+    p_z_given_x_distance = np.exp(-beta*distance)
 
     # Return importance weight based on all landmarks
     return d_mnt, p_z_given_x_distance
@@ -74,15 +78,14 @@ def update(robot_forward_motion, robot_angular_motion, measurements, measurement
 
     # Compute current particle's weight
     d_mnt, p = compute_likelihood(propagated_states, measurements, measurements_noise, beta)
-    weights = particles[0] * p
 
-    # Store
-    propagated_states[0] = weights
-    new_particles = propagated_states
+    particules = validate_state(propagated_states, bounds, d_mnt)
+
+    # Update the probability of the particle
+    propagated_states[0] = particles[0] * p
 
     # Update particles
-    validate_state(new_particles, bounds, d_mnt)
-    particles = normalize_weights(new_particles)
+    particles = normalize_weights(propagated_states)
 
     # Resample if needed
     if needs_resampling(resampling_threshold):
@@ -137,8 +140,8 @@ if __name__ == '__main__':
 
     dt, t = set_dt(T[steps,], T[0,])
 
-    t_i = int(1/3*T.shape[0])
-    t_f = T.shape[0]
+    t_i = int(2/3*T.shape[0])
+    t_f = T.shape[0] #int(4/5*T.shape[0]) #
 
     v_x = V_X[0,]
     v_y = V_Y[0,]
@@ -160,13 +163,20 @@ if __name__ == '__main__':
         y = np.linspace(-120, 120, 100)
         X, Y = np.meshgrid(x, y)
 
+        from PIL import Image
+        image = Image.open("./storage/MNT_G1.png")
+        image.show()
+
         print("Processing..")
         r = range(t_i,t_f,steps)
 
-    else : r = tqdm(range(t_i,t_f,steps))
 
+    else : r = tqdm(range(t_i,t_f,steps))
     fig, ax = plt.subplots()
     TIME = []; BAR = []; SPEED = []; ERR = []
+    beta = 1/100.
+    # beta = 1/steps
+
     for i in r:
 
         """Set data"""
@@ -187,24 +197,28 @@ if __name__ == '__main__':
         v_z_std = V_Z_STD[i,]
 
         """Processing the motion of the robot """
-        # robot_forward_motion =  dt*np.sqrt(v_x**2 + v_y**2)# + v_z**2)
         robot_forward_motion =  dt*np.sqrt(v_x**2 + v_y**2)# + v_z**2)
         robot_angular_motion = np.arctan2(v_x,v_y) #Je sais pas pourquoi c'est à l'envers
 
         """ Processing error on measures"""
-        meas_model_distance_std = 1 #50*steps*(np.sqrt(lat_std**2 + lon_std**2)) # On estime que l'erreur en z est le même que celui en lat, lon, ce qui est faux
+        meas_model_distance_std = None #1 #50*steps*(np.sqrt(lat_std**2 + lon_std**2)) # On estime que l'erreur en z est le même que celui en lat, lon, ce qui est faux
         measurements_noise = [meas_model_distance_std] ### Attention, std est en mètres !
 
         """ Processing error on algorithm"""
         motion_model_forward_std = steps*np.sqrt(v_y_std**2 + v_x_std**2)# + v_z_std**2)
-        motion_model_turn_std = steps*np.abs(np.arctan2((v_y + v_y_std),(v_x)) - np.arctan2((v_y),(v_x+v_x_std)))
+        motion_model_turn_std = np.abs(sawtooth(np.arctan2((v_x + np.sign(v_x)*v_x_std),(v_y)) - np.arctan2((v_x),(v_y+np.sign(v_y)*v_y_std))))
         process_noise = [motion_model_forward_std, motion_model_turn_std]
 
+        # if motion_model_turn_std > 1:
+        #     print(np.arctan2((v_y + v_y_std),(v_x)))
+        #     print(np.arctan2((v_y),(v_x+v_x_std)))
+        #     print("v_x={},v_y={} and v_x_std={}, v_y_std={}".format(v_x,v_y,v_x_std,v_y_std))
+        #     print(f"process_noise={process_noise}")
         """Process the update"""
         t0 = time.time()
         particles = update(robot_forward_motion, robot_angular_motion, measurements,\
                            measurements_noise, process_noise, particles,\
-                            resampling_threshold, resampler, beta = 0.05, bounds = bounds)
+                            resampling_threshold, resampler, beta = beta, bounds = bounds)
 
         """ Affichage en temps réel """
         if bool_display:
@@ -221,6 +235,7 @@ if __name__ == '__main__':
             ax.scatter(bx, by , color = 'green', label = 'Estimation of particles')
 
             ax.legend()
+
             plt.pause(0.00001)
             print("Temps d'affichage: ",time.time()-t1,"\n")
 

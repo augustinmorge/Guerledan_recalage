@@ -3,12 +3,12 @@ import numpy as np
 import os
 import pyproj
 from sklearn.neighbors import KDTree
-import joblib
+import joblib, pickle
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 
-bool_txt = False
-bool_compress = True
+bool_txt = 0
+bool_compress = 1
 
 # Définit les coordonnées de référence
 wpt_ponton = (48.1989495, -3.0148023)
@@ -88,8 +88,8 @@ if bool_txt:
     V_Y_STD=V_Y_STD, V_Z_STD=V_Z_STD,\
     dtype = np.float64, precision = 16)
     np.savez("mnt.npz", MNT=MNT, dtype = np.float64, precision = 16)
-    # with open('kd_tree.pkl', 'wb') as f:
-    #     pickle.dump(kd_tree, f)
+    with open('kd_tree.pkl', 'wb') as f:
+        pickle.dump(kd_tree, f)
     with open('kd_tree.joblib', 'wb') as f:
         joblib.dump(kd_tree, f)
 

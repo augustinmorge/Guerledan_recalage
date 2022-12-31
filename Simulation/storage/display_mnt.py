@@ -1,10 +1,9 @@
 #!/usr/bin/python3
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-from data_import import *
 import matplotlib.pyplot as plt
 
-def display_mnt(mnt):
+def display_mnt(LON, LAT, mnt):
     # Extract x and y values from the mnt array
     x = mnt[:,0]
     y = mnt[:,1]
@@ -28,11 +27,19 @@ def display_mnt(mnt):
     plt.plot(LON,LAT)
 
     # Show the plot
-    plt.show()
+    plt.savefig("MNT_G1.png", dpi = 200) #augmenter dpi pour une meilleure résolution
+    # plt.show()
+
 
 
 if __name__ == '__main__':
-    display_mnt(MNT)
+    from data_import import *
+    display_mnt(LON, LAT, MNT)
+
+    from PIL import Image
+    image = Image.open("MNT_G1.png")
+    image.show()
+
 
     # import PIL.Image as Image
     # import osm_ui

@@ -1,57 +1,73 @@
 #!/usr/bin/env python3
 
-n_particles = int(input("Number of particles: "))
-steps = int(input("number of steps between measures ? "))
-bool_display = (str(input("Display the particles ? [Y/]"))=="Y")
+n_particles = 1000 #int(input("Number of particles: "))
+steps = 10# int(input("number of steps between measures ? "))
+bool_display = 0 #(str(input("Display the particles ? [Y/]"))=="Y")
 
 import time
-T_start = time.time()
+start_time = time.perf_counter()
 import numpy as np
 import matplotlib.pyplot as plt
-import copy
 from resampler import Resampler
 from storage.data_import import *
 import sys
 from tqdm import tqdm
-import pyproj
 file_path = os.path.dirname(os.path.abspath(__file__))
 
 def sawtooth(x):
     return(2*np.arctan(np.tan(x/2)))
 
+nx_mnt, ny_mnt = coord2cart((MNT[:,1],MNT[:,0]))
+vec_mnt = np.vstack((nx_mnt, ny_mnt)).T
 
-def distance_to_bottom(xy,mnt):
-    point = np.vstack((xy[:,0], xy[:,1])).T
+def interp_mnt(interp_points):
+    _, ind = kd_tree.query(interp_points, k=4)
+    ## Récupérer les valeurs z de chaque point MNT trouvé
+    z_values = MNT[ind][:,:,2]
 
-    # Utilise KDTree pour calculer les distances
-    d_mnt, indices = kd_tree.query(point)
+    # Calculer les coordonnées relatives de chaque point à interpoler par rapport au premier point MNT trouvé
+    dx = (interp_points[:,0] - vec_mnt[ind[:,0]][:,0]) / (vec_mnt[ind[:,1]][:,0] - vec_mnt[ind[:,0]][:,0])
+    dy = (interp_points[:,1] - vec_mnt[ind[:,0]][:,1]) / (vec_mnt[ind[:,2]][:,1] - vec_mnt[ind[:,0]][:,1])
 
-    # Récupère les altitudes des points les plus proches
-    Z = mnt[indices,2]
+    # Interpoler les valeurs z en utilisant l'interpolation bilinéaire
+    z2 = z_values[:,0] + (z_values[:,1] - z_values[:,0]) * dx
+    z3 = z_values[:,2] + (z_values[:,3] - z_values[:,2]) * dx
+    z = z2 + (z3 - z2) * dy
 
-    return d_mnt, Z
+    # Tableau des valeurs z interpolées
+    interp_values = z
+
+    ## Récupérer les valeurs z de chaque point MNT trouvé
+    # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+    # print(f"interp_points={interp_points}")
+    # print(f"vec_mnt[ind]={vec_mnt[ind]}")
+    # print(f"vec_mnt[ind[:,0]]={vec_mnt[ind[:,0]]}")
+    # print(f"z_values={z_values}")
+    # print(f"z_values={z_values.shape}")
+    # print(f"ind={ind}")
+
+    # print(f"dist={dist}")
+    # print(z2,z3,(z2-z3)*dy)
+    # print(f"interp_points[:,0]={interp_points[:,0]}")
+    # print(f"interp_points[:,1]={interp_points[:,1]}")
+    # print(f"\nvec_mnt[ind]={vec_mnt[ind]}")
+    # print(f"vec_mnt[ind[:,0]]={vec_mnt[ind[:,0]]}")
+    # print(f"vec_mnt[ind[:,1]]={vec_mnt[ind[:,1]]}")
+    # print(f"vec_mnt[ind[:,2]]={vec_mnt[ind[:,2]]}")
+    # print(f"dx={dx}, dy={dy}")
+    # print(f"interp_values={interp_values}")
+
+    return(np.sqrt(dx**2+dy**2), np.expand_dims(interp_values,axis=1))
+
+
 
 def initialize_particles_uniform(n_particles, bounds):
-    weight = 1/n_particles
-    particles = [weight*np.ones((n_particles,1)),[ \
+    particles = [1/n_particles*np.ones((n_particles,1)),[ \
                            np.random.uniform(bounds[0][0], bounds[0][1], n_particles).reshape(-1,1),
                            np.random.uniform(bounds[1][0], bounds[1][1], n_particles).reshape(-1,1)]]
     return(particles)
 
-def get_max_weight(particles):
-    return np.max(weighted_sample[0])
-
 def normalize_weights(weighted_samples):
-
-    # Check if weights are non-zero
-    if np.sum(weighted_samples[0]) < 1e-15:
-        sum_weights = np.sum(weighted_samples[0])
-        print("Weight normalization failed: sum of all weights is {} (weights will be reinitialized)".format(sum_weights))
-
-        # Set uniform weights
-        return [1.0 / weighted_samples[0].shape[0]*np.ones((weighted_samples[0].shape[0],1)), weighted_samples[1]]
-
-    # Return normalized weights
     return [weighted_samples[0] / np.sum(weighted_samples[0]), weighted_samples[1]]
 
 def validate_state(state, bounds, d_mnt):
@@ -61,92 +77,54 @@ def validate_state(state, bounds, d_mnt):
     weights = state[0]
     coords  = state[1]
     weights[(coords[0] < x_min) | (coords[0] > x_max) | (coords[1] < y_min) | (coords[1] > y_max)] = 0
-    # weights[d_mnt > 2] = 0 # If we are out of the MNT
+    weights[d_mnt > 5] = 0 # If we are out of the MNT
     if np.sum(weights) == 0: sys.exit()
     return(state)
 
 def propagate_sample(samples, forward_motion, angular_motion, process_noise, bounds):
 
     # 1. rotate by given amount plus additive noise sample (index 1 is angular noise standard deviation)
-    # propagated_samples = copy.deepcopy(samples)
-    propagated_samples = samples
     # Compute forward motion by combining deterministic forward motion with additive zero mean Gaussian noise
     forward_displacement = np.random.normal(forward_motion, process_noise[0], n_particles).reshape(-1,1)
     # forward_displacement_y = np.random.normal(forward_motion, process_noise[0], n_particles).reshape(n_particles,1)
     angular_motion = np.random.normal(angular_motion, process_noise[1],n_particles).reshape(-1,1)
 
     # 2. move forward
-    propagated_samples[1][0] += forward_displacement*np.cos(angular_motion)
-    propagated_samples[1][1] += forward_displacement*np.sin(angular_motion)
+    samples[1][0] += forward_displacement*np.cos(angular_motion)
+    samples[1][1] += forward_displacement*np.sin(angular_motion)
 
     # Make sure we stay within cyclic world
-    return propagated_samples
+    return samples
 
-def compute_likelihood(samples, measurements_noise, beta):
+def compute_likelihood(samples, measurements, measurements_noise, beta):
+    d_mnt, z_mbes_particule = interp_mnt(np.hstack((samples[1][0],samples[1][1])))
 
-    d_beams = np.linspace(-20,20,10)
-    beams_x = (samples[1][0] + d_beams * np.cos(robot_angular_motion)).reshape(-1,1)
-    beams_y = (samples[1][1] + d_beams * np.sin(robot_angular_motion)).reshape(-1,1)
-
-    # Calcul de la distance au fond pour chaque faisceau de particules
-    _, z_mbes_particule_beam = distance_to_bottom(np.column_stack((beams_x, beams_y)), MNT)
-
-    # Calcul de la position du GPS
-    gps_x_beams = x_gps + d_beams * np.cos(robot_angular_motion)
-    gps_y_beams = y_gps + d_beams * np.sin(robot_angular_motion)
-
-    # Calcul de la distance au fond pour la position des beams
-    _, measurements = distance_to_bottom(np.column_stack((gps_x_beams, gps_y_beams)), MNT)
-    measurements = np.tile(measurements, (z_mbes_particule_beam.shape[0]//d_beams.shape[0], 1))
-
-    # Calcul de la norme entre les particles en la vraie mesure
-    distance = (z_mbes_particule_beam - measurements) ** 2 #Fais la différence de tous
-    distance = np.add.reduceat(distance, np.arange(0, distance.shape[0],d_beams.shape[0])) #Sommes les d_beams premiers
-    distance = np.sqrt(distance)  #Calcul pour chaque état la norme
-
-    #Calcul de la probabilité
-    # p_z_given_x_distance = np.exp(-beta*distance/(2*measurements_noise[0]**2))
+    # Map difference true and expected distance measurement to probability
+    distance = np.abs(z_mbes_particule - measurements)
+    # p_z_given_x_distance = np.exp(-beta*distance/(measurements_noise[0]**2))
     p_z_given_x_distance = np.exp(-beta*distance)
 
-    # distance = 0; i = 0
-    # # for i in range(-5,6,1):
-    # for d_beam in np.linspace(-20,20,10):
-    #     beams_x = (samples[1][0] + i) + d_beam*np.cos(robot_angular_motion)
-    #     beams_y = (samples[1][1] + i) + d_beam*np.sin(robot_angular_motion)
-    #     _, z_mbes_particule_beam = distance_to_bottom(np.hstack((beams_x,beams_y)),MNT)
-    #     _, measurements = distance_to_bottom(np.array([[(x_gps+i)+d_beam*np.cos(robot_angular_motion),\
-    #                                                     (y_gps+i)+d_beam*np.sin(robot_angular_motion)]]),\
-    #                                          MNT)
-    #     distance += (z_mbes_particule_beam - measurements)**2
-    # # distance = np.sqrt(distance)
-    # distance = np.sqrt(distance)
-    # p_z_given_x_distance = np.exp(-beta*distance)
-
     # Return importance weight based on all landmarks
-    return None, p_z_given_x_distance
+    return d_mnt, p_z_given_x_distance
 
 def needs_resampling(resampling_threshold):
+    return 1.0 / np.max(particles[0]) < resampling_threshold
 
-    max_weight = np.max(particles[0])
-
-    return 1.0 / max_weight < resampling_threshold
-
-def update(robot_forward_motion, robot_angular_motion, measurements_noise, process_noise, particles,resampling_threshold, resampler, beta, bounds):
+def update(robot_forward_motion, robot_angular_motion, measurements, measurements_noise, process_noise, particles,resampling_threshold, resampler, beta, bounds):
 
     # Propagate the particle state according to the current particle
     propagated_states = propagate_sample(particles, robot_forward_motion, robot_angular_motion, process_noise, bounds)
 
     # Compute current particle's weight
-    d_mnt, p = compute_likelihood(propagated_states, measurements_noise, beta)
-    weights = particles[0] * p
+    d_mnt, p = compute_likelihood(propagated_states, measurements, measurements_noise, beta)
+
+    particules = validate_state(propagated_states, bounds, d_mnt)
 
     # Store
-    propagated_states[0] = weights
-    new_particles = propagated_states
+    propagated_states[0] = particles[0] * p
 
     # Update particles
-    validate_state(new_particles, bounds, d_mnt)
-    particles = normalize_weights(new_particles)
+    particles = normalize_weights(propagated_states)
 
     # Resample if needed
     if needs_resampling(resampling_threshold):
@@ -202,7 +180,7 @@ if __name__ == '__main__':
     dt, t = set_dt(T[steps,], T[0,])
 
     t_i = int(2/3*T.shape[0])
-    t_f = T.shape[0]
+    t_f = T.shape[0] #int(4/5*T.shape[0]) #
 
     v_x = V_X[0,]
     v_y = V_Y[0,]
@@ -224,14 +202,20 @@ if __name__ == '__main__':
         y = np.linspace(-120, 120, 100)
         X, Y = np.meshgrid(x, y)
 
+        from PIL import Image
+        image = Image.open("./storage/MNT_G1.png")
+        image.show()
+
         print("Processing..")
         r = range(t_i,t_f,steps)
 
-    else : r = tqdm(range(t_i,t_f,steps))
 
+    else : r = tqdm(range(t_i,t_f,steps))
     fig, ax = plt.subplots()
     TIME = []; BAR = []; SPEED = []; ERR = []
-    beta = 1/100
+    beta = 1/100.
+    # beta = 1/steps
+
     for i in r:
 
         """Set data"""
@@ -242,6 +226,9 @@ if __name__ == '__main__':
         lat = LAT[i,]
         lon = LON[i,]
         x_gps, y_gps = coord2cart((lat,lon)).flatten()
+        d_mnt, measurements = interp_mnt(np.array([[x_gps, y_gps]]))
+        # if d_mnt > 1:
+        #     print(t, d_mnt)
         lat_std = LAT_STD[i,]
         lon_std = LON_STD[i,]
         v_x_std = V_X_STD[i,]
@@ -249,12 +236,11 @@ if __name__ == '__main__':
         v_z_std = V_Z_STD[i,]
 
         """Processing the motion of the robot """
-        # robot_forward_motion =  dt*np.sqrt(v_x**2 + v_y**2)# + v_z**2)
         robot_forward_motion =  dt*np.sqrt(v_x**2 + v_y**2)# + v_z**2)
         robot_angular_motion = np.arctan2(v_x,v_y) #Je sais pas pourquoi c'est à l'envers
 
         """ Processing error on measures"""
-        meas_model_distance_std = None #50*steps*(np.sqrt(lat_std**2 + lon_std**2)) # On estime que l'erreur en z est le même que celui en lat, lon, ce qui est faux
+        meas_model_distance_std = None #1 #50*steps*(np.sqrt(lat_std**2 + lon_std**2)) # On estime que l'erreur en z est le même que celui en lat, lon, ce qui est faux
         measurements_noise = [meas_model_distance_std] ### Attention, std est en mètres !
 
         """ Processing error on algorithm"""
@@ -262,9 +248,14 @@ if __name__ == '__main__':
         motion_model_turn_std = np.abs(sawtooth(np.arctan2((v_x + np.sign(v_x)*v_x_std),(v_y)) - np.arctan2((v_x),(v_y+np.sign(v_y)*v_y_std))))
         process_noise = [motion_model_forward_std, motion_model_turn_std]
 
+        # if motion_model_turn_std > 1:
+        #     print(np.arctan2((v_y + v_y_std),(v_x)))
+        #     print(np.arctan2((v_y),(v_x+v_x_std)))
+        #     print("v_x={},v_y={} and v_x_std={}, v_y_std={}".format(v_x,v_y,v_x_std,v_y_std))
+        #     print(f"process_noise={process_noise}")
         """Process the update"""
         t0 = time.time()
-        particles = update(robot_forward_motion, robot_angular_motion,\
+        particles = update(robot_forward_motion, robot_angular_motion, measurements,\
                            measurements_noise, process_noise, particles,\
                             resampling_threshold, resampler, beta = beta, bounds = bounds)
 
@@ -274,7 +265,7 @@ if __name__ == '__main__':
             print("Temps de calcul: ",time.time() - t0)
             t1 = time.time()
             ax.plot(coord2cart((LAT[t_i:t_f,], LON[t_i:t_f,]))[0,:], coord2cart((LAT[t_i:t_f,], LON[t_i:t_f,]))[1,:])
-            ax.set_title("Particle filter with {} particles".format(n_particles))
+            ax.set_title("Particle filter with {} particles with z = {}m".format(n_particles, measurements))
             ax.set_xlim([x_gps_min - 100,x_gps_max + 100])
             ax.set_ylim([y_gps_min - 100,y_gps_max + 100])
             ax.scatter(x_gps, y_gps ,color='blue', label = 'True position panopée', s = 100)
@@ -283,6 +274,10 @@ if __name__ == '__main__':
             ax.scatter(bx, by , color = 'green', label = 'Estimation of particles')
 
             ax.legend()
+
+            # Redessin de la figure
+            fig.canvas.draw()
+
             plt.pause(0.00001)
             print("Temps d'affichage: ",time.time()-t1,"\n")
 
@@ -292,13 +287,14 @@ if __name__ == '__main__':
         SPEED.append(np.sqrt(v_x**2 + v_y**2))# + v_z**2))
         # if test_diverge(ERR) : break #Permet de voir si l'algorithme diverge et pourquoi.
 
-    DT = time.time() - T_start
-    print(f"Total time: {int(DT/60/60)}h{int(DT/60)}min{int(DT-DT//60*60)}s")
+    elapsed_time = time.perf_counter() - start_time
+    print("Elapsed time: {:.2f} seconds".format(elapsed_time))
+
     """ Affichage final """
     BAR = np.array(BAR)
     LAT, LON = LAT[t_i:t_f,], LON[t_i:t_f,]
 
-    plt.suptitle(f"Algorithm with\n{n_particles} particles\n{steps} steps between measures with beams")
+    plt.suptitle(f"Algorithm with interpolation\n{n_particles}particles\n1/{steps}data log used")
     ax1 = plt.subplot2grid((2, 2), (0, 0), rowspan=2)
     ax2 = plt.subplot2grid((2, 2), (0, 1))
     ax3 = plt.subplot2grid((2, 2), (1, 1))
