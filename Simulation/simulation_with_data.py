@@ -32,14 +32,14 @@ def normalize_weights(weighted_samples):
     return [weighted_samples[0] / np.sum(weighted_samples[0]), weighted_samples[1]]
 
 def validate_state(state, bounds, d_mnt):
-    # x_min, x_max = bounds[0][0] - 10., bounds[0][1] + 10.
-    # y_min, y_max = bounds[1][0] - 10., bounds[1][1] + 10.
-    #
-    # weights = state[0]
-    # coords  = state[1]
-    # # weights[(coords[0] < x_min) | (coords[0] > x_max) | (coords[1] < y_min) | (coords[1] > y_max)] = 0
-    # weights[d_mnt > 1] = 0 # If we are out of the MNT
-    # if np.sum(weights) == 0: sys.exit()
+    x_min, x_max = bounds[0][0] - 10., bounds[0][1] + 10.
+    y_min, y_max = bounds[1][0] - 10., bounds[1][1] + 10.
+
+    weights = state[0]
+    coords  = state[1]
+    weights[(coords[0] < x_min) | (coords[0] > x_max) | (coords[1] < y_min) | (coords[1] > y_max)] = 0
+    weights[d_mnt > 1] = 0 # If we are out of the MNT
+    if np.sum(weights) == 0: sys.exit()
     return(state)
 
 def propagate_sample(samples, forward_motion, angular_motion, process_noise, bounds):
@@ -71,10 +71,10 @@ def compute_likelihood(samples, measurements, measurements_noise, beta):
 def needs_resampling(resampling_threshold):
     return 1.0 / np.max(particles[0]) < resampling_threshold
 
-def update(robot_forward_motion, robot_angular_motion, measurements, measurements_noise, process_noise, particles,resampling_threshold, resampler, beta, bounds):
+def update(roboidx_tforward_motion, robot_angular_motion, measurements, measurements_noise, process_noise, particles,resampling_threshold, resampler, beta, bounds):
 
     # Propagate the particle state according to the current particle
-    propagated_states = propagate_sample(particles, robot_forward_motion, robot_angular_motion, process_noise, bounds)
+    propagated_states = propagate_sample(particles, roboidx_tforward_motion, robot_angular_motion, process_noise, bounds)
 
     # Compute current particle's weight
     d_mnt, p = compute_likelihood(propagated_states, measurements, measurements_noise, beta)
@@ -101,7 +101,7 @@ def get_average_state(particles):
 
     return [avg_x, avg_y]
 
-def test_diverge(ERR, err_max=200):
+def test_diverge(ERR, err_max=500):
     if ERR[-1] > err_max: #Si l'erreur est de plus de 500m il y a un probleme
         print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         print("Divergence of the algorithm")
@@ -138,10 +138,11 @@ if __name__ == '__main__':
     resampler = Resampler()
     resampling_threshold = 0.5*n_particles
 
-    dt, t = set_dt(T[steps,], T[0,])
+    idx_ti = int(3/5*T.shape[0])
+    idx_tf = int(4/5*T.shape[0]) #T.shape[0] #
 
-    t_i = int(2/3*T.shape[0])
-    t_f = T.shape[0] #int(4/5*T.shape[0]) #
+    dt, t = set_dt(T[steps,], T[0,])
+    _, tf = set_dt(T[idx_tf,])
 
     v_x = V_X[0,]
     v_y = V_Y[0,]
@@ -168,19 +169,18 @@ if __name__ == '__main__':
         image.show()
 
         print("Processing..")
-        r = range(t_i,t_f,steps)
+        r = range(idx_ti,idx_tf,steps)
 
 
-    else : r = tqdm(range(t_i,t_f,steps))
+    else : r = tqdm(range(idx_ti,idx_tf,steps))
     fig, ax = plt.subplots()
     TIME = []; BAR = []; SPEED = []; ERR = []
     beta = 1/100.
     # beta = 1/steps
-
     for i in r:
 
         """Set data"""
-        _, t = set_dt(T[i,]) #même dt pour tout t
+        t = set_dt(T[i,])[1]
         v_x = V_X[i,]
         v_y = V_Y[i,]
         v_z = V_Z[i,]
@@ -197,7 +197,7 @@ if __name__ == '__main__':
         v_z_std = V_Z_STD[i,]
 
         """Processing the motion of the robot """
-        robot_forward_motion =  dt*np.sqrt(v_x**2 + v_y**2)# + v_z**2)
+        roboidx_tforward_motion =  dt*np.sqrt(v_x**2 + v_y**2)# + v_z**2)
         robot_angular_motion = np.arctan2(v_x,v_y) #Je sais pas pourquoi c'est à l'envers
 
         """ Processing error on measures"""
@@ -209,14 +209,9 @@ if __name__ == '__main__':
         motion_model_turn_std = np.abs(sawtooth(np.arctan2((v_x + np.sign(v_x)*v_x_std),(v_y)) - np.arctan2((v_x),(v_y+np.sign(v_y)*v_y_std))))
         process_noise = [motion_model_forward_std, motion_model_turn_std]
 
-        # if motion_model_turn_std > 1:
-        #     print(np.arctan2((v_y + v_y_std),(v_x)))
-        #     print(np.arctan2((v_y),(v_x+v_x_std)))
-        #     print("v_x={},v_y={} and v_x_std={}, v_y_std={}".format(v_x,v_y,v_x_std,v_y_std))
-        #     print(f"process_noise={process_noise}")
         """Process the update"""
         t0 = time.time()
-        particles = update(robot_forward_motion, robot_angular_motion, measurements,\
+        particles = update(roboidx_tforward_motion, robot_angular_motion, measurements,\
                            measurements_noise, process_noise, particles,\
                             resampling_threshold, resampler, beta = beta, bounds = bounds)
 
@@ -225,7 +220,7 @@ if __name__ == '__main__':
             ax.cla()
             print("Temps de calcul: ",time.time() - t0)
             t1 = time.time()
-            ax.plot(coord2cart((LAT[t_i:t_f,], LON[t_i:t_f,]))[0,:], coord2cart((LAT[t_i:t_f,], LON[t_i:t_f,]))[1,:])
+            ax.plot(coord2cart((LAT[idx_ti:idx_tf,], LON[idx_ti:idx_tf,]))[0,:], coord2cart((LAT[idx_ti:idx_tf,], LON[idx_ti:idx_tf,]))[1,:])
             ax.set_title("Particle filter with {} particles with z = {}m".format(n_particles, measurements))
             ax.set_xlim([x_gps_min - 100,x_gps_max + 100])
             ax.set_ylim([y_gps_min - 100,y_gps_max + 100])
@@ -243,16 +238,16 @@ if __name__ == '__main__':
         ERR.append(np.sqrt((x_gps - get_average_state(particles)[0])**2 + (y_gps - get_average_state(particles)[1])**2))
         BAR.append([get_average_state(particles)[0],get_average_state(particles)[1]])
         SPEED.append(np.sqrt(v_x**2 + v_y**2))# + v_z**2))
-        # if test_diverge(ERR) : break #Permet de voir si l'algorithme diverge et pourquoi.
+        if test_diverge(ERR) : break #Permet de voir si l'algorithme diverge et pourquoi.
 
     elapsed_time = time.perf_counter() - start_time
     print("Elapsed time: {:.2f} seconds".format(elapsed_time))
 
     """ Affichage final """
     BAR = np.array(BAR)
-    LAT, LON = LAT[t_i:t_f,], LON[t_i:t_f,]
+    LAT, LON = LAT[idx_ti:idx_tf,], LON[idx_ti:idx_tf,]
 
-    plt.suptitle(f"Algorithm with\n{n_particles} particles\n{steps} data log used")
+    plt.suptitle(f"Algorithm with\n{n_particles} particles\n1/{steps} data log used")
     ax1 = plt.subplot2grid((2, 2), (0, 0), rowspan=2)
     ax2 = plt.subplot2grid((2, 2), (0, 1))
     ax3 = plt.subplot2grid((2, 2), (1, 1))

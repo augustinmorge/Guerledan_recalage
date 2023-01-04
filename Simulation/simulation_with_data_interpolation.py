@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-n_particles = 1000 #int(input("Number of particles: "))
-steps = 10# int(input("number of steps between measures ? "))
+n_particles = 100 #int(input("Number of particles: "))
+steps = 1# int(input("number of steps between measures ? "))
 bool_display = False #(str(input("Display the particles ? [Y/]"))=="Y")
 
 import time
@@ -177,10 +177,12 @@ if __name__ == '__main__':
     resampler = Resampler()
     resampling_threshold = 0.5*n_particles
 
-    dt, t = set_dt(T[steps,], T[0,])
+    t_i = int(3/5*T.shape[0])
+    t_f = int(4/5*T.shape[0]) #T.shape[0] #
 
-    t_i = int(2/3*T.shape[0])
-    t_f = T.shape[0] #int(4/5*T.shape[0]) #
+    dt, t = set_dt(T[steps,], T[0,])
+    _, tf = set_dt(T[t_f,])
+
 
     v_x = V_X[0,]
     v_y = V_Y[0,]
@@ -219,7 +221,7 @@ if __name__ == '__main__':
     for i in r:
 
         """Set data"""
-        _, t = set_dt(T[i,]) #même dt pour tout t
+        t = set_dt(T[i,])[1] #même dt pour tout t
         v_x = V_X[i,]
         v_y = V_Y[i,]
         v_z = V_Z[i,]
@@ -248,11 +250,6 @@ if __name__ == '__main__':
         motion_model_turn_std = np.abs(sawtooth(np.arctan2((v_x + np.sign(v_x)*v_x_std),(v_y)) - np.arctan2((v_x),(v_y+np.sign(v_y)*v_y_std))))
         process_noise = [motion_model_forward_std, motion_model_turn_std]
 
-        # if motion_model_turn_std > 1:
-        #     print(np.arctan2((v_y + v_y_std),(v_x)))
-        #     print(np.arctan2((v_y),(v_x+v_x_std)))
-        #     print("v_x={},v_y={} and v_x_std={}, v_y_std={}".format(v_x,v_y,v_x_std,v_y_std))
-        #     print(f"process_noise={process_noise}")
         """Process the update"""
         t0 = time.time()
         particles = update(robot_forward_motion, robot_angular_motion, measurements,\
@@ -294,7 +291,7 @@ if __name__ == '__main__':
     BAR = np.array(BAR)
     LAT, LON = LAT[t_i:t_f,], LON[t_i:t_f,]
 
-    plt.suptitle(f"Algorithm with interpolation\n{n_particles}particles\n1/{steps}data log used")
+    plt.suptitle(f"Algorithm with interpolation\n{n_particles} particles\n1/{steps} data log used")
     ax1 = plt.subplot2grid((2, 2), (0, 0), rowspan=2)
     ax2 = plt.subplot2grid((2, 2), (0, 1))
     ax3 = plt.subplot2grid((2, 2), (1, 1))
