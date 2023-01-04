@@ -17,7 +17,7 @@ int main() {
 	ifstream datafile;
 	datafile.open(filename.c_str(),ios::binary | ios::in);
 
-	if (!datafile.is_open()) 
+	if (!datafile.is_open())
 		throw "Unable to load data file";
 	Header header;
 	datafile.read((char*)&header.headerId,sizeof(header.headerId));
