@@ -177,7 +177,6 @@ if __name__ == '__main__':
     TIME = []; BAR = []; SPEED = []; ERR = []
     STD_X = []; STD_Y = []
     beta = 1/100.
-    # beta = 1/steps
     for i in r:
 
         """Set data"""
@@ -233,17 +232,18 @@ if __name__ == '__main__':
             plt.pause(0.00001)
             print("Temps d'affichage: ",time.time()-t1,"\n")
 
+        #Add variables useful to display graphs at the end of the program
         TIME.append(t)
         ERR.append(np.sqrt((x_gps - get_average_state(particles)[0])**2 + (y_gps - get_average_state(particles)[1])**2))
         BAR.append([get_average_state(particles)[0],get_average_state(particles)[1]])
         SPEED.append(np.sqrt(v_x**2 + v_y**2))# + v_z**2))
 
         var = np.std(np.column_stack((particles[1][0],particles[1][1])),axis=0)
-
         STD_X.append(var[0])
         STD_Y.append(var[1])
 
-        if test_diverge(ERR) : break #Permet de voir si l'algorithme diverge et pourquoi.
+        #Test if the algorithm diverge and why
+        if test_diverge(ERR) : break
 
 
 
@@ -284,14 +284,14 @@ if __name__ == '__main__':
     STD_X = np.array(STD_X).squeeze()
     STD_Y = np.array(STD_Y).squeeze()
     NORM_STD = np.sqrt(STD_X**2 + STD_Y**2)
-    max_std = 2*np.mean(NORM_STD)
+    max_std = 1.5*np.mean(NORM_STD)
     masque = NORM_STD > max_std
 
     fig, ax = plt.subplots()
     ax.set_title('Barycentre')
     ax.set_xlabel("x [m]")
     ax.set_ylabel("y [m]")
-    scatter = ax.scatter(BAR[:,0][~masque], BAR[:,1][~masque], s = 1.2, c = NORM_STD[~masque], cmap='viridis', label='barycentre of the particle')
+    scatter = ax.scatter(BAR[:,0][~masque], BAR[:,1][~masque], s = 1.2, c = NORM_STD[~masque], cmap='plasma', label='barycentre of the particle')
     cbar = fig.colorbar(scatter, extend='both')
     cbar.set_label('Ecart type')
     ax.legend()
