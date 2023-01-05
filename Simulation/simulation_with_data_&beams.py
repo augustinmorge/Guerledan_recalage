@@ -82,22 +82,27 @@ def propagate_sample(samples, forward_motion, angular_motion, process_noise, bou
     # Make sure we stay within cyclic world
     return propagated_samples
 
+
+d_beams_min = -20
+d_beams_max = 20
+d_beams = np.linspace(d_beams_min,d_beams_max,(d_beams_max-d_beams_min)//2+1)
+
 def compute_likelihood(samples, measurements_noise, beta):
-
-    d_beams = np.linspace(-20,20,10)
-    beams_x = (samples[1][0] + d_beams * np.cos(robot_angular_motion)).reshape(-1,1)
-    beams_y = (samples[1][1] + d_beams * np.sin(robot_angular_motion)).reshape(-1,1)
-
-    # Calcul de la distance au fond pour chaque faisceau de particules
-    _, z_mbes_particule_beam = distance_to_bottom(np.column_stack((beams_x, beams_y)), MNT)
-
     # Calcul de la position du GPS
     gps_x_beams = x_gps + d_beams * np.cos(robot_angular_motion)
     gps_y_beams = y_gps + d_beams * np.sin(robot_angular_motion)
 
     # Calcul de la distance au fond pour la position des beams
     _, measurements = distance_to_bottom(np.column_stack((gps_x_beams, gps_y_beams)), MNT)
-    measurements = np.tile(measurements, (z_mbes_particule_beam.shape[0]//d_beams.shape[0], 1))
+    measurements = np.tile(measurements, (n_particles, 1))
+
+    # Calcul de la position des beams
+    beams_x = (samples[1][0] + d_beams * np.cos(robot_angular_motion)).reshape(-1,1)
+    beams_y = (samples[1][1] + d_beams * np.sin(robot_angular_motion)).reshape(-1,1)
+
+    # Calcul de la distance au fond pour chaque faisceau de particules
+    _, z_mbes_particule_beam = distance_to_bottom(np.column_stack((beams_x, beams_y)), MNT)
+
 
     # Calcul de la norme entre les particles en la vraie mesure
     distance = (z_mbes_particule_beam - measurements) ** 2 #Fais la différence de tous

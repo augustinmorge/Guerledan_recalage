@@ -32,14 +32,14 @@ def normalize_weights(weighted_samples):
     return [weighted_samples[0] / np.sum(weighted_samples[0]), weighted_samples[1]]
 
 def validate_state(state, bounds, d_mnt):
-    x_min, x_max = bounds[0][0] - 10., bounds[0][1] + 10.
-    y_min, y_max = bounds[1][0] - 10., bounds[1][1] + 10.
-
+    # x_min, x_max = bounds[0][0] - 10., bounds[0][1] + 10.
+    # y_min, y_max = bounds[1][0] - 10., bounds[1][1] + 10.
+    #
     weights = state[0]
-    coords  = state[1]
-    weights[(coords[0] < x_min) | (coords[0] > x_max) | (coords[1] < y_min) | (coords[1] > y_max)] = 0
+    # coords  = state[1]
+    # weights[(coords[0] < x_min) | (coords[0] > x_max) | (coords[1] < y_min) | (coords[1] > y_max)] = 0
     weights[d_mnt > 1] = 0 # If we are out of the MNT
-    if np.sum(weights) == 0: sys.exit()
+    # if np.sum(weights) == 0: sys.exit()
     return(state)
 
 def propagate_sample(samples, forward_motion, angular_motion, process_noise, bounds):
@@ -138,11 +138,11 @@ if __name__ == '__main__':
     resampler = Resampler()
     resampling_threshold = 0.5*n_particles
 
-    idx_ti = int(3/5*T.shape[0])
-    idx_tf = int(4/5*T.shape[0]) #T.shape[0] #
+    idx_ti = int(1/3*T.shape[0])
+    idx_tf =  T.shape[0] #int(4/5*T.shape[0]) #
 
     dt, t = set_dt(T[steps,], T[0,])
-    _, tf = set_dt(T[idx_tf,])
+    _, tf = set_dt(T[idx_tf-1,])
 
     v_x = V_X[0,]
     v_y = V_Y[0,]
@@ -175,6 +175,7 @@ if __name__ == '__main__':
     else : r = tqdm(range(idx_ti,idx_tf,steps))
     fig, ax = plt.subplots()
     TIME = []; BAR = []; SPEED = []; ERR = []
+    STD_X = []; STD_Y = []
     beta = 1/100.
     # beta = 1/steps
     for i in r:
@@ -187,9 +188,7 @@ if __name__ == '__main__':
         lat = LAT[i,]
         lon = LON[i,]
         x_gps, y_gps = coord2cart((lat,lon)).flatten()
-        d_mnt, measurements = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)
-        if d_mnt > 1:
-            print(t, d_mnt)
+        _, measurements = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)
         lat_std = LAT_STD[i,]
         lon_std = LON_STD[i,]
         v_x_std = V_X_STD[i,]
@@ -238,7 +237,15 @@ if __name__ == '__main__':
         ERR.append(np.sqrt((x_gps - get_average_state(particles)[0])**2 + (y_gps - get_average_state(particles)[1])**2))
         BAR.append([get_average_state(particles)[0],get_average_state(particles)[1]])
         SPEED.append(np.sqrt(v_x**2 + v_y**2))# + v_z**2))
+
+        var = np.std(np.column_stack((particles[1][0],particles[1][1])),axis=0)
+
+        STD_X.append(var[0])
+        STD_Y.append(var[1])
+
         if test_diverge(ERR) : break #Permet de voir si l'algorithme diverge et pourquoi.
+
+
 
     elapsed_time = time.perf_counter() - start_time
     print("Elapsed time: {:.2f} seconds".format(elapsed_time))
@@ -274,6 +281,22 @@ if __name__ == '__main__':
 
     print("Computing the diagrams..")
 
+    STD_X = np.array(STD_X).squeeze()
+    STD_Y = np.array(STD_Y).squeeze()
+    NORM_STD = np.sqrt(STD_X**2 + STD_Y**2)
+    max_std = 2*np.mean(NORM_STD)
+    masque = NORM_STD > max_std
+
+    fig, ax = plt.subplots()
+    ax.set_title('Barycentre')
+    ax.set_xlabel("x [m]")
+    ax.set_ylabel("y [m]")
+    scatter = ax.scatter(BAR[:,0][~masque], BAR[:,1][~masque], s = 1.2, c = NORM_STD[~masque], cmap='viridis', label='barycentre of the particle')
+    cbar = fig.colorbar(scatter, extend='both')
+    cbar.set_label('Ecart type')
+    ax.legend()
+
     plt.show()
+
 
 print("~~~End of the algorithm~~~")

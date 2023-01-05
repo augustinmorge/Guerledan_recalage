@@ -56,7 +56,7 @@ if bool_txt:
 
     print("Importing the MNT-TXT file..")
     """ Import the MNT """
-    data_cropped = True #((str(input("cropped ?[Y/] "))) == "Y")
+    data_cropped = False #((str(input("cropped ?[Y/] "))) == "Y")
     AimeNT = np.loadtxt(file_path+"/../resources/guerledan_EDF_2013-06_MNT1m.tiff.txt", dtype = str)
     if data_cropped:
         AimeNT = np.loadtxt(file_path+"/../resources/guerledan_cropped.txt", dtype = str)
