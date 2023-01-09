@@ -253,6 +253,11 @@ if __name__ == '__main__':
     """ Affichage final """
     BAR = np.array(BAR)
     LAT, LON = LAT[idx_ti:idx_tf,], LON[idx_ti:idx_tf,]
+    STD_X = np.array(STD_X).squeeze()
+    STD_Y = np.array(STD_Y).squeeze()
+    NORM_STD = np.sqrt(STD_X**2 + STD_Y**2)
+    max_std = 1.5*np.mean(NORM_STD)
+    masque = NORM_STD > max_std
 
     plt.suptitle(f"Algorithm with\n{n_particles} particles\n1/{steps} data log used")
     ax1 = plt.subplot2grid((2, 2), (0, 0), rowspan=2)
@@ -263,8 +268,10 @@ if __name__ == '__main__':
     ax1.set_title("Barycentre")
     ax1.set_xlabel("x [m]")
     ax1.set_ylabel("y [m]")
-    ax1.plot(coord2cart((LAT,LON))[0,:], coord2cart((LAT,LON))[1,:],label='true position')
-    ax1.scatter(BAR[:,0], BAR[:,1], color='red', s = 1.2, label='barycentre of the particle')
+    ax1.plot(coord2cart((LAT,LON))[0,:], coord2cart((LAT,LON))[1,:],label='true position',linewidth=0.5,color='k')
+    scatter = ax1.scatter(BAR[:,0][~masque], BAR[:,1][~masque], s = 1.2, c = NORM_STD[~masque], cmap='plasma', label='barycentre of the particle')
+    cbar = fig.colorbar(scatter, extend='both', ax = ax1)
+    cbar.set_label('Ecart type')
     ax1.legend()
 
     ax2.set_title("Error function.")
@@ -280,21 +287,6 @@ if __name__ == '__main__':
     ax3.legend()
 
     print("Computing the diagrams..")
-
-    STD_X = np.array(STD_X).squeeze()
-    STD_Y = np.array(STD_Y).squeeze()
-    NORM_STD = np.sqrt(STD_X**2 + STD_Y**2)
-    max_std = 1.5*np.mean(NORM_STD)
-    masque = NORM_STD > max_std
-
-    fig, ax = plt.subplots()
-    ax.set_title('Barycentre')
-    ax.set_xlabel("x [m]")
-    ax.set_ylabel("y [m]")
-    scatter = ax.scatter(BAR[:,0][~masque], BAR[:,1][~masque], s = 1.2, c = NORM_STD[~masque], cmap='plasma', label='barycentre of the particle')
-    cbar = fig.colorbar(scatter, extend='both')
-    cbar.set_label('Ecart type')
-    ax.legend()
 
     plt.show()
 

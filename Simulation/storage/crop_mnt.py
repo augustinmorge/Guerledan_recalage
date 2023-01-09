@@ -4,9 +4,9 @@ import os
 file_path = os.path.dirname(os.path.abspath(__file__))
 
 with open("../resources/guerledan_cropped.txt","w") as mnt_cropped:
-    AimeNT = np.loadtxt(file_path+"/../resources/guerledan_EDF_2013-06_MNT1m.tiff.txt", dtype = str)
+    MNT_txt = np.loadtxt(file_path+"/../resources/guerledan_EDF_2013-06_MNT1m.tiff.txt", dtype = str)
     MNT = []
-    for i in AimeNT:
+    for i in MNT_txt:
         MNT.append(i.split(','))
         MNT[-1] = [np.float64(MNT[-1][0]), np.float64(MNT[-1][1]), np.float64(MNT[-1][2]+'.'+MNT[-1][3])]
     MNT = np.array(MNT)
