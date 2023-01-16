@@ -7,10 +7,10 @@ import joblib, pickle
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 
-bool_txt = 0
-bool_compress = 1
+bool_txt = 1
+bool_compress = 0
 if bool_txt*bool_compress or not(bool_txt+bool_compress): import sys; print("Please choose txt or compressed data"); sys.exit()
-data_cropped = 0
+data_cropped = 1
 
 # Définit les coordonnées de référence
 wpt_ponton = (48.1989495, -3.0148023)
@@ -41,15 +41,15 @@ if bool_txt:
     T = data[:,0]
     LAT = np.float64(data[:,4])
     LON = np.float64(data[:,5])
-    V_X = np.float64(data[:,1])
-    V_Y = np.float64(data[:,2])
+    V_X = np.float64(data[:,2])
+    V_Y = np.float64(data[:,1])
     V_Z = np.float64(data[:,3])
 
     #Error on importation
     LAT_STD = np.float64(data[:,6])
     LON_STD = np.float64(data[:,7])
-    V_X_STD = np.float64(data[:,8])
-    V_Y_STD = np.float64(data[:,9])
+    V_X_STD = np.float64(data[:,9])
+    V_Y_STD = np.float64(data[:,8])
     V_Z_STD = np.float64(data[:,10])
 
 
@@ -92,15 +92,15 @@ if bool_txt:
     kd_tree = KDTree(vec_mnt, metric="euclidean")
 
     """ Uncomment the following section to save the data """
-    # np.savez("ins.npz", T=T, LAT=LAT, LON=LON, V_X=V_X, V_Y=V_Y, V_Z=V_Z,\
-    # LAT_STD=LAT_STD, LON_STD=LON_STD, V_X_STD=V_X_STD,\
-    # V_Y_STD=V_Y_STD, V_Z_STD=V_Z_STD,\
-    # dtype = np.float64, precision = 16)
-    # np.savez("mnt.npz", MNT=MNT, dtype = np.float64, precision = 16)
+    np.savez("ins.npz", T=T, LAT=LAT, LON=LON, V_X=V_X, V_Y=V_Y, V_Z=V_Z,\
+    LAT_STD=LAT_STD, LON_STD=LON_STD, V_X_STD=V_X_STD,\
+    V_Y_STD=V_Y_STD, V_Z_STD=V_Z_STD,\
+    dtype = np.float64, precision = 16)
+    np.savez("mnt.npz", MNT=MNT, dtype = np.float64, precision = 16)
     # with open('kd_tree.pkl', 'wb') as f:
     #     pickle.dump(kd_tree, f)
-    # with open('kd_tree.joblib', 'wb') as f:
-    #     joblib.dump(kd_tree, f)
+    with open('kd_tree.joblib', 'wb') as f:
+        joblib.dump(kd_tree, f)
 
 if bool_compress:
     """ Load the compressed data """

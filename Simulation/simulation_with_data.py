@@ -71,10 +71,10 @@ def compute_likelihood(samples, measurements, measurements_noise, beta):
 def needs_resampling(resampling_threshold):
     return 1.0 / np.max(particles[0]) < resampling_threshold
 
-def update(roboidx_tforward_motion, robot_angular_motion, measurements, measurements_noise, process_noise, particles,resampling_threshold, resampler, beta, bounds):
+def update(robot_forward_motion, robot_angular_motion, measurements, measurements_noise, process_noise, particles,resampling_threshold, resampler, beta, bounds):
 
     # Propagate the particle state according to the current particle
-    propagated_states = propagate_sample(particles, roboidx_tforward_motion, robot_angular_motion, process_noise, bounds)
+    propagated_states = propagate_sample(particles, robot_forward_motion, robot_angular_motion, process_noise, bounds)
 
     # Compute current particle's weight
     d_mnt, p = compute_likelihood(propagated_states, measurements, measurements_noise, beta)
@@ -196,8 +196,8 @@ if __name__ == '__main__':
         v_z_std = V_Z_STD[i,]
 
         """Processing the motion of the robot """
-        roboidx_tforward_motion =  dt*np.sqrt(v_x**2 + v_y**2)# + v_z**2)
-        robot_angular_motion = np.arctan2(v_x,v_y) #Je sais pas pourquoi c'est à l'envers
+        robot_forward_motion =  dt*np.sqrt(v_x**2 + v_y**2)# + v_z**2)
+        robot_angular_motion = np.arctan2(v_y,v_x) #Je sais pas pourquoi c'est à l'envers
 
         """ Processing error on measures"""
         meas_model_distance_std = None
@@ -210,7 +210,7 @@ if __name__ == '__main__':
 
         """Process the update"""
         t0 = time.time()
-        particles = update(roboidx_tforward_motion, robot_angular_motion, measurements,\
+        particles = update(robot_forward_motion, robot_angular_motion, measurements,\
                            measurements_noise, process_noise, particles,\
                             resampling_threshold, resampler, beta = beta, bounds = bounds)
 
