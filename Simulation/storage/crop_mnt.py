@@ -3,8 +3,8 @@ import pyproj
 import os
 file_path = os.path.dirname(os.path.abspath(__file__))
 
-with open("../resources/guerledan_cropped.txt","w") as mnt_cropped:
-    MNT_txt = np.loadtxt(file_path+"/../resources/guerledan_EDF_2013-06_MNT1m.tiff.txt", dtype = str)
+with open("../mnt/guerledan_cropped.txt","w") as mnt_cropped:
+    MNT_txt = np.loadtxt(file_path+"/../mnt/guerledan_EDF_2013-06_MNT1m.tiff.txt", dtype = str)
     MNT = []
     for i in MNT_txt:
         MNT.append(i.split(','))
