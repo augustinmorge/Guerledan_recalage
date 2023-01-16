@@ -10,8 +10,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from resampler import Resampler
 from storage.data_import import *
-import sys
 from tqdm import tqdm
+import sys
 file_path = os.path.dirname(os.path.abspath(__file__))
 
 def sawtooth(x):
@@ -138,22 +138,23 @@ if __name__ == '__main__':
     resampler = Resampler()
     resampling_threshold = 0.5*n_particles
 
-    idx_ti = int(1/3*T.shape[0])
-    idx_tf =  T.shape[0] #int(4/5*T.shape[0]) #
+    idx_ti = int(2/3*T.shape[0]) #0 #
+    idx_tf =  int(4/5*T.shape[0]) #T.shape[0] #
 
     dt, t = set_dt(T[steps,], T[0,])
+    _, tini = set_dt(T[idx_ti,],)
     _, tf = set_dt(T[idx_tf-1,])
 
-    v_x = V_X[0,]
-    v_y = V_Y[0,]
-    v_z = V_Z[0,]
-    lat = LAT[0,]
-    lon = LON[0,]
-    lat_std = LAT_STD[0,]
-    lon_std = LON_STD[0,]
-    v_x_std = V_X_STD[0,]
-    v_y_std = V_Y_STD[0,]
-    v_z_std = V_Z_STD[0,]
+    v_x = V_X[idx_ti,]
+    v_y = V_Y[idx_ti,]
+    v_z = V_Z[idx_ti,]
+    lat = LAT[idx_ti,]
+    lon = LON[idx_ti,]
+    lat_std = LAT_STD[idx_ti,]
+    lon_std = LON_STD[idx_ti,]
+    v_x_std = V_X_STD[idx_ti,]
+    v_y_std = V_Y_STD[idx_ti,]
+    v_z_std = V_Z_STD[idx_ti,]
 
     if bool_display:
         """ Création des isobates """
@@ -199,7 +200,7 @@ if __name__ == '__main__':
         robot_angular_motion = np.arctan2(v_x,v_y) #Je sais pas pourquoi c'est à l'envers
 
         """ Processing error on measures"""
-        meas_model_distance_std = None #1 #50*steps*(np.sqrt(lat_std**2 + lon_std**2)) # On estime que l'erreur en z est le même que celui en lat, lon, ce qui est faux
+        meas_model_distance_std = None
         measurements_noise = [meas_model_distance_std] ### Attention, std est en mètres !
 
         """ Processing error on algorithm"""
@@ -251,6 +252,7 @@ if __name__ == '__main__':
     print("Elapsed time: {:.2f} seconds".format(elapsed_time))
 
     """ Affichage final """
+    TIME = (np.array(TIME) - tini)/60.
     BAR = np.array(BAR)
     LAT, LON = LAT[idx_ti:idx_tf,], LON[idx_ti:idx_tf,]
     STD_X = np.array(STD_X).squeeze()
@@ -259,7 +261,7 @@ if __name__ == '__main__':
     max_std = 1.5*np.mean(NORM_STD)
     masque = NORM_STD > max_std
 
-    plt.suptitle(f"Algorithm with\n{n_particles} particles\n1/{steps} data log used")
+    plt.suptitle(f"Algorithm with\n{n_particles} particles; 1/{steps} data log used\nTotal time:{int(elapsed_time)}s")
     ax1 = plt.subplot2grid((2, 2), (0, 0), rowspan=2)
     ax2 = plt.subplot2grid((2, 2), (0, 1))
     ax3 = plt.subplot2grid((2, 2), (1, 1))
@@ -275,13 +277,13 @@ if __name__ == '__main__':
     ax1.legend()
 
     ax2.set_title("Error function.")
-    ax2.set_xlabel("time [s]")
+    ax2.set_xlabel("time [min]")
     ax2.set_ylabel("error (m)")
     ax2.plot(TIME, ERR, color = 'b', label = 'erreur')
     ax2.legend()
 
     ax3.set_title("Vitesse")
-    ax3.set_xlabel("time [s]")
+    ax3.set_xlabel("time [min]")
     ax3.set_ylabel("||v|| [m/s]")
     ax3.plot(TIME, SPEED, label = 'speed')
     ax3.legend()

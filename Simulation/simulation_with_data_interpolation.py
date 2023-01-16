@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
-n_particles = 100 #int(input("Number of particles: "))
-steps = 1# int(input("number of steps between measures ? "))
-bool_display = False #(str(input("Display the particles ? [Y/]"))=="Y")
+n_particles = int(input("Number of particles: "))
+steps = int(input("number of steps between measures ? "))
+bool_display = (str(input("Display the particles ? [Y/]"))=="Y")
 
 import time
 start_time = time.perf_counter()
@@ -177,11 +177,11 @@ if __name__ == '__main__':
     resampler = Resampler()
     resampling_threshold = 0.5*n_particles
 
-    t_i = int(3/5*T.shape[0])
-    t_f = int(4/5*T.shape[0]) #T.shape[0] #
+    idx_ti = int(1/3*T.shape[0])
+    idx_tf =  T.shape[0] #int(4/5*T.shape[0]) #
 
     dt, t = set_dt(T[steps,], T[0,])
-    _, tf = set_dt(T[t_f,])
+    _, tf = set_dt(T[idx_tf-1,])
 
 
     v_x = V_X[0,]
@@ -209,12 +209,13 @@ if __name__ == '__main__':
         image.show()
 
         print("Processing..")
-        r = range(t_i,t_f,steps)
+        r = range(idx_ti,idx_tf,steps)
 
 
-    else : r = tqdm(range(t_i,t_f,steps))
+    else : r = tqdm(range(idx_ti,idx_tf,steps))
     fig, ax = plt.subplots()
     TIME = []; BAR = []; SPEED = []; ERR = []
+    STD_X = []; STD_Y = [];
     beta = 1/100.
     # beta = 1/steps
 
@@ -261,7 +262,7 @@ if __name__ == '__main__':
             ax.cla()
             print("Temps de calcul: ",time.time() - t0)
             t1 = time.time()
-            ax.plot(coord2cart((LAT[t_i:t_f,], LON[t_i:t_f,]))[0,:], coord2cart((LAT[t_i:t_f,], LON[t_i:t_f,]))[1,:])
+            ax.plot(coord2cart((LAT[idx_ti:idx_tf,], LON[idx_ti:idx_tf,]))[0,:], coord2cart((LAT[idx_ti:idx_tf,], LON[idx_ti:idx_tf,]))[1,:])
             ax.set_title("Particle filter with {} particles with z = {}m".format(n_particles, measurements))
             ax.set_xlim([x_gps_min - 100,x_gps_max + 100])
             ax.set_ylim([y_gps_min - 100,y_gps_max + 100])
@@ -282,6 +283,10 @@ if __name__ == '__main__':
         ERR.append(np.sqrt((x_gps - get_average_state(particles)[0])**2 + (y_gps - get_average_state(particles)[1])**2))
         BAR.append([get_average_state(particles)[0],get_average_state(particles)[1]])
         SPEED.append(np.sqrt(v_x**2 + v_y**2))# + v_z**2))
+
+        var = np.std(np.column_stack((particles[1][0],particles[1][1])),axis=0)
+        STD_X.append(var[0])
+        STD_Y.append(var[1])
         # if test_diverge(ERR) : break #Permet de voir si l'algorithme diverge et pourquoi.
 
     elapsed_time = time.perf_counter() - start_time
@@ -289,9 +294,14 @@ if __name__ == '__main__':
 
     """ Affichage final """
     BAR = np.array(BAR)
-    LAT, LON = LAT[t_i:t_f,], LON[t_i:t_f,]
+    LAT, LON = LAT[idx_ti:idx_tf,], LON[idx_ti:idx_tf,]
+    STD_X = np.array(STD_X).squeeze()
+    STD_Y = np.array(STD_Y).squeeze()
+    NORM_STD = np.sqrt(STD_X**2 + STD_Y**2)
+    max_std = 1.5*np.mean(NORM_STD)
+    masque = NORM_STD > max_std
 
-    plt.suptitle(f"Algorithm with interpolation\n{n_particles} particles\n1/{steps} data log used")
+    plt.suptitle(f"Interpolation algorithm with\n{n_particles} particles; 1/{steps} data log used\nTotal time:{int(elapsed_time)}s")
     ax1 = plt.subplot2grid((2, 2), (0, 0), rowspan=2)
     ax2 = plt.subplot2grid((2, 2), (0, 1))
     ax3 = plt.subplot2grid((2, 2), (1, 1))
@@ -300,8 +310,10 @@ if __name__ == '__main__':
     ax1.set_title("Barycentre")
     ax1.set_xlabel("x [m]")
     ax1.set_ylabel("y [m]")
-    ax1.plot(coord2cart((LAT,LON))[0,:], coord2cart((LAT,LON))[1,:],label='true position')
-    ax1.scatter(BAR[:,0], BAR[:,1], color='red', s = 1.2, label='barycentre of the particle')
+    ax1.plot(coord2cart((LAT,LON))[0,:], coord2cart((LAT,LON))[1,:],label='true position',linewidth=0.5,color='k')
+    scatter = ax1.scatter(BAR[:,0][~masque], BAR[:,1][~masque], s = 1.2, c = NORM_STD[~masque], cmap='plasma', label='barycentre of the particle')
+    cbar = fig.colorbar(scatter, extend='both', ax = ax1)
+    cbar.set_label('Ecart type')
     ax1.legend()
 
     ax2.set_title("Error function.")
