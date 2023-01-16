@@ -10,7 +10,7 @@ file_path = os.path.dirname(os.path.abspath(__file__))
 bool_txt = 0
 bool_compress = 1
 if bool_txt*bool_compress or not(bool_txt+bool_compress): import sys; print("Please choose txt or compressed data"); sys.exit()
-data_cropped = 0
+data_cropped = 1
 
 # Définit les coordonnées de référence
 wpt_ponton = (48.1989495, -3.0148023)
@@ -70,6 +70,10 @@ if bool_txt:
             MNT[-1] = [np.float64(MNT[-1][0]), np.float64(MNT[-1][1]), np.float64(MNT[-1][2])]
         MNT = np.array(MNT)
 
+        # #Slicing of the MNT
+        # masque = (MNT[:,0]>-3.016)&(MNT[:,1]>48.2)
+        # MNT = MNT[~masque]
+
     else: #Choose the compressed file
         MNT_txt = np.loadtxt(file_path+"/../resources/guerledan_EDF_2013-06_MNT1m.tiff.txt", dtype = str)
 
@@ -92,15 +96,15 @@ if bool_txt:
     kd_tree = KDTree(vec_mnt, metric="euclidean")
 
     """ Uncomment the following section to save the data """
-    # np.savez("ins.npz", T=T, LAT=LAT, LON=LON, V_X=V_X, V_Y=V_Y, V_Z=V_Z,\
-    # LAT_STD=LAT_STD, LON_STD=LON_STD, V_X_STD=V_X_STD,\
-    # V_Y_STD=V_Y_STD, V_Z_STD=V_Z_STD,\
-    # dtype = np.float64, precision = 16)
-    # np.savez("mnt.npz", MNT=MNT, dtype = np.float64, precision = 16)
-    # with open('kd_tree.pkl', 'wb') as f:
-    #     pickle.dump(kd_tree, f)
-    # with open('kd_tree.joblib', 'wb') as f:
-    #     joblib.dump(kd_tree, f)
+    np.savez("ins.npz", T=T, LAT=LAT, LON=LON, V_X=V_X, V_Y=V_Y, V_Z=V_Z,\
+    LAT_STD=LAT_STD, LON_STD=LON_STD, V_X_STD=V_X_STD,\
+    V_Y_STD=V_Y_STD, V_Z_STD=V_Z_STD,\
+    dtype = np.float64, precision = 16)
+    np.savez("mnt.npz", MNT=MNT, dtype = np.float64, precision = 16)
+    with open('kd_tree.pkl', 'wb') as f:
+        pickle.dump(kd_tree, f)
+    with open('kd_tree.joblib', 'wb') as f:
+        joblib.dump(kd_tree, f)
 
 if bool_compress:
     """ Load the compressed data """
