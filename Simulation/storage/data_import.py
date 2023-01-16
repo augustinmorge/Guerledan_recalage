@@ -24,9 +24,9 @@ def coord2cart(coords,coords_ref=wpt_ponton):
     return np.array([x_tilde,y_tilde])
 
 """ Uncomment the following section to crop the data from INS """
-# file = open("/../resources/sbgCenterExport.txt", "r")
+# file = open("/sbgCenterExport.txt", "r")
 # file_text = file.readlines()
-# newfile = open("/../resources/sbgCenterExport_new.txt", "w")
+# newfile = open("/sbgCenterExport_new.txt", "w")
 # for i in range(250000,len(file_text)):
 #     line = file_text[i]
 #     newfile.write(line)
@@ -36,7 +36,7 @@ def coord2cart(coords,coords_ref=wpt_ponton):
 if bool_txt:
     """ Import INS """
     print("Importing the INS-TXT file..")
-    filepath = file_path+"/../resources/sbgCenterExport_new.txt"
+    filepath = file_path+"/sbgCenterExport_new.txt"
     data = np.loadtxt(filepath, dtype="U")
     T = data[:,0]
     LAT = np.float64(data[:,4])
@@ -64,14 +64,14 @@ if bool_txt:
 
     MNT = []
     if data_cropped: #Choose the txt file
-        MNT_txt = np.loadtxt(file_path+"/../resources/guerledan_cropped.txt", dtype = str)
+        MNT_txt = np.loadtxt(file_path+"/../mnt/guerledan_cropped.txt", dtype = str)
         for i in MNT_txt:
             MNT.append(i.split(','))
             MNT[-1] = [np.float64(MNT[-1][0]), np.float64(MNT[-1][1]), np.float64(MNT[-1][2])]
         MNT = np.array(MNT)
 
     else: #Choose the compressed file
-        MNT_txt = np.loadtxt(file_path+"/../resources/guerledan_EDF_2013-06_MNT1m.tiff.txt", dtype = str)
+        MNT_txt = np.loadtxt(file_path+"/../mnt/guerledan_EDF_2013-06_MNT1m.tiff.txt", dtype = str)
 
         #Flip the MNT
         for i in MNT_txt:
