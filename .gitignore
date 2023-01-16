@@ -6,3 +6,7 @@ Simulation/storage/ins.npz
 Simulation/storage/mnt.npz
 Simulation/storage/kd_tree.pkl
 Simulation/storage/kd_tree.joblib
+Simulation/storage_afternoon/ins.npz
+Simulation/storage_afternoon/mnt.npz
+Simulation/storage_afternoon/kd_tree.pkl
+Simulation/storage_afternoon/kd_tree.joblib
