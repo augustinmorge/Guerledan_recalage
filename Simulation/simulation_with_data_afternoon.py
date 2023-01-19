@@ -115,17 +115,6 @@ def test_diverge(ERR, err_max=1000):
         return True #Alors on arrete
     return(False)
 
-def set_dt(ti, pti = T[0,]):
-    t = ti.split(":")
-    t[2] = t[2].split(".")
-    t = float(t[0])*60*60+float(t[1])*60+float(t[2][0]) + float(t[2][1])/1000.
-
-    pt = pti.split(":")
-    pt[2] = pt[2].split(".")
-    pt = float(pt[0])*60*60+float(pt[1])*60+float(pt[2][0]) + float(pt[2][1])/1000.
-
-    return(t - pt, t)
-
 if __name__ == '__main__':
     print("~~~Start of the algorithm~~~")
 
@@ -141,9 +130,11 @@ if __name__ == '__main__':
     idx_ti = int(1/3*T.shape[0]) #0 #
     idx_tf =  T.shape[0] #int(4/5*T.shape[0]) #
 
-    dt, t = set_dt(T[steps,], T[0,])
-    _, tini = set_dt(T[idx_ti,],)
-    _, tf = set_dt(T[idx_tf-1,])
+    dt = T[steps,] - T[0,]
+    tini = T[idx_ti,]
+    tf = T[idx_tf-1,]
+
+    print(dt)
 
     v_x_ins = V_X[idx_ti,]
     v_y_ins = V_Y[idx_ti,]
@@ -189,7 +180,7 @@ if __name__ == '__main__':
     for i in r:
 
         """Set data"""
-        t = set_dt(T[i,])[1]
+        t = T[i,]
         v_x_ins = V_X[i,]
         v_y_ins = V_Y[i,]
         v_z_ins = V_Z[i,]

@@ -181,17 +181,6 @@ def test_diverge(ERR, err_max=200):
         return True #Alors on arrete
     return(False)
 
-def set_dt(ti, pti = T[0,]):
-    t = ti.split(":")
-    t[2] = t[2].split(".")
-    t = float(t[0])*60*60+float(t[1])*60+float(t[2][0]) + float(t[2][1])/1000.
-
-    pt = pti.split(":")
-    pt[2] = pt[2].split(".")
-    pt = float(pt[0])*60*60+float(pt[1])*60+float(pt[2][0]) + float(pt[2][1])/1000.
-
-    return(t - pt, t)
-
 if __name__ == '__main__':
     print("~~~Start of the algorithm~~~")
 
@@ -204,11 +193,12 @@ if __name__ == '__main__':
     resampler = Resampler()
     resampling_threshold = 0.5*n_particles
 
-    idx_ti = int(1/3*T.shape[0])
-    idx_tf =  T.shape[0] #int(4/5*T.shape[0]) #
+    idx_ti = int(1/3*T.shape[0]) #0 #
+    idx_tf =  int(4/5*T.shape[0]) #T.shape[0] #
 
-    dt, t = set_dt(T[steps,], T[0,])
-    _, tf = set_dt(T[idx_tf-1,])
+    dt = T[steps,] - T[0,]
+    tini = T[idx_ti,]
+    tf = T[idx_tf-1,]
 
     v_x = V_X[0,]
     v_y = V_Y[0,]

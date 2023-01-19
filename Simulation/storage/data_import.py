@@ -10,7 +10,7 @@ file_path = os.path.dirname(os.path.abspath(__file__))
 bool_txt = 0
 bool_compress = 1
 if bool_txt*bool_compress or not(bool_txt+bool_compress): import sys; print("Please choose txt or compressed data"); sys.exit()
-data_cropped = 0
+data_cropped = 1
 
 # Définit les coordonnées de référence
 wpt_ponton = (48.1989495, -3.0148023)
@@ -39,6 +39,8 @@ if bool_txt:
     filepath = file_path+"/sbgCenterExport_new.txt"
     data = np.loadtxt(filepath, dtype="U")
     T = data[:,0]
+    T = np.array([dt.split(":") for dt in T], dtype=np.float64)
+    T = 60*60*T[:,0] + 60*T[:,1] + T[:,2]
     LAT = np.float64(data[:,4])
     LON = np.float64(data[:,5])
     V_X = np.float64(data[:,2])
