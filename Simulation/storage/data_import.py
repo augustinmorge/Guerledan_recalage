@@ -7,10 +7,10 @@ import joblib, pickle
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 
-bool_txt = 1
-bool_compress = 0
+bool_txt = 0
+bool_compress = 1
 if bool_txt*bool_compress or not(bool_txt+bool_compress): import sys; print("Please choose txt or compressed data"); sys.exit()
-data_cropped = 1
+data_cropped = 0
 
 # Définit les coordonnées de référence
 wpt_ponton = (48.1989495, -3.0148023)

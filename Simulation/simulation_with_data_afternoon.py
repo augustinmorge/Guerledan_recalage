@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
-n_particles = 10000#int(input("Number of particles: "))
-steps = 400#int(input("number of steps between measures ? "))
-bool_display = True # (str(input("Display the particles ? [Y/]"))=="Y")
+n_particles = int(input("Number of particles: "))
+steps = int(input("number of steps between measures ? "))
+bool_display =(str(input("Display the particles ? [Y/]"))=="Y")
 
 import time
 start_time = time.perf_counter()
@@ -221,7 +221,7 @@ if __name__ == '__main__':
 
         """ Processing error on algorithm"""
         motion_model_forward_std = steps*np.sqrt(v_y_ins_std**2 + v_x_ins_std**2)# + v_z_ins_std**2)
-        motion_model_turn_std = yaw_std #np.abs(sawtooth(np.arctan2((v_x_ins + np.sign(v_x_ins)*v_x_ins_std),(v_y_ins)) - np.arctan2((v_x_ins),(v_y_ins+np.sign(v_y_ins)*v_y_ins_std))))
+        motion_model_turn_std = np.abs(sawtooth(np.arctan2((v_x_ins + np.sign(v_x_ins)*v_x_ins_std),(v_y_ins)) - np.arctan2((v_x_ins),(v_y_ins+np.sign(v_y_ins)*v_y_ins_std))))
         process_noise = [motion_model_forward_std, motion_model_turn_std]
 
         """Process the update"""

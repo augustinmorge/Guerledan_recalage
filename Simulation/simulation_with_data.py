@@ -138,7 +138,7 @@ if __name__ == '__main__':
     resampler = Resampler()
     resampling_threshold = 0.5*n_particles
 
-    idx_ti = int(2/3*T.shape[0]) #0 #
+    idx_ti = int(1/3*T.shape[0]) #0 #
     idx_tf =  int(4/5*T.shape[0]) #T.shape[0] #
 
     dt, t = set_dt(T[steps,], T[0,])

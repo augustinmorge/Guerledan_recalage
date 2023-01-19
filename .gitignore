@@ -10,3 +10,7 @@ Simulation/storage_afternoon/ins.npz
 Simulation/storage_afternoon/mnt.npz
 Simulation/storage_afternoon/kd_tree.pkl
 Simulation/storage_afternoon/kd_tree.joblib
+Simulation/storage_afternoon/kd_tree.joblib
+
+Simulation/storage/mbes_trdi.txt
+Simulation/storage_afternoon/dvl_afternoon/mbes_navsight.txt
