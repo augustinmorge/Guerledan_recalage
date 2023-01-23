@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from storage_afternoon.data_import import *
 n_particles = int(input("Number of particles: "))
 steps = int(input("number of steps between measures ? "))
 bool_display =(str(input("Display the particles ? [Y/]"))=="Y")
@@ -9,7 +10,6 @@ start_time = time.perf_counter()
 import numpy as np
 import matplotlib.pyplot as plt
 from resampler import Resampler
-from storage_afternoon.data_import import *
 from tqdm import tqdm
 import sys
 file_path = os.path.dirname(os.path.abspath(__file__))
@@ -127,14 +127,12 @@ if __name__ == '__main__':
     resampler = Resampler()
     resampling_threshold = 0.5*n_particles
 
-    idx_ti = int(1/3*T.shape[0]) #0 #
+    idx_ti = 0 #int(1/3*T.shape[0]) #
     idx_tf =  T.shape[0] #int(4/5*T.shape[0]) #
 
     dt = T[steps,] - T[0,]
     tini = T[idx_ti,]
     tf = T[idx_tf-1,]
-
-    print(dt)
 
     v_x_ins = V_X[idx_ti,]
     v_y_ins = V_Y[idx_ti,]
@@ -147,13 +145,6 @@ if __name__ == '__main__':
     lon = LON[idx_ti,]
     lat_std = LAT_STD[idx_ti,]
     lon_std = LON_STD[idx_ti,]
-
-    # yaw = YAW[idx_ti,]
-    # yaw_std = YAW_STD[idx_ti,]
-    # roll = ROLL[idx_ti,]
-    # roll_std = ROLL_STD[idx_ti,]
-    # pitch = PITCH[idx_ti,]
-    # pitch_std = PITCH_STD[idx_ti,]
 
     if bool_display:
         """ Création des isobates """
@@ -176,6 +167,7 @@ if __name__ == '__main__':
     fig, ax = plt.subplots()
     TIME = []; BAR = []; SPEED = []; ERR = []
     STD_X = []; STD_Y = []
+    MEASUREMENTS = []
     beta = 5/100.
     for i in r:
 
@@ -188,19 +180,8 @@ if __name__ == '__main__':
         v_y_ins_std = V_Y_STD[i,]
         v_z_ins_std = V_Z_STD[i,]
 
-        lat = LAT[i,]
-        lon = LON[i,]
-        x_gps, y_gps = coord2cart((lat,lon)).flatten()
-        _, measurements = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)
-        lat_std = LAT_STD[i,]
-        lon_std = LON_STD[i,]
-
-        # yaw = (YAW[i,])/180*np.pi%(2*np.pi)
-        # pitch = (PITCH[i,])/180*np.pi%(2*np.pi)
-        # roll = (ROLL[i,])/180*np.pi%(2*np.pi)
-        # yaw_std = YAW_STD[i,]/180*np.pi
-        # pitch_std = PITCH_STD[i,]/180*np.pi
-        # roll_std = ROLL_STD[i,]/180*np.pi
+        # _, measurements = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)
+        measurements = MBES_Z[i,] - 117.67990472 #offset between 2013 MNT and calculation
 
         """Processing the motion of the robot """
         robot_forward_motion =  dt*np.sqrt(v_x_ins**2 + v_y_ins**2)# + v_z_ins**2)
@@ -223,6 +204,9 @@ if __name__ == '__main__':
 
         """ Affichage en temps réel """
         if bool_display:
+            lat = LAT[i,]
+            lon = LON[i,]
+            x_gps, y_gps = coord2cart((lat,lon)).flatten()
             ax.cla()
             print("Temps de calcul: ",time.time() - t0)
             t1 = time.time()
@@ -242,6 +226,10 @@ if __name__ == '__main__':
 
         #Add variables useful to display graphs at the end of the program
         TIME.append(t)
+
+        lat = LAT[i,]
+        lon = LON[i,]
+        x_gps, y_gps = coord2cart((lat,lon)).flatten()
         ERR.append(np.sqrt((x_gps - get_average_state(particles)[0])**2 + (y_gps - get_average_state(particles)[1])**2))
         BAR.append([get_average_state(particles)[0],get_average_state(particles)[1]])
         SPEED.append(np.sqrt(v_x_ins**2 + v_y_ins**2))# + v_z_ins**2))
@@ -249,6 +237,8 @@ if __name__ == '__main__':
         var = np.std(np.column_stack((particles[1][0],particles[1][1])),axis=0)
         STD_X.append(var[0])
         STD_Y.append(var[1])
+
+        MEASUREMENTS.append([distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)[1], MBES_Z[i,]])
 
         #Test if the algorithm diverge and why
         if test_diverge(ERR) : break
@@ -267,6 +257,7 @@ if __name__ == '__main__':
     NORM_STD = np.sqrt(STD_X**2 + STD_Y**2)
     max_std = 1.5*np.mean(NORM_STD)
     masque = NORM_STD > max_std
+    MEASUREMENTS = np.array(MEASUREMENTS)
 
     plt.suptitle(f"Algorithm with\n{n_particles} particles; 1/{steps} data log used\nTotal time:{int(elapsed_time)}s")
     ax1 = plt.subplot2grid((2, 2), (0, 0), rowspan=2)
@@ -289,11 +280,18 @@ if __name__ == '__main__':
     ax2.plot(TIME, ERR, color = 'b', label = 'erreur')
     ax2.legend()
 
-    ax3.set_title("Vitesse")
+    ax3.set_title("Difference of measurements = {}.".format(np.abs(np.mean(MEASUREMENTS[:,0]) - np.mean(MEASUREMENTS[:,1]))))
     ax3.set_xlabel("time [min]")
-    ax3.set_ylabel("||v|| [m/s]")
-    ax3.plot(TIME, SPEED, label = 'speed')
+    ax3.set_ylabel("error (m)")
+    ax3.plot(TIME, MEASUREMENTS[:,0], color = 'b', label = 'measurements from the MNT')
+    ax3.plot(TIME, MEASUREMENTS[:,1], color = 'r', label = 'measurements from the MBES')
     ax3.legend()
+
+    # ax3.set_title("Vitesse")
+    # ax3.set_xlabel("time [min]")
+    # ax3.set_ylabel("||v|| [m/s]")
+    # ax3.plot(TIME, SPEED, label = 'speed')
+    # ax3.legend()
 
     print("Computing the diagrams..")
 

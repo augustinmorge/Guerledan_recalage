@@ -216,23 +216,70 @@ if bool_compress:
     MBES_Y = np.array(MBES_Y[mid_indices])
     MBES_Z = np.array(MBES_Z[mid_indices])
 
-    print(T)
     """ Interpolate data """
     from scipy.interpolate import interp1d
 
-    # Determine the common start and end times between T and MBES_T
+    # Déterminez les temps de début et de fin communs entre T et MBES_T
     start_time = max(T[0], MBES_T[0])
     end_time = min(T[-1], MBES_T[-1])
 
-    # Create a new time vector with a common start time, end time, and a fixed time step
-    dt = 0.1 # time step in seconds
+    # Créez un nouveau vecteur de temps avec un temps de début commun, un temps de fin commun et un pas de temps fixe
+    dt = 0.1 #max(MBES_T[1,]-MBES[0,], T[1,] - T[0,]) # pas de temps en secondes
     T_glob = np.arange(start_time, end_time, dt)
 
-    # Interpolate the data from T and MBES_T onto the new time vector T_glob
+    # Interpolez les données de T sur le nouveau vecteur de temps T_glob
     f_T = interp1d(T, T)
-    f_MBES_T = interp1d(MBES_T, MBES_T)
     T_interp = f_T(T_glob)
-    MBES_T_interp = f_MBES_T(T_glob)
 
-    print(f_MBES_T)
-    print(MBES_T_interp)
+    # Interpolez les autres variables (x, y, z, vitesse, etc.) de la même manière
+    f_LAT = interp1d(T, LAT)
+    f_LON = interp1d(T, LON)
+    f_V_X = interp1d(T, V_X)
+    f_V_Y = interp1d(T, V_Y)
+    f_V_Z = interp1d(T, V_Z)
+    f_LAT_STD = interp1d(T, LAT_STD)
+    f_LON_STD = interp1d(T, LON_STD)
+    f_V_X_STD = interp1d(T, V_X_STD)
+    f_V_Y_STD = interp1d(T, V_Y_STD)
+    f_V_Z_STD = interp1d(T, V_Z_STD)
+
+    LAT_interp = f_LAT(T_glob)
+    LON_interp = f_LON(T_glob)
+    V_X_interp = f_V_X(T_glob)
+    V_Y_interp = f_V_Y(T_glob)
+    V_Z_interp = f_V_Z(T_glob)
+    LAT_STD_interp = f_LAT_STD(T_glob)
+    LON_STD_interp = f_LON_STD(T_glob)
+    V_X_STD_interp = f_V_X_STD(T_glob)
+    V_Y_STD_interp = f_V_Y_STD(T_glob)
+    V_Z_STD_interp = f_V_Z_STD(T_glob)
+
+    # Interpolate the MBES
+    f_MBES_T = interp1d(MBES_T, MBES_T)
+    f_MBES_X = interp1d(MBES_T, MBES_X)
+    f_MBES_Y = interp1d(MBES_T, MBES_Y)
+    f_MBES_Z = interp1d(MBES_T, MBES_Z)
+
+    MBES_T_interp = f_MBES_T(T_glob)
+    MBES_X_interp = f_MBES_X(T_glob)
+    MBES_Y_interp = f_MBES_Y(T_glob)
+    MBES_Z_interp = f_MBES_Z(T_glob)
+
+    # Update the previous vector
+    T = T_interp
+    MBES_T = MBES_T_interp
+    LAT = LAT_interp
+    LON = LON_interp
+    V_X = V_X_interp
+    V_Y = V_Y_interp
+    V_Z = V_Z_interp
+    LAT_STD = LAT_STD_interp
+    LON_STD = LON_STD_interp
+    V_X_STD = V_X_STD_interp
+    V_Y_STD = V_Y_STD_interp
+    V_Z_STD = V_Z_STD_interp
+
+    MBES_T = MBES_T_interp
+    MBES_X = MBES_X_interp
+    MBES_Y = MBES_Y_interp
+    MBES_Z = MBES_Z_interp
