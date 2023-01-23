@@ -5,7 +5,6 @@ steps = int(input("number of steps between measures ? "))
 bool_display = (str(input("Display the particles ? [Y/]"))=="Y")
 
 import time
-start_time = time.perf_counter()
 import numpy as np
 import matplotlib.pyplot as plt
 from resampler import Resampler
@@ -35,10 +34,10 @@ def validate_state(state, bounds, d_mnt):
     # x_min, x_max = bounds[0][0] - 10., bounds[0][1] + 10.
     # y_min, y_max = bounds[1][0] - 10., bounds[1][1] + 10.
     #
-    weights = state[0]
+    # weights = state[0]
     # coords  = state[1]
     # weights[(coords[0] < x_min) | (coords[0] > x_max) | (coords[1] < y_min) | (coords[1] > y_max)] = 0
-    weights[d_mnt > 1] = 0 # If we are out of the MNT
+    # weights[d_mnt > 1] = 0 # If we are out of the MNT
     # if np.sum(weights) == 0: sys.exit()
     return(state)
 
@@ -117,6 +116,7 @@ def test_diverge(ERR, err_max=500):
 
 if __name__ == '__main__':
     print("~~~Start of the algorithm~~~")
+    start_time = time.perf_counter()
 
     x_gps_min, y_gps_min = np.min(coord2cart((LAT, LON))[0,:]), np.min(coord2cart((LAT, LON))[1,:])
     x_gps_max, y_gps_max = np.max(coord2cart((LAT, LON))[0,:]), np.max(coord2cart((LAT, LON))[1,:])
@@ -154,9 +154,9 @@ if __name__ == '__main__':
         y = np.linspace(-120, 120, 100)
         X, Y = np.meshgrid(x, y)
 
-        from PIL import Image
-        image = Image.open("./storage/MNT_G1.png")
-        image.show()
+        # from PIL import Image
+        # image = Image.open("./storage/MNT_G1.png")
+        # image.show()
 
         print("Processing..")
         r = range(idx_ti,idx_tf,steps)
@@ -242,6 +242,9 @@ if __name__ == '__main__':
         if test_diverge(ERR) : break
 
 
+    plt.close('all')
+    plt.figure()
+
     elapsed_time = time.perf_counter() - start_time
     print("Elapsed time: {:.2f} seconds".format(elapsed_time))
 
@@ -254,7 +257,7 @@ if __name__ == '__main__':
     NORM_STD = np.sqrt(STD_X**2 + STD_Y**2)
     max_std = 1.5*np.mean(NORM_STD)
     masque = NORM_STD > max_std
-    MEASUREMENTS = np.array(MEASUREMENTS)
+    MEASUREMENTS = np.array(MEASUREMENTS, dtype = object)
 
     plt.suptitle(f"Algorithm with\n{n_particles} particles; 1/{steps} data log used\nTotal time:{int(elapsed_time)}s")
     ax1 = plt.subplot2grid((2, 2), (0, 0), rowspan=2)
@@ -293,6 +296,7 @@ if __name__ == '__main__':
     print("Computing the diagrams..")
 
     plt.show()
+    if bool_display: plt.pause(100)
 
 
 print("~~~End of the algorithm~~~")

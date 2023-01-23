@@ -197,8 +197,18 @@ if bool_compress:
     start_time = max(T[0], MBES_T[0])
     end_time = min(T[-1], MBES_T[-1])
 
-    # Créez un nouveau vecteur de temps avec un temps de début commun, un temps de fin commun et un pas de temps fixe
-    dt = 0.1 #max(MBES_T[1,]-MBES[0,], T[1,] - T[0,]) # pas de temps en secondes
+    # # Calculer la différence de temps entre chaque mesure
+    # time_diffs_mbes = np.diff(MBES_T)
+    # # Calculer la fréquence moyenne en divisant la différence de temps par le nombre de mesures
+    # mean_freq_mbes = 1 / (np.mean(time_diffs_mbes))
+    # freq_ins = 1/0.005
+    # f_low = min(freq_ins, mean_freq_mbes)
+    # dt = 1/f_low
+    # print(dt)
+
+    dt = 0.1
+
+
     T_glob = np.arange(start_time, end_time, dt)
 
     # Interpolez les données de T sur le nouveau vecteur de temps T_glob

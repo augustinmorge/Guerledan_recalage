@@ -182,6 +182,7 @@ if __name__ == '__main__':
 
         # _, measurements = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)
         measurements = MBES_Z[i,] - 117.67990472 #offset between 2013 MNT and calculation
+        # measurements = MBES_Z[i,] - 117.61492204
 
         """Processing the motion of the robot """
         robot_forward_motion =  dt*np.sqrt(v_x_ins**2 + v_y_ins**2)# + v_z_ins**2)
