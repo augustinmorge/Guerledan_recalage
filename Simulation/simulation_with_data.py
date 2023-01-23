@@ -127,8 +127,8 @@ if __name__ == '__main__':
     resampler = Resampler()
     resampling_threshold = 0.5*n_particles
 
-    idx_ti = int(1/3*T.shape[0]) #0 #
-    idx_tf =  int(4/5*T.shape[0]) #T.shape[0] #
+    idx_ti = 0 #int(1/3*T.shape[0]) #
+    idx_tf = T.shape[0] # int(4/5*T.shape[0]) #
 
     dt = T[steps,] - T[0,]
     tini = T[idx_ti,]
@@ -166,6 +166,7 @@ if __name__ == '__main__':
     fig, ax = plt.subplots()
     TIME = []; BAR = []; SPEED = []; ERR = []
     STD_X = []; STD_Y = []
+    MEASUREMENTS = []
     beta = 1/100.
     for i in r:
 
@@ -177,7 +178,8 @@ if __name__ == '__main__':
         lat = LAT[i,]
         lon = LON[i,]
         x_gps, y_gps = coord2cart((lat,lon)).flatten()
-        _, measurements = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)
+        # _, measurements = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)
+        measurements = MBES_Z[i,] - 117.61492204
         lat_std = LAT_STD[i,]
         lon_std = LON_STD[i,]
         v_x_std = V_X_STD[i,]
@@ -232,9 +234,12 @@ if __name__ == '__main__':
         STD_X.append(var[0])
         STD_Y.append(var[1])
 
+        _, measurements_mnt = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)
+        MEASUREMENTS.append([measurements_mnt, MBES_Z[i,]])
+
+
         #Test if the algorithm diverge and why
         if test_diverge(ERR) : break
-
 
 
     elapsed_time = time.perf_counter() - start_time
@@ -249,6 +254,7 @@ if __name__ == '__main__':
     NORM_STD = np.sqrt(STD_X**2 + STD_Y**2)
     max_std = 1.5*np.mean(NORM_STD)
     masque = NORM_STD > max_std
+    MEASUREMENTS = np.array(MEASUREMENTS)
 
     plt.suptitle(f"Algorithm with\n{n_particles} particles; 1/{steps} data log used\nTotal time:{int(elapsed_time)}s")
     ax1 = plt.subplot2grid((2, 2), (0, 0), rowspan=2)
@@ -271,11 +277,18 @@ if __name__ == '__main__':
     ax2.plot(TIME, ERR, color = 'b', label = 'erreur')
     ax2.legend()
 
-    ax3.set_title("Vitesse")
+    ax3.set_title("Difference of measurements = {}.".format(np.abs(np.mean(MEASUREMENTS[:,0]) - np.mean(MEASUREMENTS[:,1]))))
     ax3.set_xlabel("time [min]")
-    ax3.set_ylabel("||v|| [m/s]")
-    ax3.plot(TIME, SPEED, label = 'speed')
+    ax3.set_ylabel("error (m)")
+    ax3.plot(TIME, MEASUREMENTS[:,0], color = 'b', label = 'measurements from the MNT')
+    ax3.plot(TIME, MEASUREMENTS[:,1], color = 'r', label = 'measurements from the MBES')
     ax3.legend()
+
+    # ax3.set_title("Vitesse")
+    # ax3.set_xlabel("time [min]")
+    # ax3.set_ylabel("||v|| [m/s]")
+    # ax3.plot(TIME, SPEED, label = 'speed')
+    # ax3.legend()
 
     print("Computing the diagrams..")
 

@@ -238,7 +238,8 @@ if __name__ == '__main__':
         STD_X.append(var[0])
         STD_Y.append(var[1])
 
-        MEASUREMENTS.append([distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)[1], MBES_Z[i,]])
+        _, measurements_mnt = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)
+        MEASUREMENTS.append([measurements_mnt, MBES_Z[i,]])
 
         #Test if the algorithm diverge and why
         if test_diverge(ERR) : break

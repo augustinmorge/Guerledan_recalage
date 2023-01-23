@@ -59,6 +59,29 @@ if bool_txt:
     print("Importing the DVL-TXT file..")
     ## TODO:
 
+    """ Import MBES """
+    print("Importing the MBES-TXT file..")
+    filepath = file_path+"/mbes_trdi.txt"
+    # Read data from file
+    data_mbes = np.genfromtxt(filepath, delimiter=',', skip_header=1, dtype = "U")
+
+    # Split columns using index
+    Beam, Date_Time, Footprint_X, Footprint_Y, Footprint_Z = data_mbes[:, 0], data_mbes[:, 1], data_mbes[:, 2], data_mbes[:, 3], data_mbes[:, 4]
+
+    # Convert columns to float
+    Beam, Footprint_X, Footprint_Y, Footprint_Z = np.float64(Beam), np.float64(Footprint_X), np.float64(Footprint_Y), np.float64(Footprint_Z)
+
+    # Create Time_MBES array
+    Time_MBES = np.array([dt.split(" ")[1].split(":") for dt in Date_Time], dtype=np.float64)
+
+    # Create the TIME vector array
+    Time_MBES_seconds = (60*60*Time_MBES[:,0] + 60*Time_MBES[:,1] + Time_MBES[:,2])
+    print("Beam: ",Beam)
+    print("Footprint_X: ",Footprint_X)
+    print("Footprint_Y: ",Footprint_Y)
+    print("Footprint_Z: ",Footprint_Z)
+    print("Time_MBES_seconds: ",Time_MBES_seconds)
+
 
     print("Importing the MNT-TXT file..")
     """ Import the MNT """
@@ -104,14 +127,21 @@ if bool_txt:
     dtype = np.float64, precision = 16)
     np.savez("mnt.npz", MNT=MNT, dtype = np.float64, precision = 16)
 
-    with open('kd_tree.pkl', 'wb') as f:
-        pickle.dump(kd_tree, f)
+    # with open('kd_tree.pkl', 'wb') as f:
+    #     pickle.dump(kd_tree, f)
 
     # with open('kd_tree.pkl', 'wb') as f:
     #     pickle.dump(kd_tree, f)
 
     with open('kd_tree.joblib', 'wb') as f:
         joblib.dump(kd_tree, f)
+
+    np.savez('mbes.npz', BEAMS = Beam,
+                        MBES_X = Footprint_X,
+                        MBES_Y = Footprint_Y,
+                        MBES_Z = Footprint_Z,
+                        MBES_T = Time_MBES_seconds, dtype = np.float64)
+
 
 if bool_compress:
     """ Load the compressed data """
@@ -140,3 +170,90 @@ if bool_compress:
     #     kd_tree = pickle.load(f)
     with open(file_path+'/kd_tree.joblib', 'rb') as f:
         kd_tree = joblib.load(f)
+
+    """ Load the MBES """
+    # Load data from npz file
+    mbes = np.load(file_path + "/mbes.npz")
+    BEAMS, MBES_X, MBES_Y, MBES_Z, MBES_T = mbes['BEAMS'], mbes['MBES_X'], mbes['MBES_Y'], mbes['MBES_Z'], mbes['MBES_T']
+
+    # Find the indices where the value of BEAMS decreases
+    indices = np.where(np.diff(BEAMS) < 0)[0]
+
+    # Append the last index to indices
+    indices = np.append(indices, BEAMS.shape[0]-1)
+
+    # Use the indices to extract the corresponding values of other arrays
+    mid_indices = (indices[:-1]+indices[1:])//2
+
+    MBES_T = np.array(MBES_T[mid_indices])
+    MBES_X = np.array(MBES_X[mid_indices])
+    MBES_Y = np.array(MBES_Y[mid_indices])
+    MBES_Z = np.array(MBES_Z[mid_indices])
+
+    """ Interpolate data """
+    from scipy.interpolate import interp1d
+
+    # Déterminez les temps de début et de fin communs entre T et MBES_T
+    start_time = max(T[0], MBES_T[0])
+    end_time = min(T[-1], MBES_T[-1])
+
+    # Créez un nouveau vecteur de temps avec un temps de début commun, un temps de fin commun et un pas de temps fixe
+    dt = 0.1 #max(MBES_T[1,]-MBES[0,], T[1,] - T[0,]) # pas de temps en secondes
+    T_glob = np.arange(start_time, end_time, dt)
+
+    # Interpolez les données de T sur le nouveau vecteur de temps T_glob
+    f_T = interp1d(T, T)
+    T_interp = f_T(T_glob)
+
+    # Interpolez les autres variables (x, y, z, vitesse, etc.) de la même manière
+    f_LAT = interp1d(T, LAT)
+    f_LON = interp1d(T, LON)
+    f_V_X = interp1d(T, V_X)
+    f_V_Y = interp1d(T, V_Y)
+    f_V_Z = interp1d(T, V_Z)
+    f_LAT_STD = interp1d(T, LAT_STD)
+    f_LON_STD = interp1d(T, LON_STD)
+    f_V_X_STD = interp1d(T, V_X_STD)
+    f_V_Y_STD = interp1d(T, V_Y_STD)
+    f_V_Z_STD = interp1d(T, V_Z_STD)
+
+    LAT_interp = f_LAT(T_glob)
+    LON_interp = f_LON(T_glob)
+    V_X_interp = f_V_X(T_glob)
+    V_Y_interp = f_V_Y(T_glob)
+    V_Z_interp = f_V_Z(T_glob)
+    LAT_STD_interp = f_LAT_STD(T_glob)
+    LON_STD_interp = f_LON_STD(T_glob)
+    V_X_STD_interp = f_V_X_STD(T_glob)
+    V_Y_STD_interp = f_V_Y_STD(T_glob)
+    V_Z_STD_interp = f_V_Z_STD(T_glob)
+
+    # Interpolate the MBES
+    f_MBES_T = interp1d(MBES_T, MBES_T)
+    f_MBES_X = interp1d(MBES_T, MBES_X)
+    f_MBES_Y = interp1d(MBES_T, MBES_Y)
+    f_MBES_Z = interp1d(MBES_T, MBES_Z)
+
+    MBES_T_interp = f_MBES_T(T_glob)
+    MBES_X_interp = f_MBES_X(T_glob)
+    MBES_Y_interp = f_MBES_Y(T_glob)
+    MBES_Z_interp = f_MBES_Z(T_glob)
+
+    # Update the previous vector
+    T = T_interp
+    MBES_T = MBES_T_interp
+    LAT = LAT_interp
+    LON = LON_interp
+    V_X = V_X_interp
+    V_Y = V_Y_interp
+    V_Z = V_Z_interp
+    LAT_STD = LAT_STD_interp
+    LON_STD = LON_STD_interp
+    V_X_STD = V_X_STD_interp
+    V_Y_STD = V_Y_STD_interp
+    V_Z_STD = V_Z_STD_interp
+
+    MBES_T = MBES_T_interp
+    MBES_X = MBES_X_interp
+    MBES_Y = MBES_Y_interp
+    MBES_Z = MBES_Z_interp
