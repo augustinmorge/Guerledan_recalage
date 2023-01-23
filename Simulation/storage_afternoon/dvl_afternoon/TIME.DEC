@@ -1,9 +1,0 @@
-;  Variable Leader Decoder Information
-0080,5,1	; Real-Time Clock (RTC) Year
-0080,6,1	; RTC Month
-0080,7,1	; RTC Day
-0080,8,1	; RTC Hour
-0080,9,1	; RTC Minute
-0080,10,1	; RTC Second
-0080,11,1	; RTC Hundredths of Seconds
-$L

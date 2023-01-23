@@ -263,6 +263,7 @@ if bool_compress:
     V_Y_STD = V_Y_STD_interp
     V_Z_STD = V_Z_STD_interp
 
+    # print("WARNING: inversed z")
     MBES_T = MBES_T_interp
     MBES_X = MBES_X_interp
     MBES_Y = MBES_Y_interp

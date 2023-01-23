@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
 from storage_afternoon.data_import import *
-n_particles = int(input("Number of particles: "))
-steps = int(input("number of steps between measures ? "))
-bool_display =(str(input("Display the particles ? [Y/]"))=="Y")
+n_particles = 2000# int(input("Number of particles: "))
+steps = 1#int(input("number of steps between measures ? "))
+bool_display = False #(str(input("Display the particles ? [Y/]"))=="Y")
 
 import time
 start_time = time.perf_counter()
@@ -108,9 +108,9 @@ def test_diverge(ERR, err_max=1000):
         print(f"dt = {dt}")
         print(f"process_noise = {process_noise}")
         print(f"measurements_noise = {measurements_noise}")
-        print(f"V = {v_x_ins, v_y_ins, v_z_ins}")
+        print(f"V = {v_x, v_y, v_z}")
         print(f"pos_std = {lat_std, lon_std}")
-        print(f"speed_std = {v_x_ins_std, v_y_ins_std, v_z_ins_std}")
+        print(f"speed_std = {v_std}")
         print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         return True #Alors on arrete
     return(False)
@@ -128,18 +128,16 @@ if __name__ == '__main__':
     resampling_threshold = 0.5*n_particles
 
     idx_ti = 0 #int(1/3*T.shape[0]) #
-    idx_tf =  T.shape[0] #int(4/5*T.shape[0]) #
+    idx_tf =  dvl_T.shape[0] #int(4/5*T.shape[0]) #
 
-    dt = T[steps,] - T[0,]
-    tini = T[idx_ti,]
-    tf = T[idx_tf-1,]
+    dt = dvl_T[steps,] - dvl_T[0,]
+    tini = dvl_T[idx_ti,]
+    tf = dvl_T[idx_tf-1,]
 
-    v_x_ins = V_X[idx_ti,]
-    v_y_ins = V_Y[idx_ti,]
-    v_z_ins = V_Z[idx_ti,]
-    v_x_ins_std = V_X_STD[idx_ti,]
-    v_y_ins_std = V_Y_STD[idx_ti,]
-    v_z_ins_std = V_Z_STD[idx_ti,]
+    v_x = dvl_VE[idx_ti,]
+    v_y = dvl_VN[idx_ti,]
+    v_z = dvl_VZ[idx_ti,]
+    v_std = dvl_VSTD[idx_ti,]
 
     lat = LAT[idx_ti,]
     lon = LON[idx_ti,]
@@ -172,28 +170,26 @@ if __name__ == '__main__':
     for i in r:
 
         """Set data"""
-        t = T[i,]
-        v_x_ins = V_X[i,]
-        v_y_ins = V_Y[i,]
-        v_z_ins = V_Z[i,]
-        v_x_ins_std = V_X_STD[i,]
-        v_y_ins_std = V_Y_STD[i,]
-        v_z_ins_std = V_Z_STD[i,]
+        t = dvl_T[i,]
+        v_x = dvl_VE[i,]
+        v_y = dvl_VN[i,]
+        v_z = dvl_VZ[i,]
+        v_std = dvl_VSTD[idx_ti,]
 
         # _, measurements = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)
         measurements = MBES_Z[i,] - 117.67990472 #offset between 2013 MNT and calculation
 
         """Processing the motion of the robot """
-        robot_forward_motion =  dt*np.sqrt(v_x_ins**2 + v_y_ins**2)# + v_z_ins**2)
-        robot_angular_motion = np.arctan2(v_y_ins,v_x_ins) #Je sais pas pourquoi c'est à l'envers
+        robot_forward_motion =  dt*np.sqrt(v_x**2 + v_y**2)# + v_z**2)
+        robot_angular_motion = np.arctan2(v_y,v_x) #Je sais pas pourquoi c'est à l'envers
 
         """ Processing error on measures"""
         meas_model_distance_std = None
         measurements_noise = [meas_model_distance_std] ### Attention, std est en mètres !
 
         """ Processing error on algorithm"""
-        motion_model_forward_std = steps*np.sqrt(v_y_ins_std**2 + v_x_ins_std**2)# + v_z_ins_std**2)
-        motion_model_turn_std = np.abs(sawtooth(np.arctan2((v_x_ins + np.sign(v_x_ins)*v_x_ins_std),(v_y_ins)) - np.arctan2((v_x_ins),(v_y_ins+np.sign(v_y_ins)*v_y_ins_std))))
+        motion_model_forward_std = steps*np.abs(v_std)
+        motion_model_turn_std = np.abs(sawtooth(np.arctan2((v_x + np.sign(v_x)*v_std),(v_y)) - np.arctan2((v_x),(v_y+np.sign(v_y)*v_std))))
         process_noise = [motion_model_forward_std, motion_model_turn_std]
 
         """Process the update"""
@@ -232,7 +228,7 @@ if __name__ == '__main__':
         x_gps, y_gps = coord2cart((lat,lon)).flatten()
         ERR.append(np.sqrt((x_gps - get_average_state(particles)[0])**2 + (y_gps - get_average_state(particles)[1])**2))
         BAR.append([get_average_state(particles)[0],get_average_state(particles)[1]])
-        SPEED.append(np.sqrt(v_x_ins**2 + v_y_ins**2))# + v_z_ins**2))
+        SPEED.append(np.sqrt(v_x**2 + v_y**2))# + v_z**2))
 
         var = np.std(np.column_stack((particles[1][0],particles[1][1])),axis=0)
         STD_X.append(var[0])
@@ -242,7 +238,7 @@ if __name__ == '__main__':
         MEASUREMENTS.append([measurements_mnt, MBES_Z[i,]])
 
         #Test if the algorithm diverge and why
-        if test_diverge(ERR, 1000) : break
+        # if test_diverge(ERR, 1000) : break
 
 
 
