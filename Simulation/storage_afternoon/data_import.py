@@ -107,11 +107,11 @@ if bool_txt:
 
     # Create the TIME vector array
     Time_MBES_seconds = (60*60*Time_MBES[:,0] + 60*Time_MBES[:,1] + Time_MBES[:,2])
-    print("Beam: ",Beam)
-    print("Footprint_X: ",Footprint_X)
-    print("Footprint_Y: ",Footprint_Y)
-    print("Footprint_Z: ",Footprint_Z)
-    print("Time_MBES_seconds: ",Time_MBES_seconds)
+    # print("Beam: ",Beam)
+    # print("Footprint_X: ",Footprint_X)
+    # print("Footprint_Y: ",Footprint_Y)
+    # print("Footprint_Z: ",Footprint_Z)
+    # print("Time_MBES_seconds: ",Time_MBES_seconds)
 
 
     print("Importing the MNT-TXT file..")
@@ -374,90 +374,87 @@ if bool_compress:
     dvl_VSTD = dvl_VSTD_interp
 
 
-    # Display speed
-    import matplotlib.pyplot as plt
-    plt.figure()
-    ax1 = plt.subplot2grid((2, 3), (0, 0))
-    ax2 = plt.subplot2grid((2, 3), (0, 1))
-    ax3 = plt.subplot2grid((2, 3), (1, 0))
-    ax4 = plt.subplot2grid((2, 3), (1, 1))
-    ax5 = plt.subplot2grid((2, 3), (0, 2))
-
-
-    # ax1.plot(dvl_T, (dvl_VE), label="dvl")
-    ax1.plot(dvl_T, (dvl_VE*np.cos(np.pi/4) - np.sin(np.pi/4)*dvl_VN)*np.sin(YAW), label="dvl")
-    ax1.plot(T, (V_X), label = "ins")
-    ax1.legend()
-    ax1.set_title("VE")
-    ax1.grid()
-    ax4.grid()
-
-
-    # ax2.plot(dvl_T, (dvl_VN), label="dvl")
-    ax2.plot(dvl_T, (dvl_VE*np.sin(np.pi/4) - np.cos(np.pi/4)*dvl_VN)*np.cos(YAW), label="dvl")
-    ax2.plot(T, (V_Y), label = "ins")
-    ax2.legend()
-    ax2.set_title("VN")
-    ax2.grid()
-
-    ax3.plot(dvl_T, (dvl_VZ), label="dvl")
-    ax3.plot(T, (V_Z), label = "ins")
-    ax3.legend()
-    ax3.set_title("VZ")
-    ax3.grid()
-
-    ax4.plot(dvl_T, np.sqrt(dvl_VE**2 + dvl_VN**2 + dvl_VZ**2), label="dvl")
-    ax4.plot(T, np.sqrt(V_X**2 + V_Y**2 + V_Z**2), label = "ins")
-    ax4.legend()
-    ax4.set_title("||V||")
-    ax4.grid()
-
-    ax5.plot(dvl_T, np.sqrt(dvl_VSTD**2), label = "error speed on dvl")
-    ax5.plot(T, np.sqrt(V_X_STD**2 + V_Y_STD**2 + V_Z_STD**2), label = "error speed on ins")
-    ax5.set_title("Error on speed")
-    ax5.legend()
-    ax5.grid()
-
-    #######################################
-    plt.figure()
-    ax1 = plt.subplot2grid((2, 3), (0, 0))
-    ax2 = plt.subplot2grid((2, 3), (0, 1))
-    ax3 = plt.subplot2grid((2, 3), (1, 0))
-    ax4 = plt.subplot2grid((2, 3), (1, 1))
-    ax5 = plt.subplot2grid((2, 3), (0, 2), rowspan=2)
-
-    print(np.diff(MBES_Z))
-    mask1 = np.abs(np.diff(MBES_Z)) > 0.001*np.std(MBES_Z)
-    print(mask1.shape, MBES_T.shape)
-    print(np.sum(mask1))
-
-    ax1.plot(dvl_T, dvl_BM1R, label = "dvl_BM1R", color = 'red')
-    ax1.plot((MBES_T[1:,])[~mask1], (MBES_Z[1:,])[~mask1], label="MBES_Z")
-    ax1.legend()
-    ax1.grid()
-    ax1.set_title("dvl_BM1R")
-
-    ax2.plot(dvl_T, dvl_BM2R, label = "dvl_BM2R", color = 'red')
-    ax2.plot((MBES_T[1:,])[~mask1], (MBES_Z[1:,])[~mask1], label="MBES_Z")
-    ax2.legend()
-    ax2.grid()
-    ax2.set_title("dvl_BM2R")
-
-    ax3.plot(dvl_T, dvl_BM3R, label = "dvl_BM3R", color = 'red')
-    ax3.plot((MBES_T[1:,])[~mask1], (MBES_Z[1:,])[~mask1], label="MBES_Z")
-    ax3.legend()
-    ax3.grid()
-    ax3.set_title("dvl_BM3R")
-
-    ax4.plot(dvl_T, dvl_BM4R, label = "dvl_BM4R", color = 'red')
-    ax4.plot((MBES_T[1:,])[~mask1], (MBES_Z[1:,])[~mask1], label="MBES_Z")
-    ax4.legend()
-    ax4.grid()
-    ax4.set_title("dvl_BM4R")
-
-    ax5.plot(dvl_T, (dvl_BM1R + dvl_BM2R + dvl_BM3R + dvl_BM4R)/4, label = "mean dvl_BMR", color = 'red')
-    ax5.plot(MBES_T[1:,][~mask1], MBES_Z[1:,][~mask1], label="MBES_Z")
-    ax5.legend()
-    ax5.grid()
-    ax5.set_title("Mean of dvl range v/s MBES")
-    plt.show()
+    # # Display speed
+    # import matplotlib.pyplot as plt
+    # plt.figure()
+    # ax1 = plt.subplot2grid((2, 3), (0, 0))
+    # ax2 = plt.subplot2grid((2, 3), (0, 1))
+    # ax3 = plt.subplot2grid((2, 3), (1, 0))
+    # ax4 = plt.subplot2grid((2, 3), (1, 1))
+    # ax5 = plt.subplot2grid((2, 3), (0, 2))
+    #
+    #
+    # # ax1.plot(dvl_T, (dvl_VE), label="dvl")
+    # ax1.plot(dvl_T, (dvl_VE*np.cos(np.pi/4) - np.sin(np.pi/4)*dvl_VN)*np.sin(YAW), label="dvl")
+    # ax1.plot(T, (V_X), label = "ins")
+    # ax1.legend()
+    # ax1.set_title("VE")
+    # ax1.grid()
+    # ax4.grid()
+    #
+    #
+    # # ax2.plot(dvl_T, (dvl_VN), label="dvl")
+    # ax2.plot(dvl_T, (dvl_VE*np.sin(np.pi/4) - np.cos(np.pi/4)*dvl_VN)*np.cos(YAW), label="dvl")
+    # ax2.plot(T, (V_Y), label = "ins")
+    # ax2.legend()
+    # ax2.set_title("VN")
+    # ax2.grid()
+    #
+    # ax3.plot(dvl_T, (dvl_VZ), label="dvl")
+    # ax3.plot(T, (V_Z), label = "ins")
+    # ax3.legend()
+    # ax3.set_title("VZ")
+    # ax3.grid()
+    #
+    # ax4.plot(dvl_T, np.sqrt(dvl_VE**2 + dvl_VN**2 + dvl_VZ**2), label="dvl")
+    # ax4.plot(T, np.sqrt(V_X**2 + V_Y**2 + V_Z**2), label = "ins")
+    # ax4.legend()
+    # ax4.set_title("||V||")
+    # ax4.grid()
+    #
+    # ax5.plot(dvl_T, np.sqrt(dvl_VSTD**2), label = "error speed on dvl")
+    # ax5.plot(T, np.sqrt(V_X_STD**2 + V_Y_STD**2 + V_Z_STD**2), label = "error speed on ins")
+    # ax5.set_title("Error on speed")
+    # ax5.legend()
+    # ax5.grid()
+    #
+    # #######################################
+    # plt.figure()
+    # ax1 = plt.subplot2grid((2, 3), (0, 0))
+    # ax2 = plt.subplot2grid((2, 3), (0, 1))
+    # ax3 = plt.subplot2grid((2, 3), (1, 0))
+    # ax4 = plt.subplot2grid((2, 3), (1, 1))
+    # ax5 = plt.subplot2grid((2, 3), (0, 2), rowspan=2)
+    #
+    # mask1 = np.abs(np.diff(MBES_Z)) > 0.001*np.std(MBES_Z)
+    #
+    # ax1.plot(dvl_T, dvl_BM1R, label = "dvl_BM1R", color = 'red')
+    # ax1.plot((MBES_T[1:,])[~mask1], (MBES_Z[1:,])[~mask1], label="MBES_Z")
+    # ax1.legend()
+    # ax1.grid()
+    # ax1.set_title("dvl_BM1R")
+    #
+    # ax2.plot(dvl_T, dvl_BM2R, label = "dvl_BM2R", color = 'red')
+    # ax2.plot((MBES_T[1:,])[~mask1], (MBES_Z[1:,])[~mask1], label="MBES_Z")
+    # ax2.legend()
+    # ax2.grid()
+    # ax2.set_title("dvl_BM2R")
+    #
+    # ax3.plot(dvl_T, dvl_BM3R, label = "dvl_BM3R", color = 'red')
+    # ax3.plot((MBES_T[1:,])[~mask1], (MBES_Z[1:,])[~mask1], label="MBES_Z")
+    # ax3.legend()
+    # ax3.grid()
+    # ax3.set_title("dvl_BM3R")
+    #
+    # ax4.plot(dvl_T, dvl_BM4R, label = "dvl_BM4R", color = 'red')
+    # ax4.plot((MBES_T[1:,])[~mask1], (MBES_Z[1:,])[~mask1], label="MBES_Z")
+    # ax4.legend()
+    # ax4.grid()
+    # ax4.set_title("dvl_BM4R")
+    #
+    # ax5.plot(dvl_T, (dvl_BM1R + dvl_BM2R + dvl_BM3R + dvl_BM4R)/4, label = "mean dvl_BMR", color = 'red')
+    # ax5.plot(MBES_T[1:,][~mask1], MBES_Z[1:,][~mask1], label="MBES_Z")
+    # ax5.legend()
+    # ax5.grid()
+    # ax5.set_title("Mean of dvl range v/s MBES")
+    # plt.show()
