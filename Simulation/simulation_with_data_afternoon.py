@@ -3,7 +3,7 @@
 from storage_afternoon.data_import import *
 n_particles = int(input("Number of particles: "))
 steps = int(input("number of steps between measures ? "))
-bool_display =(str(input("Display the particles ? [Y/]"))=="Y")
+bool_display = (str(input("Display the particles ? [Y/]"))=="Y")
 
 import time
 start_time = time.perf_counter()
@@ -24,8 +24,8 @@ def distance_to_bottom(xy,mnt):
 
 def initialize_particles_uniform(n_particles, bounds):
     particles = [1/n_particles*np.ones((n_particles,1)),[ \
-                           np.random.uniform(bounds[0][0], bounds[0][1], n_particles).reshape(-1,1),
-                           np.random.uniform(bounds[1][0], bounds[1][1], n_particles).reshape(-1,1)]]
+                           np.random.uniform(bounds[0][0]-20, bounds[0][1]+20, n_particles).reshape(-1,1),
+                           np.random.uniform(bounds[1][0]-20, bounds[1][1]+20, n_particles).reshape(-1,1)]]
     return(particles)
 
 def normalize_weights(weighted_samples):
@@ -57,27 +57,31 @@ def propagate_sample(samples, forward_motion, angular_motion, process_noise, bou
     # Make sure we stay within cyclic world
     return samples
 
-def compute_likelihood(samples, measurements, measurements_noise, beta):
+def compute_likelihood(samples, measurements, measurements_noise, beta, previous_z_mbes_particule):
     d_mnt, z_mbes_particule = distance_to_bottom(np.hstack((samples[1][0],samples[1][1])),MNT)
+    d_mbes_particule = z_mbes_particule - previous_z_mbes_particule
 
     # Map difference true and expected distance measurement to probability
-    distance = np.abs(z_mbes_particule - measurements)
+    distance = np.abs(d_mbes_particule - measurements)
     # p_z_given_x_distance = np.exp(-beta*distance/(measurements_noise[0]**2))
     p_z_given_x_distance = np.exp(-beta*distance)
 
     # Return importance weight based on all landmarks
-    return d_mnt, p_z_given_x_distance
+    previous_z_mbes_particule = z_mbes_particule
+    return d_mnt, p_z_given_x_distance, previous_z_mbes_particule
 
 def needs_resampling(resampling_threshold):
     return 1.0 / np.max(particles[0]) < resampling_threshold
 
-def update(robot_forward_motion, robot_angular_motion, measurements, measurements_noise, process_noise, particles,resampling_threshold, resampler, beta, bounds):
+def update(robot_forward_motion, robot_angular_motion, measurements, \
+            measurements_noise, process_noise, particles,resampling_threshold,\
+            resampler, beta, bounds, previous_z_mbes_particule):
 
     # Propagate the particle state according to the current particle
     propagated_states = propagate_sample(particles, robot_forward_motion, robot_angular_motion, process_noise, bounds)
 
     # Compute current particle's weight
-    d_mnt, p = compute_likelihood(propagated_states, measurements, measurements_noise, beta)
+    d_mnt, p, previous_z_mbes_particule = compute_likelihood(propagated_states, measurements, measurements_noise, beta, previous_z_mbes_particule)
 
     particules = validate_state(propagated_states, bounds, d_mnt)
 
@@ -91,7 +95,7 @@ def update(robot_forward_motion, robot_angular_motion, measurements, measurement
     if needs_resampling(resampling_threshold):
         particles = resampler.resample(particles, n_particles) #1 = MULTINOMIAL
 
-    return(particles)
+    return(particles, previous_z_mbes_particule)
 
 def get_average_state(particles):
 
@@ -108,9 +112,9 @@ def test_diverge(ERR, err_max=1000):
         print(f"dt = {dt}")
         print(f"process_noise = {process_noise}")
         print(f"measurements_noise = {measurements_noise}")
-        print(f"V = {v_x_ins, v_y_ins, v_z_ins}")
+        print(f"V = {v_x, v_y, v_z}")
         print(f"pos_std = {lat_std, lon_std}")
-        print(f"speed_std = {v_x_ins_std, v_y_ins_std, v_z_ins_std}")
+        print(f"speed_std = {v_std}")
         print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         return True #Alors on arrete
     return(False)
@@ -123,23 +127,23 @@ if __name__ == '__main__':
     bounds = [[x_gps_min, x_gps_max], [y_gps_min, y_gps_max]]
     particles = initialize_particles_uniform(n_particles, bounds)
 
+    _, previous_z_mbes_particule = distance_to_bottom(np.hstack((particles[1][0],particles[1][1])),MNT)
+
     #For the update
     resampler = Resampler()
     resampling_threshold = 0.5*n_particles
 
-    idx_ti = 0 #int(1/3*T.shape[0]) #
-    idx_tf =  T.shape[0] #int(4/5*T.shape[0]) #
+    idx_ti = 0 + steps #int(1/3*T.shape[0]) #
+    idx_tf =  dvl_T.shape[0] #int(4/5*T.shape[0]) #
 
-    dt = T[steps,] - T[0,]
-    tini = T[idx_ti,]
-    tf = T[idx_tf-1,]
+    dt = dvl_T[steps,] - dvl_T[0,]
+    tini = dvl_T[idx_ti,]
+    tf = dvl_T[idx_tf-1,]
 
-    v_x_ins = V_X[idx_ti,]
-    v_y_ins = V_Y[idx_ti,]
-    v_z_ins = V_Z[idx_ti,]
-    v_x_ins_std = V_X_STD[idx_ti,]
-    v_y_ins_std = V_Y_STD[idx_ti,]
-    v_z_ins_std = V_Z_STD[idx_ti,]
+    v_x = dvl_VE[idx_ti,]
+    v_y = dvl_VN[idx_ti,]
+    v_z = dvl_VZ[idx_ti,]
+    v_std = dvl_VSTD[idx_ti,]
 
     lat = LAT[idx_ti,]
     lon = LON[idx_ti,]
@@ -168,39 +172,40 @@ if __name__ == '__main__':
     TIME = []; BAR = []; SPEED = []; ERR = []
     STD_X = []; STD_Y = []
     MEASUREMENTS = []
-    beta = 5/100.
+    beta = 1.
+    previous_MBES = MBES_Z[0,]
     for i in r:
 
         """Set data"""
-        t = T[i,]
-        v_x_ins = V_X[i,]
-        v_y_ins = V_Y[i,]
-        v_z_ins = V_Z[i,]
-        v_x_ins_std = V_X_STD[i,]
-        v_y_ins_std = V_Y_STD[i,]
-        v_z_ins_std = V_Z_STD[i,]
+        t = dvl_T[i,]
+        v_x = (dvl_VE[i,]*np.cos(np.pi/4) - np.sin(np.pi/4)*dvl_VN[i,])*np.sin(YAW[i,])
+        v_y = (dvl_VE[i,]*np.sin(np.pi/4) - np.cos(np.pi/4)*dvl_VN[i,])*np.cos(YAW[i,])
+        v_z = dvl_VZ[i,]
+        v_std = dvl_VSTD[i,]
 
         # _, measurements = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)
-        measurements = MBES_Z[i,] - 117.67990472 #offset between 2013 MNT and calculation
+        measurements = MBES_Z[i,] - previous_MBES #offset between 2013 MNT and calculation
+        previous_MBES = MBES_Z[i,]
 
         """Processing the motion of the robot """
-        robot_forward_motion =  dt*np.sqrt(v_x_ins**2 + v_y_ins**2)# + v_z_ins**2)
-        robot_angular_motion = np.arctan2(v_y_ins,v_x_ins) #Je sais pas pourquoi c'est à l'envers
+        robot_forward_motion =  dt*np.sqrt(v_x**2 + v_y**2)# + v_z**2)
+        robot_angular_motion = np.arctan2(v_y,v_x) #Je sais pas pourquoi c'est à l'envers
 
         """ Processing error on measures"""
         meas_model_distance_std = None
         measurements_noise = [meas_model_distance_std] ### Attention, std est en mètres !
 
         """ Processing error on algorithm"""
-        motion_model_forward_std = steps*np.sqrt(v_y_ins_std**2 + v_x_ins_std**2)# + v_z_ins_std**2)
-        motion_model_turn_std = np.abs(sawtooth(np.arctan2((v_x_ins + np.sign(v_x_ins)*v_x_ins_std),(v_y_ins)) - np.arctan2((v_x_ins),(v_y_ins+np.sign(v_y_ins)*v_y_ins_std))))
+        motion_model_forward_std = steps*np.abs(v_std)
+        motion_model_turn_std = np.abs(sawtooth(np.arctan2((v_x + np.sign(v_x)*v_std),(v_y)) - np.arctan2((v_x),(v_y+np.sign(v_y)*v_std))))
         process_noise = [motion_model_forward_std, motion_model_turn_std]
 
         """Process the update"""
         t0 = time.time()
-        particles = update(robot_forward_motion, robot_angular_motion, measurements,\
-                           measurements_noise, process_noise, particles,\
-                            resampling_threshold, resampler, beta = beta, bounds = bounds)
+        particles, previous_z_mbes_particule = update(robot_forward_motion, robot_angular_motion, measurements,\
+                                               measurements_noise, process_noise, particles,\
+                                                resampling_threshold, resampler, beta, bounds,\
+                                                previous_z_mbes_particule)
 
         """ Affichage en temps réel """
         if bool_display:
@@ -232,7 +237,7 @@ if __name__ == '__main__':
         x_gps, y_gps = coord2cart((lat,lon)).flatten()
         ERR.append(np.sqrt((x_gps - get_average_state(particles)[0])**2 + (y_gps - get_average_state(particles)[1])**2))
         BAR.append([get_average_state(particles)[0],get_average_state(particles)[1]])
-        SPEED.append(np.sqrt(v_x_ins**2 + v_y_ins**2))# + v_z_ins**2))
+        SPEED.append(np.sqrt(v_x**2 + v_y**2))# + v_z**2))
 
         var = np.std(np.column_stack((particles[1][0],particles[1][1])),axis=0)
         STD_X.append(var[0])
@@ -297,6 +302,7 @@ if __name__ == '__main__':
     print("Computing the diagrams..")
 
     plt.show()
+    if bool_display:plt.pause(100)
 
 
 print("~~~End of the algorithm~~~")

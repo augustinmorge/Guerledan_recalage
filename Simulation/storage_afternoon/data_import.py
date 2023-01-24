@@ -260,6 +260,7 @@ if bool_compress:
     start_time = max(max(T[0], MBES_T[0]),dvl_T[0])
     end_time = min(min(T[-1], MBES_T[-1]),dvl_T[-1])
 
+    # dt = 0.005
     dt = 0.1
 
     T_glob = np.arange(start_time, end_time, dt)
@@ -389,6 +390,8 @@ if bool_compress:
     ax1.legend()
     ax1.set_title("VE")
     ax1.grid()
+    ax4.grid()
+
 
     # ax2.plot(dvl_T, (dvl_VN), label="dvl")
     ax2.plot(dvl_T, (dvl_VE*np.sin(np.pi/4) - np.cos(np.pi/4)*dvl_VN)*np.cos(YAW), label="dvl")
@@ -409,8 +412,8 @@ if bool_compress:
     ax4.set_title("||V||")
     ax4.grid()
 
-    ax5.plot(T, np.sqrt(V_X_STD**2 + V_Y_STD**2 + V_Z_STD**2), label = "error speed on ins")
     ax5.plot(dvl_T, np.sqrt(dvl_VSTD**2), label = "error speed on dvl")
+    ax5.plot(T, np.sqrt(V_X_STD**2 + V_Y_STD**2 + V_Z_STD**2), label = "error speed on ins")
     ax5.set_title("Error on speed")
     ax5.legend()
     ax5.grid()
