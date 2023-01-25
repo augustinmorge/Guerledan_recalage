@@ -150,6 +150,8 @@ if __name__ == '__main__':
     lat_std = LAT_STD[idx_ti,]
     lon_std = LON_STD[idx_ti,]
 
+    x_gps, y_gps = coord2cart((lat,lon)).flatten()
+
     if bool_display:
         """ Création des isobates """
         plt.ion()
@@ -172,32 +174,42 @@ if __name__ == '__main__':
     TIME = []; BAR = []; SPEED = []; ERR = []
     STD_X = []; STD_Y = []
     MEASUREMENTS = []
-    beta = 1.
-    previous_MBES = MBES_Z[0,]
+    beta = 1/5.
+    previous_MBES = (dvl_BM1R[0,] + dvl_BM2R[0,] + dvl_BM3R[0,] + dvl_BM4R[0,])/4 #MBES_Z[0,]
+
     for i in r:
 
         """Set data"""
         t = dvl_T[i,]
-        v_x = (dvl_VE[i,]*np.cos(np.pi/4) - np.sin(np.pi/4)*dvl_VN[i,])*np.sin(YAW[i,])
-        v_y = (dvl_VE[i,]*np.sin(np.pi/4) - np.cos(np.pi/4)*dvl_VN[i,])*np.cos(YAW[i,])
-        v_z = dvl_VZ[i,]
-        v_std = dvl_VSTD[i,]
+        yaw = sawtooth(-YAW[i,]+np.pi/2)
+        v_x = (dvl_VE[i,]*np.cos(-np.pi/4) + np.sin(-np.pi/4)*dvl_VN[i,])*np.cos(yaw)
+        v_y = (dvl_VE[i,]*np.sin(-np.pi/4) + np.cos(-np.pi/4)*dvl_VN[i,])*np.sin(yaw)
+        # v_x = dvl_VE[i,]*np.cos(YAW[i,] - np.pi/2)
+        # v_y = dvl_VN[i,]*np.sin(YAW[i,] - np.pi/2)
+
+        # v_z = dvl_VZ[i,]
+        v_std = 0.01 #dvl_VSTD[i,]
 
         # _, measurements = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)
-        measurements = MBES_Z[i,] - previous_MBES #offset between 2013 MNT and calculation
-        previous_MBES = MBES_Z[i,]
+        mean_range_dvl = (dvl_BM1R[i,] + dvl_BM2R[i,] + dvl_BM3R[i,] + dvl_BM4R[i,])/4
+        measurements = mean_range_dvl - previous_MBES #MBES_Z[i,] - previous_MBES
+        previous_MBES = mean_range_dvl #MBES_Z[i,]
 
         """Processing the motion of the robot """
         robot_forward_motion =  dt*np.sqrt(v_x**2 + v_y**2)# + v_z**2)
-        robot_angular_motion = np.arctan2(v_y,v_x) #Je sais pas pourquoi c'est à l'envers
+        # robot_angular_motion = sawtooth(-yaw+np.pi/2) #np.arctan2(v_y,v_x) #Je sais pas pourquoi c'est à l'envers
+        robot_angular_motion = yaw #np.arctan2(v_y,v_x) #Je sais pas pourquoi c'est à l'envers
 
         """ Processing error on measures"""
         meas_model_distance_std = None
         measurements_noise = [meas_model_distance_std] ### Attention, std est en mètres !
 
         """ Processing error on algorithm"""
+        # motion_model_forward_std = steps*np.abs(v_std)
         motion_model_forward_std = steps*np.abs(v_std)
-        motion_model_turn_std = np.abs(sawtooth(np.arctan2((v_x + np.sign(v_x)*v_std),(v_y)) - np.arctan2((v_x),(v_y+np.sign(v_y)*v_std))))
+
+        # motion_model_turn_std = np.abs(sawtooth(np.arctan2((v_x + np.sign(v_x)*v_std),(v_y)) - np.arctan2((v_x),(v_y+np.sign(v_y)*v_std))))
+        motion_model_turn_std = YAW_STD[i,]
         process_noise = [motion_model_forward_std, motion_model_turn_std]
 
         """Process the update"""
@@ -206,6 +218,7 @@ if __name__ == '__main__':
                                                measurements_noise, process_noise, particles,\
                                                 resampling_threshold, resampler, beta, bounds,\
                                                 previous_z_mbes_particule)
+
 
         """ Affichage en temps réel """
         if bool_display:
@@ -232,6 +245,7 @@ if __name__ == '__main__':
         #Add variables useful to display graphs at the end of the program
         TIME.append(t)
 
+        _, measurements_mnt = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)
         lat = LAT[i,]
         lon = LON[i,]
         x_gps, y_gps = coord2cart((lat,lon)).flatten()
@@ -243,8 +257,9 @@ if __name__ == '__main__':
         STD_X.append(var[0])
         STD_Y.append(var[1])
 
-        _, measurements_mnt = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)
-        MEASUREMENTS.append([measurements_mnt, MBES_Z[i,]])
+        _, new_measurements_mnt = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)
+        d_measurements_mnt = new_measurements_mnt - measurements_mnt
+        MEASUREMENTS.append([d_measurements_mnt, measurements])
 
         #Test if the algorithm diverge and why
         if test_diverge(ERR, 1000) : break
@@ -289,8 +304,8 @@ if __name__ == '__main__':
     ax3.set_title("Difference of measurements = {}.".format(np.abs(np.mean(MEASUREMENTS[:,0]) - np.mean(MEASUREMENTS[:,1]))))
     ax3.set_xlabel("time [min]")
     ax3.set_ylabel("error (m)")
-    ax3.plot(TIME, MEASUREMENTS[:,0], color = 'b', label = 'measurements from the MNT')
-    ax3.plot(TIME, MEASUREMENTS[:,1], color = 'r', label = 'measurements from the MBES')
+    ax3.scatter(TIME, MEASUREMENTS[:,0], color = 'b', label = 'measurements from the MNT')
+    ax3.scatter(TIME, MEASUREMENTS[:,1], color = 'r', label = 'measurements from the MBES')
     ax3.legend()
 
     # ax3.set_title("Vitesse")

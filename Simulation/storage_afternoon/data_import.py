@@ -261,8 +261,8 @@ if bool_compress:
     end_time = min(min(T[-1], MBES_T[-1]),dvl_T[-1])
 
     # dt = 0.005
-    dt = 0.1
-
+    dt = np.mean(np.diff(dvl_T))
+    print(dt)
     T_glob = np.arange(start_time, end_time, dt)
 
     # Interpolez les données de T sur le nouveau vecteur de temps T_glob
@@ -373,88 +373,116 @@ if bool_compress:
     dvl_VZ = dvl_VZ_interp
     dvl_VSTD = dvl_VSTD_interp
 
+if __name__ == '__main__':
+    import matplotlib.pyplot as plt
 
-    # # Display speed
-    # import matplotlib.pyplot as plt
-    # plt.figure()
-    # ax1 = plt.subplot2grid((2, 3), (0, 0))
-    # ax2 = plt.subplot2grid((2, 3), (0, 1))
-    # ax3 = plt.subplot2grid((2, 3), (1, 0))
-    # ax4 = plt.subplot2grid((2, 3), (1, 1))
-    # ax5 = plt.subplot2grid((2, 3), (0, 2))
-    #
-    #
-    # # ax1.plot(dvl_T, (dvl_VE), label="dvl")
-    # ax1.plot(dvl_T, (dvl_VE*np.cos(np.pi/4) - np.sin(np.pi/4)*dvl_VN)*np.sin(YAW), label="dvl")
-    # ax1.plot(T, (V_X), label = "ins")
-    # ax1.legend()
-    # ax1.set_title("VE")
-    # ax1.grid()
-    # ax4.grid()
-    #
-    #
-    # # ax2.plot(dvl_T, (dvl_VN), label="dvl")
-    # ax2.plot(dvl_T, (dvl_VE*np.sin(np.pi/4) - np.cos(np.pi/4)*dvl_VN)*np.cos(YAW), label="dvl")
-    # ax2.plot(T, (V_Y), label = "ins")
-    # ax2.legend()
-    # ax2.set_title("VN")
-    # ax2.grid()
-    #
-    # ax3.plot(dvl_T, (dvl_VZ), label="dvl")
-    # ax3.plot(T, (V_Z), label = "ins")
-    # ax3.legend()
-    # ax3.set_title("VZ")
-    # ax3.grid()
-    #
-    # ax4.plot(dvl_T, np.sqrt(dvl_VE**2 + dvl_VN**2 + dvl_VZ**2), label="dvl")
-    # ax4.plot(T, np.sqrt(V_X**2 + V_Y**2 + V_Z**2), label = "ins")
-    # ax4.legend()
-    # ax4.set_title("||V||")
-    # ax4.grid()
-    #
-    # ax5.plot(dvl_T, np.sqrt(dvl_VSTD**2), label = "error speed on dvl")
-    # ax5.plot(T, np.sqrt(V_X_STD**2 + V_Y_STD**2 + V_Z_STD**2), label = "error speed on ins")
-    # ax5.set_title("Error on speed")
-    # ax5.legend()
-    # ax5.grid()
-    #
     # #######################################
-    # plt.figure()
-    # ax1 = plt.subplot2grid((2, 3), (0, 0))
-    # ax2 = plt.subplot2grid((2, 3), (0, 1))
-    # ax3 = plt.subplot2grid((2, 3), (1, 0))
-    # ax4 = plt.subplot2grid((2, 3), (1, 1))
-    # ax5 = plt.subplot2grid((2, 3), (0, 2), rowspan=2)
-    #
-    # mask1 = np.abs(np.diff(MBES_Z)) > 0.001*np.std(MBES_Z)
-    #
-    # ax1.plot(dvl_T, dvl_BM1R, label = "dvl_BM1R", color = 'red')
-    # ax1.plot((MBES_T[1:,])[~mask1], (MBES_Z[1:,])[~mask1], label="MBES_Z")
-    # ax1.legend()
-    # ax1.grid()
-    # ax1.set_title("dvl_BM1R")
-    #
-    # ax2.plot(dvl_T, dvl_BM2R, label = "dvl_BM2R", color = 'red')
-    # ax2.plot((MBES_T[1:,])[~mask1], (MBES_Z[1:,])[~mask1], label="MBES_Z")
-    # ax2.legend()
-    # ax2.grid()
-    # ax2.set_title("dvl_BM2R")
-    #
-    # ax3.plot(dvl_T, dvl_BM3R, label = "dvl_BM3R", color = 'red')
-    # ax3.plot((MBES_T[1:,])[~mask1], (MBES_Z[1:,])[~mask1], label="MBES_Z")
-    # ax3.legend()
-    # ax3.grid()
-    # ax3.set_title("dvl_BM3R")
-    #
-    # ax4.plot(dvl_T, dvl_BM4R, label = "dvl_BM4R", color = 'red')
-    # ax4.plot((MBES_T[1:,])[~mask1], (MBES_Z[1:,])[~mask1], label="MBES_Z")
-    # ax4.legend()
-    # ax4.grid()
-    # ax4.set_title("dvl_BM4R")
-    #
-    # ax5.plot(dvl_T, (dvl_BM1R + dvl_BM2R + dvl_BM3R + dvl_BM4R)/4, label = "mean dvl_BMR", color = 'red')
-    # ax5.plot(MBES_T[1:,][~mask1], MBES_Z[1:,][~mask1], label="MBES_Z")
-    # ax5.legend()
-    # ax5.grid()
-    # ax5.set_title("Mean of dvl range v/s MBES")
-    # plt.show()
+    plt.figure()
+    ax1 = plt.subplot2grid((2, 3), (0, 0))
+    ax2 = plt.subplot2grid((2, 3), (0, 1))
+    ax3 = plt.subplot2grid((2, 3), (1, 0))
+    ax4 = plt.subplot2grid((2, 3), (1, 1))
+    ax5 = plt.subplot2grid((2, 3), (0, 2), rowspan=2)
+
+    mask1 = np.abs(np.diff(MBES_Z)) > 0.001*np.std(MBES_Z)
+
+    ax1.plot(dvl_T, dvl_BM1R, label = "dvl_BM1R", color = 'red')
+    ax1.plot((MBES_T[1:,])[~mask1], (MBES_Z[1:,])[~mask1], label="MBES_Z")
+    ax1.legend()
+    ax1.grid()
+    ax1.set_title("dvl_BM1R")
+
+    ax2.plot(dvl_T, dvl_BM2R, label = "dvl_BM2R", color = 'red')
+    ax2.plot((MBES_T[1:,])[~mask1], (MBES_Z[1:,])[~mask1], label="MBES_Z")
+    ax2.legend()
+    ax2.grid()
+    ax2.set_title("dvl_BM2R")
+
+    ax3.plot(dvl_T, dvl_BM3R, label = "dvl_BM3R", color = 'red')
+    ax3.plot((MBES_T[1:,])[~mask1], (MBES_Z[1:,])[~mask1], label="MBES_Z")
+    ax3.legend()
+    ax3.grid()
+    ax3.set_title("dvl_BM3R")
+
+    ax4.plot(dvl_T, dvl_BM4R, label = "dvl_BM4R", color = 'red')
+    ax4.plot((MBES_T[1:,])[~mask1], (MBES_Z[1:,])[~mask1], label="MBES_Z")
+    ax4.legend()
+    ax4.grid()
+    ax4.set_title("dvl_BM4R")
+
+    def distance_to_bottom(xy,mnt):
+        d_mnt, indices = kd_tree.query(xy)  #Utilise KDTree pour calculer les distances
+        Z = mnt[indices,2] # Récupère les altitudes des points les plus proches
+        return d_mnt, Z
+
+    x_gps, y_gps = coord2cart((LAT, LON))
+    ax5.scatter(T[:-1,], np.diff(distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze()), label = "d_mnt")
+    mean_dvlR = (dvl_BM1R + dvl_BM2R + dvl_BM3R + dvl_BM4R)/4
+    ax5.scatter(dvl_T[:-1,], np.diff(mean_dvlR), label = "mean dvl_BMR", color = 'orange')
+    # ax5.scatter(MBES_T[1:-1,][~mask1], np.diff(MBES_Z[1:,][~mask1]), label="MBES_Z")
+    ax5.scatter(MBES_T[1:-1,], np.diff(MBES_Z[1:,]), label="MBES_Z", color = 'gray', s = 0.5)
+    ax5.legend()
+    ax5.grid()
+    ax5.set_title("Mean of dvl range v/s MBES")
+
+    ##################################################
+    plt.figure()
+    sawtooth = lambda x : 2*np.arctan(np.tan(x/2))
+    YAW = sawtooth(-YAW+np.pi/2)
+    dvl_v_x = (dvl_VE*np.cos(-np.pi/4) + dvl_VN*np.sin(-np.pi/4))*np.cos(YAW)
+    # dvl_v_x = dvl_VE*np.cos(YAW - np.pi/2)
+    dvl_v_y = (dvl_VN*np.sin(-np.pi/4) + dvl_VE*np.cos(-np.pi/4))*np.sin(YAW)
+    # dvl_v_y = dvl_VN*np.sin(YAW - np.pi/2)
+    dvl_v_z = dvl_VZ
+
+    ###
+
+    ax1 = plt.subplot2grid((2, 3), (0, 0))
+    ax2 = plt.subplot2grid((2, 3), (0, 1))
+    ax3 = plt.subplot2grid((2, 3), (1, 0))
+    ax4 = plt.subplot2grid((2, 3), (1, 1))
+    ax5 = plt.subplot2grid((2, 3), (0, 2))
+    ax6 = plt.subplot2grid((2, 3), (1, 2))
+
+
+    ax1.plot(dvl_T, dvl_v_x, label="dvl")
+    ax1.plot(T, (V_X), label = "ins")
+    ax1.legend()
+    ax1.set_title("VE")
+    ax1.grid()
+
+
+    ax2.plot(dvl_T, dvl_v_y, label="dvl")
+    ax2.plot(T, (V_Y), label = "ins")
+    ax2.legend()
+    ax2.set_title("VN")
+    ax2.grid()
+
+    ax3.plot(dvl_T, (dvl_VZ), label="dvl")
+    ax3.plot(T, (V_Z), label = "ins")
+    ax3.legend()
+    ax3.set_title("VZ")
+    ax3.grid()
+
+    ax4.plot(dvl_T, np.sqrt(dvl_v_x**2 + dvl_v_y**2), label="dvl")
+    ax4.plot(T, np.sqrt(V_X**2 + V_Y**2), label = "ins")
+    ax4.set_title("||V_xy||")
+    ax4.legend()
+    ax4.grid()
+
+    ax5.plot(dvl_T, dvl_VSTD, label = "error speed on dvl")
+    ax5.plot(T, V_X_STD, label = "error speed on ins on X")
+    ax5.plot(T, V_Y_STD, label = "error speed on ins on Y")
+    ax5.plot(T, V_Z_STD, label = "error speed on ins on Z")
+    ax5.set_title("Error on speed")
+    ax5.legend()
+    ax5.grid()
+
+    ax6.plot(dvl_T, np.arctan2(dvl_v_y,dvl_v_x), label = "angle_vDvL")
+    ax6.plot(T, np.arctan2(V_Y,V_X), label = "angle_vINS")
+    ax6.plot(T, YAW, label = f"yaw")
+    ax6.legend()
+    ax6.grid()
+    ax6.set_title("angle of speed")
+
+    plt.show()
