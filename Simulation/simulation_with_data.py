@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import sys
+print("You can run your program adding mbes or dvl or mnt at the end of the arguments")
 if len(sys.argv[1:])>=1:
     for arg in sys.argv[1:]:
         if arg == "mnt" or arg == "dvl" or arg == "mbes":
@@ -47,7 +48,7 @@ def validate_state(state, bounds, d_mnt):
     weights = state[0]
     # coords  = state[1]
     # weights[(coords[0] < x_min) | (coords[0] > x_max) | (coords[1] < y_min) | (coords[1] > y_max)] = 0
-    weights[d_mnt > 1] = 0 # If we are out of the MNT
+    weights[d_mnt > 0.5] = 0 # If we are out of the MNT
     # if np.sum(weights) == 0: sys.exit()
     return(state)
 
@@ -283,10 +284,6 @@ if __name__ == '__main__':
         var = np.std(np.column_stack((particles[1][0],particles[1][1])),axis=0)
         STD_X.append(var[0])
         STD_Y.append(var[1])
-
-        # _, new_measurements_mnt = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)
-        # d_measurements_mnt = new_measurements_mnt - measurements_mnt
-        # MEASUREMENTS.append([d_measurements_mnt, measurements])
 
         #Test if the algorithm diverge and why
         if test_diverge(ERR, 1000) : break
