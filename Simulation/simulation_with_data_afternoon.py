@@ -177,6 +177,11 @@ if __name__ == '__main__':
     beta = 1/5.
     previous_MBES = (dvl_BM1R[0,] + dvl_BM2R[0,] + dvl_BM3R[0,] + dvl_BM4R[0,])/4 #MBES_Z[0,]
 
+
+    x_gps, y_gps = coord2cart((LAT[0,],LON[0,])).flatten()
+    _, previous_measurements = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)
+
+
     for i in r:
 
         """Set data"""
@@ -190,7 +195,9 @@ if __name__ == '__main__':
         # v_z = dvl_VZ[i,]
         v_std = 0.01 #dvl_VSTD[i,]
 
-        # _, measurements = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)
+        # measurements = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)[1] - previous_measurements
+        # _, previous_measurements = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)
+
         mean_range_dvl = (dvl_BM1R[i,] + dvl_BM2R[i,] + dvl_BM3R[i,] + dvl_BM4R[i,])/4
         measurements = mean_range_dvl - previous_MBES #MBES_Z[i,] - previous_MBES
         previous_MBES = mean_range_dvl #MBES_Z[i,]

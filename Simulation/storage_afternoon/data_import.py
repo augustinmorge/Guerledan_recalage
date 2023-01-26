@@ -221,13 +221,17 @@ if bool_compress:
     # Append the last index to indices
     indices = np.append(indices, BEAMS.shape[0]-1)
 
-    # Use the indices to extract the corresponding values of other arrays
-    mid_indices = (indices[:-1]+indices[1:])//2
+    # Use only the middle of the beams
+    MBES_T = np.array(MBES_T[(indices[:-1]+indices[1:])//2])
+    MBES_X = np.array(MBES_X[(indices[:-1]+indices[1:])//2])
+    MBES_Y = np.array(MBES_Y[(indices[:-1]+indices[1:])//2])
+    MBES_Z = np.array(MBES_Z[(indices[:-1]+indices[1:])//2])
 
-    MBES_T = np.array(MBES_T[mid_indices])
-    MBES_X = np.array(MBES_X[mid_indices])
-    MBES_Y = np.array(MBES_Y[mid_indices])
-    MBES_Z = np.array(MBES_Z[mid_indices])
+    # Use the average on all the beams
+    # MBES_T = np.array([np.mean(MBES_T[indices[i]:indices[i+1]]) for i in range(len(indices)-1)])
+    # MBES_X = np.array([np.mean(MBES_X[indices[i]:indices[i+1]]) for i in range(len(indices)-1)])
+    # MBES_Y = np.array([np.mean(MBES_Y[indices[i]:indices[i+1]]) for i in range(len(indices)-1)])
+    # MBES_Z = np.array([np.mean(MBES_Z[indices[i]:indices[i+1]]) for i in range(len(indices)-1)])
 
     """ Load the DVL """
     dvl = np.load(file_path + "/dvl.npz")
@@ -262,7 +266,7 @@ if bool_compress:
 
     # dt = 0.005
     dt = np.mean(np.diff(dvl_T))
-    print(dt)
+    # print(dt)
     T_glob = np.arange(start_time, end_time, dt)
 
     # Interpolez les données de T sur le nouveau vecteur de temps T_glob
@@ -375,7 +379,9 @@ if bool_compress:
 
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
-
+    T = (T - T[0])/60
+    dvl_T = (dvl_T - dvl_T[0])/60
+    MBES_T = (MBES_T - MBES_T[0])/60
     # #######################################
     plt.figure()
     ax1 = plt.subplot2grid((2, 3), (0, 0))
@@ -390,24 +396,32 @@ if __name__ == '__main__':
     ax1.plot((MBES_T[1:,])[~mask1], (MBES_Z[1:,])[~mask1], label="MBES_Z")
     ax1.legend()
     ax1.grid()
+    ax1.set_xlabel("Time [min]")
+    ax1.set_ylabel("Range [m]")
     ax1.set_title("dvl_BM1R")
 
     ax2.plot(dvl_T, dvl_BM2R, label = "dvl_BM2R", color = 'red')
     ax2.plot((MBES_T[1:,])[~mask1], (MBES_Z[1:,])[~mask1], label="MBES_Z")
     ax2.legend()
     ax2.grid()
+    ax2.set_xlabel("Time [min]")
+    ax2.set_ylabel("Range [m]")
     ax2.set_title("dvl_BM2R")
 
     ax3.plot(dvl_T, dvl_BM3R, label = "dvl_BM3R", color = 'red')
     ax3.plot((MBES_T[1:,])[~mask1], (MBES_Z[1:,])[~mask1], label="MBES_Z")
     ax3.legend()
     ax3.grid()
+    ax3.set_xlabel("Time [min]")
+    ax3.set_ylabel("Range [m]")
     ax3.set_title("dvl_BM3R")
 
     ax4.plot(dvl_T, dvl_BM4R, label = "dvl_BM4R", color = 'red')
     ax4.plot((MBES_T[1:,])[~mask1], (MBES_Z[1:,])[~mask1], label="MBES_Z")
     ax4.legend()
     ax4.grid()
+    ax4.set_xlabel("Time [min]")
+    ax4.set_ylabel("Range [m]")
     ax4.set_title("dvl_BM4R")
 
     def distance_to_bottom(xy,mnt):
@@ -416,14 +430,32 @@ if __name__ == '__main__':
         return d_mnt, Z
 
     x_gps, y_gps = coord2cart((LAT, LON))
-    ax5.scatter(T[:-1,], np.diff(distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze()), label = "d_mnt")
+    ax5.scatter(T[:-1,], np.diff(distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze()), label = "d_mnt", s = 1)
     mean_dvlR = (dvl_BM1R + dvl_BM2R + dvl_BM3R + dvl_BM4R)/4
-    ax5.scatter(dvl_T[:-1,], np.diff(mean_dvlR), label = "mean dvl_BMR", color = 'orange')
-    # ax5.scatter(MBES_T[1:-1,][~mask1], np.diff(MBES_Z[1:,][~mask1]), label="MBES_Z")
-    ax5.scatter(MBES_T[1:-1,], np.diff(MBES_Z[1:,]), label="MBES_Z", color = 'gray', s = 0.5)
+    ax5.scatter(dvl_T[:-1,], np.diff(mean_dvlR), label = "mean dvl_BMR", color = 'orange', s = 1)
+    # ax5.scatter(MBES_T[1:-1,], np.diff(MBES_Z[1:,]), label="MBES_Z", color = 'gray', s = 0.5)
+    ax5.scatter(MBES_T[:-1,], np.diff(MBES_Z), label="MBES_Z", color = 'gray', s = 0.5)
     ax5.legend()
     ax5.grid()
+    ax5.set_xlabel("Time [min]")
+    ax5.set_ylabel("Range [m]")
     ax5.set_title("Mean of dvl range v/s MBES")
+    # ax5.scatter(MBES_T[1:-1,][~mask1], np.diff(MBES_Z[1:,][~mask1]), label="MBES_Z")
+
+    # Calculate the error between the DVL and the MNT
+    dvl_error = np.diff(mean_dvlR) - np.diff(distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze())
+    # Calculate the error between the MBES and the MNT
+    mbes_error = np.diff(MBES_Z) - np.diff(distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze())
+
+    plt.figure()
+    plt.scatter(MBES_T[:-1], mbes_error, label = "mbes_error", color = 'green', s = 1)
+    plt.scatter(T[:-1], dvl_error, label = "dvl_error", color = 'red', s = 1)
+    plt.legend()
+    plt.grid()
+    plt.xlabel("Time [min]")
+    plt.ylabel("Error on measuremnts [m]")
+    plt.title("Error of dvl range v/s MNT and mbes range v/s MNT")
+    plt.plot()
 
     ##################################################
     plt.figure()
@@ -450,6 +482,8 @@ if __name__ == '__main__':
     ax1.legend()
     ax1.set_title("VE")
     ax1.grid()
+    ax1.set_xlabel("Time [min]")
+    ax1.set_ylabel("Speed [m/s]")
 
 
     ax2.plot(dvl_T, dvl_v_y, label="dvl")
@@ -457,18 +491,24 @@ if __name__ == '__main__':
     ax2.legend()
     ax2.set_title("VN")
     ax2.grid()
+    ax2.set_xlabel("Time [min]")
+    ax2.set_ylabel("Speed [m/s]")
 
     ax3.plot(dvl_T, (dvl_VZ), label="dvl")
     ax3.plot(T, (V_Z), label = "ins")
     ax3.legend()
     ax3.set_title("VZ")
     ax3.grid()
+    ax3.set_xlabel("Time [min]")
+    ax3.set_ylabel("Speed [m/s]")
 
     ax4.plot(dvl_T, np.sqrt(dvl_v_x**2 + dvl_v_y**2), label="dvl")
     ax4.plot(T, np.sqrt(V_X**2 + V_Y**2), label = "ins")
     ax4.set_title("||V_xy||")
     ax4.legend()
     ax4.grid()
+    ax4.set_xlabel("Time [min]")
+    ax4.set_ylabel("Speed [m/s]")
 
     ax5.plot(dvl_T, dvl_VSTD, label = "error speed on dvl")
     ax5.plot(T, V_X_STD, label = "error speed on ins on X")
@@ -477,12 +517,16 @@ if __name__ == '__main__':
     ax5.set_title("Error on speed")
     ax5.legend()
     ax5.grid()
+    ax5.set_xlabel("Time [min]")
+    ax5.set_ylabel("Error on speed [m/s]")
 
     ax6.plot(dvl_T, np.arctan2(dvl_v_y,dvl_v_x), label = "angle_vDvL")
     ax6.plot(T, np.arctan2(V_Y,V_X), label = "angle_vINS")
     ax6.plot(T, YAW, label = f"yaw")
     ax6.legend()
     ax6.grid()
+    ax6.set_xlabel("Time [min]")
+    ax6.set_ylabel("Error on angle [rad]")
     ax6.set_title("angle of speed")
 
     plt.show()

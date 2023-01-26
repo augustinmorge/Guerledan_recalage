@@ -56,37 +56,27 @@ def propagate_sample(samples, forward_motion, angular_motion, process_noise, bou
     # Make sure we stay within cyclic world
     return samples
 
-def compute_likelihood(samples, measurements, measurements_noise, beta, previous_z_mbes_particule):
+def compute_likelihood(samples, measurements, measurements_noise, beta):
     d_mnt, z_mbes_particule = distance_to_bottom(np.hstack((samples[1][0],samples[1][1])),MNT)
 
     # Map difference true and expected distance measurement to probability
-    measurements_particles = z_mbes_particule - previous_z_mbes_particule
-    # print(measurements_particles.shape,"\n")
-    # i = 0
-    # for i in range(measurements_particles.shape[0]):
-    #     if measurements_particles[i,0]:
-    #         print(measurements_particles[i,0])
-    #         i+=1
-    # print(i)
-    # sys.exit()
-
-    distance = np.abs(measurements_particles - measurements)
+    distance = np.abs(z_mbes_particule - measurements)
     # p_z_given_x_distance = np.exp(-beta*distance/(measurements_noise[0]**2))
     p_z_given_x_distance = np.exp(-beta*distance)
 
     # Return importance weight based on all landmarks
-    return d_mnt, p_z_given_x_distance, z_mbes_particule
+    return d_mnt, p_z_given_x_distance
 
 def needs_resampling(resampling_threshold):
     return 1.0 / np.max(particles[0]) < resampling_threshold
 
-def update(robot_forward_motion, robot_angular_motion, measurements, measurements_noise, process_noise, particles,resampling_threshold, resampler, beta, bounds, previous_z_mbes_particule):
+def update(robot_forward_motion, robot_angular_motion, measurements, measurements_noise, process_noise, particles,resampling_threshold, resampler, beta, bounds):
 
     # Propagate the particle state according to the current particle
     propagated_states = propagate_sample(particles, robot_forward_motion, robot_angular_motion, process_noise, bounds)
 
     # Compute current particle's weight
-    d_mnt, p, previous_z_mbes_particule = compute_likelihood(propagated_states, measurements, measurements_noise, beta, previous_z_mbes_particule)
+    d_mnt, p = compute_likelihood(propagated_states, measurements, measurements_noise, beta)
 
     particules = validate_state(propagated_states, bounds, d_mnt)
 
@@ -100,7 +90,7 @@ def update(robot_forward_motion, robot_angular_motion, measurements, measurement
     if needs_resampling(resampling_threshold):
         particles = resampler.resample(particles, n_particles) #1 = MULTINOMIAL
 
-    return(previous_z_mbes_particule,particles)
+    return(particles)
 
 def get_average_state(particles):
 
@@ -133,12 +123,11 @@ if __name__ == '__main__':
     bounds = [[x_gps_min, x_gps_max], [y_gps_min, y_gps_max]]
     particles = initialize_particles_uniform(n_particles, bounds)
 
-    _, previous_z_mbes_particule = distance_to_bottom(np.hstack((particles[1][0],particles[1][1])),MNT)
     #For the update
     resampler = Resampler()
     resampling_threshold = 0.5*n_particles
 
-    idx_ti = 0 + steps #int(1/3*T.shape[0]) #
+    idx_ti = 0 #int(1/3*T.shape[0]) #
     idx_tf = T.shape[0] # int(4/5*T.shape[0]) #
 
     dt = T[steps,] - T[0,]
@@ -178,10 +167,8 @@ if __name__ == '__main__':
     TIME = []; BAR = []; SPEED = []; ERR = []
     STD_X = []; STD_Y = []
     MEASUREMENTS = []
-    beta = 5/100.
+    beta = 1/100.
     for i in r:
-        # print(i-steps, " ", i, " ", steps)
-
 
         """Set data"""
         t = T[i,]
@@ -192,7 +179,7 @@ if __name__ == '__main__':
         lon = LON[i,]
         x_gps, y_gps = coord2cart((lat,lon)).flatten()
         # _, measurements = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)
-        measurements = MBES_Z[i,] - MBES_Z[i-steps,]
+        measurements = MBES_Z[i,] - 117.61492204
         lat_std = LAT_STD[i,]
         lon_std = LON_STD[i,]
         v_x_std = V_X_STD[i,]
@@ -214,22 +201,17 @@ if __name__ == '__main__':
 
         """Process the update"""
         t0 = time.time()
-        # a = previous_z_mbes_particule
-        # print(measurements)
-        previous_z_mbes_particule, particles = update(robot_forward_motion, robot_angular_motion, measurements,\
+        particles = update(robot_forward_motion, robot_angular_motion, measurements,\
                            measurements_noise, process_noise, particles,\
-                            resampling_threshold, resampler, beta, bounds, previous_z_mbes_particule)
-        # b = previous_z_mbes_particule
-        # print(a-b)
-        # print("\n")
-        # sys
-        """ Affichage en previouss réel """
+                            resampling_threshold, resampler, beta = beta, bounds = bounds)
+
+        """ Affichage en temps réel """
         if bool_display:
             ax.cla()
             print("Temps de calcul: ",time.time() - t0)
             t1 = time.time()
             ax.plot(coord2cart((LAT[idx_ti:idx_tf,], LON[idx_ti:idx_tf,]))[0,:], coord2cart((LAT[idx_ti:idx_tf,], LON[idx_ti:idx_tf,]))[1,:])
-            ax.set_title("Particle filter with {} particles with dz = {}m".format(n_particles, measurements))
+            ax.set_title("Particle filter with {} particles with z = {}m".format(n_particles, measurements))
             ax.set_xlim([x_gps_min - 100,x_gps_max + 100])
             ax.set_ylim([y_gps_min - 100,y_gps_max + 100])
             ax.scatter(x_gps, y_gps ,color='blue', label = 'True position panopée', s = 100)
