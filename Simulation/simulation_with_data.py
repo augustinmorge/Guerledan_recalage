@@ -33,23 +33,23 @@ def distance_to_bottom(xy,mnt):
     return d_mnt, Z
 
 def initialize_particles_uniform(n_particles, bounds):
-    particles = [1/n_particles*np.ones((n_particles,1)),[ \
-                           np.random.uniform(bounds[0][0]-20, bounds[0][1]+20, n_particles).reshape(-1,1),
-                           np.random.uniform(bounds[1][0]-20, bounds[1][1]+20, n_particles).reshape(-1,1)]]
+    # particles = [1/n_particles*np.ones((n_particles,1)),[ \
+    #                        np.random.uniform(bounds[0][0]-20, bounds[0][1]+20, n_particles).reshape(-1,1),
+    #                        np.random.uniform(bounds[1][0]-20, bounds[1][1]+20, n_particles).reshape(-1,1)]]
+
+    particles = []
+    index = np.random.randint(0, MNT.shape[0], size = n_particles)
+    particles = [MNT[index][:,0].reshape(-1,1), MNT[index][:,1].reshape(-1,1)]
+    particles = [1/n_particles*np.ones((n_particles,1)), particles]
     return(particles)
 
 def normalize_weights(weighted_samples):
     return [weighted_samples[0] / np.sum(weighted_samples[0]), weighted_samples[1]]
 
 def validate_state(state, bounds, d_mnt):
-    # x_min, x_max = bounds[0][0] - 10., bounds[0][1] + 10.
-    # y_min, y_max = bounds[1][0] - 10., bounds[1][1] + 10.
-    #
-    weights = state[0]
-    # coords  = state[1]
-    # weights[(coords[0] < x_min) | (coords[0] > x_max) | (coords[1] < y_min) | (coords[1] > y_max)] = 0
-    weights[d_mnt > 0.5] = 0 # If we are out of the MNT
-    # if np.sum(weights) == 0: sys.exit()
+    # # If we are out of the MNT
+    # weights = state[0]
+    # weights[d_mnt > 0.5] = 0
     return(state)
 
 def propagate_sample(samples, forward_motion, angular_motion, process_noise, bounds):
@@ -72,19 +72,20 @@ def compute_likelihood(propagated_states, measurements, measurements_noise, beta
     d_mbes_particule = new_z_particules_mnt - z_particules_mnt
 
     # Map difference true and expected distance measurement to probability
-    # print(d_mbes_particule[0],"\n",measurements)
-    # distance = np.sqrt(d_mbes_particule**2+measurements**2)
     distance = np.abs(d_mbes_particule-measurements)
-    # print(distance[0],"\n")
-    # p_z_given_x_distance = np.exp(-beta*distance/(measurements_noise[0]**2))
-    p_z_given_x_distance = np.exp(-beta*distance**2)
 
+    if measurements_noise[0] == None:
+        p_z_given_x_distance = np.exp(-beta*distance)
+    else:
+        p_z_given_x_distance = np.exp(-beta*distance/(measurements_noise[0]**2))
+
+    # p_z_given_x_distance = 1
     # Return importance weight based on all landmarks
-    return d_mnt, p_z_given_x_distance, z_particules_mnt
+    return d_mnt, p_z_given_x_distance, new_z_particules_mnt
 
 def needs_resampling(resampling_threshold):
     return 1.0 / np.max(particles[0]) < resampling_threshold
-    # return 1.0 / np.sum(particles[0]) < resampling_threshold
+
 
 def update(robot_forward_motion, robot_angular_motion, measurements, \
             measurements_noise, process_noise, particles,resampling_threshold,\
@@ -117,6 +118,29 @@ def get_average_state(particles):
     avg_y = np.sum(particles[0]*particles[1][1]) / np.sum(particles[0])
 
     return [avg_x, avg_y]
+
+# Init range sensor
+if choice_range_sensor == "mnt":
+    x_gps, y_gps = coord2cart((LAT[0,],LON[0,])).flatten()
+    d_mnt, previous_measurements = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)
+elif choice_range_sensor == "dvl":
+    previous_measurements = (dvl_BM1R[0,] + dvl_BM2R[0,] + dvl_BM3R[0,] + dvl_BM4R[0,])/4 #range__Z[0,]
+else:
+    previous_measurements = MBES_Z[0,]
+
+def f_measurements(i, previous_measurements):
+    if choice_range_sensor == "mnt":
+        x_gps, y_gps = coord2cart((LAT[i,],LON[i,])).flatten()
+        d_mnt, measurements = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)
+        return measurements-previous_measurements, measurements, d_mnt
+        # return measurements, measurements, d_mnt
+    elif choice_range_sensor == "dvl":
+        mean_range_dvl = (dvl_BM1R[i,] + dvl_BM2R[i,] + dvl_BM3R[i,] + dvl_BM4R[i,])/4
+        measurements = mean_range_dvl - previous_measurements #117.61492204 #
+        return measurements, mean_range_dvl, None
+    else:
+        measurements = MBES_Z[i,] - previous_measurements #117.61492204 #
+        return measurements, MBES_Z[i,], None
 
 def test_diverge(ERR, err_max=1000):
     if ERR[-1] > err_max: #Si l'erreur est de plus de 500m il y a un probleme
@@ -187,51 +211,27 @@ if __name__ == '__main__':
     TIME = []; BAR = []; SPEED = []; ERR = []
     STD_X = []; STD_Y = []
     MEASUREMENTS = []
-    beta = 10**(-10)
-
-    # Init range sensor
-    if choice_range_sensor == "mnt":
-        x_gps, y_gps = coord2cart((LAT[0,],LON[0,])).flatten()
-        _, previous_measurements = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)
-    elif choice_range_sensor == "dvl":
-        previous_measurements = (dvl_BM1R[0,] + dvl_BM2R[0,] + dvl_BM3R[0,] + dvl_BM4R[0,])/4 #range__Z[0,]
-    else:
-        previous_measurements = MBES_Z[0,]
-
-    def f_measurements(i, previous_measurements):
-        if choice_range_sensor == "mnt":
-            x_gps, y_gps = coord2cart((LAT[i,],LON[i,])).flatten()
-            measurements = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)[1] - previous_measurements
-            return measurements, distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)[1]
-        elif choice_range_sensor == "dvl":
-            mean_range_dvl = (dvl_BM1R[i,] + dvl_BM2R[i,] + dvl_BM3R[i,] + dvl_BM4R[i,])/4
-            measurements = mean_range_dvl - previous_measurements
-            return measurements, mean_range_dvl
-        else:
-            measurements = MBES_Z[i,] - previous_measurements
-            return measurements, MBES_Z[i,]
+    # beta = 1/100
+    beta = 10**(-1)
 
     for i in r:
 
         """Set data"""
         t = dvl_T[i,]
-        # yaw = sawtooth(-YAW[i,]+np.pi/2)
-        yaw = np.arctan2(V_Y[i,],V_X[i,])
+        yaw = YAW[i,]
         v_x = dvl_v_x[i,]
         v_y = dvl_v_y[i,]
-        # v_x = V_X[i,]
-        # v_y = V_Y[i,]
-        v_std = np.sqrt(V_X_STD[i,]**2+V_Y_STD[i,])
-        # v_std = dvl_VSTD[i,]
+        # v_std = np.sqrt(V_X_STD[i,]**2+V_Y_STD[i,]**2)
+        v_std = dvl_VSTD[i,]/10
 
-        measurements, previous_measurements = f_measurements(i, previous_measurements)
+        measurements, previous_measurements, meas_model_distance_std = f_measurements(i, previous_measurements)
 
         """Processing the motion of the robot """
         robot_forward_motion =  dt*np.sqrt(v_x**2 + v_y**2)# + v_z**2)
         robot_angular_motion = yaw
 
         """ Processing error on measures"""
-        meas_model_distance_std = None
+        # meas_model_distance_std = None
         measurements_noise = [meas_model_distance_std] ### Attention, std est en mètres !
 
         """ Processing error on algorithm"""
@@ -286,7 +286,7 @@ if __name__ == '__main__':
         STD_Y.append(var[1])
 
         #Test if the algorithm diverge and why
-        if test_diverge(ERR, 1000) : break
+        if test_diverge(ERR, 700) : break
 
 
 

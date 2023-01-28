@@ -35,32 +35,37 @@ def coord2cart(coords,coords_ref=wpt_ponton):
 if bool_txt:
     """ Import INS """
     print("Importing the INS-TXT file..")
-    filepath = file_path+"/sbgCenterExport_new.txt"
-    data = np.loadtxt(filepath, dtype="U")
-    T = data[:,0]
+        # UTC Time	North Velocity	East Velocity	Down Velocity	Latitude	Longitude
+        	# Latitude Std.	Longitude Std.	North Velocity Std.	East Velocity Std.
+                # Down Velocity Std.	Yaw	Yaw Std.	Roll	Roll Std.	Pitch
+                    # Pitch Std.
+
+    filepath = file_path+"/sbgCenterExport.txt"
+    data_ins = np.genfromtxt(filepath, delimiter='\t', skip_header=2, dtype = "U")
+    T = data_ins[:,0]
     T = np.array([dt.split(":") for dt in T], dtype=np.float64)
     T = 60*60*T[:,0] + 60*T[:,1] + T[:,2]
-    V_Y = np.float64(data[:,1])
-    V_X = np.float64(data[:,2])
-    V_Z = np.float64(data[:,3])
-    LAT = np.float64(data[:,4])
-    LON = np.float64(data[:,5])
+
+    V_Y = np.float64(data_ins[:,1])
+    V_X = np.float64(data_ins[:,2])
+    V_Z = np.float64(data_ins[:,3])
+    LAT = np.float64(data_ins[:,4])
+    LON = np.float64(data_ins[:,5])
 
     #Error on importation
-    LAT_STD = np.float64(data[:,6])
-    LON_STD = np.float64(data[:,7])
-    V_X_STD = np.float64(data[:,9])
-    V_Y_STD = np.float64(data[:,8])
-    V_Z_STD = np.float64(data[:,10])
+    LAT_STD = np.float64(data_ins[:,6])
+    LON_STD = np.float64(data_ins[:,7])
+    V_Y_STD = np.float64(data_ins[:,8])
+    V_X_STD = np.float64(data_ins[:,9])
+    V_Z_STD = np.float64(data_ins[:,10])
 
     # #Attitude
-    # YAW = np.float64(data[:,11])
-    # YAW_STD = np.float64(data[:,12])
-    # ROLL = np.float64(data[:,13])
-    # ROLL_STD = np.float64(data[:,14])
-    # PITCH = np.float64(data[:,15])
-    # PITCH_STD = np.float64(data[:,16])
-
+    YAW = np.float64(data_ins[:,11])
+    YAW_STD = np.float64(data_ins[:,12])
+    ROLL = np.float64(data_ins[:,13])
+    ROLL_STD = np.float64(data_ins[:,14])
+    PITCH = np.float64(data_ins[:,15])
+    PITCH_STD = np.float64(data_ins[:,16])
 
     """ Import DVL """
     print("Importing the DVL-TXT file..")
@@ -144,9 +149,9 @@ if bool_txt:
     """ Uncomment the following section to save the data """
     np.savez("ins.npz", T=T, LAT=LAT, LON=LON, V_X=V_X, V_Y=V_Y, V_Z=V_Z,\
             LAT_STD=LAT_STD, LON_STD=LON_STD, V_X_STD=V_X_STD,\
-            V_Y_STD=V_Y_STD, V_Z_STD=V_Z_STD, dtype = np.float64, precision = 16) #, YAW=YAW, YAW_STD=YAW_STD,\
-            # ROLL=ROLL, ROLL_STD=ROLL_STD, PITCH=PITCH, PITCH_STD=PITCH_STD,\
-            # dtype = np.float64, precision = 16)
+            V_Y_STD=V_Y_STD, V_Z_STD=V_Z_STD, YAW=YAW, YAW_STD=YAW_STD,\
+            ROLL=ROLL, ROLL_STD=ROLL_STD, PITCH=PITCH, PITCH_STD=PITCH_STD,\
+            dtype = np.float64, precision = 16)
     np.savez("mnt.npz", MNT=MNT, dtype = np.float64, precision = 16)
     # with open('kd_tree.pkl', 'wb') as f:
     #     pickle.dump(kd_tree, f)
@@ -168,10 +173,14 @@ if bool_txt:
                         dvl_VZ = dvl_VZ,
                         dvl_VSTD = dvl_VSTD, dtype = np.float64)
 
+    import sys
+    print("Relaunch with data compressed")
+    sys.exit()
+
 if bool_compress:
     """ Load the compressed data """
 
-    """ Load npz file """
+    """ Load INS """
     print("Loading the compressed data..")
     ins = np.load(file_path + "/ins.npz")
     T = ins['T']
@@ -186,15 +195,19 @@ if bool_compress:
     V_Y_STD = ins['V_Y_STD']
     V_Z_STD = ins['V_Z_STD']
 
-    # YAW = ins['YAW']/180*np.pi
-    # YAW_STD = ins['YAW_STD']/180*np.pi
-    # ROLL = ins['ROLL']/180*np.pi
-    # ROLL_STD = ins['ROLL_STD']/180*np.pi
-    # PITCH = ins['PITCH']/180*np.pi
-    # PITCH_STD = ins['PITCH_STD']/180*np.pi
+    YAW = ins['YAW']/180*np.pi
+    YAW_STD = ins['YAW_STD']/180*np.pi
+    ROLL = ins['ROLL']/180*np.pi
+    ROLL_STD = ins['ROLL_STD']/180*np.pi
+    PITCH = ins['PITCH']/180*np.pi
+    PITCH_STD = ins['PITCH_STD']/180*np.pi
 
+    """ Load INS """
     mnt = np.load(file_path + "/mnt.npz")
     MNT = mnt['MNT']
+    nx_mnt, ny_mnt = coord2cart((MNT[:,1],MNT[:,0]))
+    MNT[:,0] = nx_mnt
+    MNT[:,1] = ny_mnt
 
 
     """ Load the KD-Tree """
@@ -239,29 +252,50 @@ if bool_compress:
     dvl_VN = dvl["dvl_VN"]/10000.
     dvl_VZ = dvl["dvl_VZ"]/10000.
     dvl_VSTD = dvl["dvl_VSTD"]/10000.
-    mask = (dvl_VE == -32.768) | (dvl_VN == -32.768) | (dvl_VZ == -32.768) \
-            | (dvl_VSTD == -32.768)
-
-    dvl_T = dvl_T[~mask]
-    dvl_BM1R = dvl_BM1R[~mask]
-    dvl_BM2R = dvl_BM2R[~mask]
-    dvl_BM3R = dvl_BM3R[~mask]
-    dvl_BM4R = dvl_BM4R[~mask]
-    dvl_VE = dvl_VE[~mask]
-    dvl_VN = dvl_VN[~mask]
-    dvl_VZ = dvl_VZ[~mask]
-    dvl_VSTD = dvl_VSTD[~mask]
+    # mask = (dvl_VE == -32.768) | (dvl_VN == -32.768) | (dvl_VZ == -32.768) \
+    #         | (dvl_VSTD == -32.768)
+    #
+    # dvl_T = dvl_T[~mask]
+    # dvl_BM1R = dvl_BM1R[~mask]
+    # dvl_BM2R = dvl_BM2R[~mask]
+    # dvl_BM3R = dvl_BM3R[~mask]
+    # dvl_BM4R = dvl_BM4R[~mask]
+    # dvl_VE = dvl_VE[~mask]
+    # dvl_VN = dvl_VN[~mask]
+    # dvl_VZ = dvl_VZ[~mask]
+    # dvl_VSTD = dvl_VSTD[~mask]
 
     """ Interpolate data """
     from scipy.interpolate import interp1d
+    apply_modif = True
+    if apply_modif:
+        #Apply a mask
+        # mask_dvl_VE = np.abs(dvl_VE - np.mean(dvl_VE)) > 1.5*np.std(dvl_VE)
+        # mask_dvl_VN = np.abs(dvl_VN - np.mean(dvl_VN)) > 1.5*np.std(dvl_VN)
+        mask_dvl_VE = np.abs(dvl_VE - np.mean(dvl_VE)) > 3*np.std(dvl_VE)
+        mask_dvl_VN = np.abs(dvl_VN - np.mean(dvl_VN)) > 3*np.std(dvl_VN)
+        # mask = mask_dvl_v_x | mask_dvl_VN
+        mask = (mask_dvl_VE) | (mask_dvl_VN) | (dvl_BM1R == 0) | (dvl_BM2R == 0) | (dvl_BM3R == 0) | (dvl_BM4R == 0)
+
+        print("Total point of DVL taken = ",dvl_VE[~mask].shape[0]/dvl_VE.shape[0]*100,"%")
+        dvl_VE = dvl_VE[~mask]
+        dvl_VN = dvl_VN[~mask]
+        dvl_T = dvl_T[~mask]
+        dvl_VZ = dvl_VZ[~mask]
+        dvl_VSTD = dvl_VSTD[~mask]
+        dvl_BM1R = dvl_BM1R[~mask]
+        dvl_BM2R = dvl_BM2R[~mask]
+        dvl_BM3R = dvl_BM3R[~mask]
+        dvl_BM4R = dvl_BM4R[~mask]
 
     # Déterminez les temps de début et de fin communs entre T et MBES_T
     start_time = max(max(T[0], MBES_T[0]),dvl_T[0])
     end_time = min(min(T[-1], MBES_T[-1]),dvl_T[-1])
 
-    # dt = 0.005
-    dt = np.mean(np.diff(dvl_T))
-    # print(dt)
+    dt = 0.1 #np.mean(np.diff(dvl_T))
+    # dt = np.mean(np.diff(MBES_T))
+    # dt = 0.05 #ins
+    print(f"dt choosen = {dt}")
     T_glob = np.arange(start_time, end_time, dt)
 
     # Interpolez les données de T sur le nouveau vecteur de temps T_glob
@@ -278,12 +312,12 @@ if bool_compress:
     f_V_X_STD = interp1d(T, V_X_STD)
     f_V_Y_STD = interp1d(T, V_Y_STD)
     f_V_Z_STD = interp1d(T, V_Z_STD)
-    # f_YAW = interp1d(T,YAW)
-    # f_YAW_STD = interp1d(T,YAW_STD)
-    # f_ROLL = interp1d(T,ROLL)
-    # f_ROLL_STD = interp1d(T,ROLL_STD)
-    # f_PITCH = interp1d(T,PITCH)
-    # f_PITCH_STD = interp1d(T,PITCH_STD)
+    f_YAW = interp1d(T,YAW)
+    f_YAW_STD = interp1d(T,YAW_STD)
+    f_ROLL = interp1d(T,ROLL)
+    f_ROLL_STD = interp1d(T,ROLL_STD)
+    f_PITCH = interp1d(T,PITCH)
+    f_PITCH_STD = interp1d(T,PITCH_STD)
 
     T_interp = f_T(T_glob)
     LAT_interp = f_LAT(T_glob)
@@ -296,12 +330,12 @@ if bool_compress:
     V_X_STD_interp = f_V_X_STD(T_glob)
     V_Y_STD_interp = f_V_Y_STD(T_glob)
     V_Z_STD_interp = f_V_Z_STD(T_glob)
-    # YAW_interp = f_YAW(T_glob)
-    # YAW_STD_interp = f_YAW_STD(T_glob)
-    # ROLL_interp = f_ROLL(T_glob)
-    # ROLL_STD_interp = f_ROLL_STD(T_glob)
-    # PITCH_interp = f_PITCH(T_glob)
-    # PITCH_STD_interp = f_PITCH_STD(T_glob)
+    YAW_interp = f_YAW(T_glob)
+    YAW_STD_interp = f_YAW_STD(T_glob)
+    ROLL_interp = f_ROLL(T_glob)
+    ROLL_STD_interp = f_ROLL_STD(T_glob)
+    PITCH_interp = f_PITCH(T_glob)
+    PITCH_STD_interp = f_PITCH_STD(T_glob)
 
     # Interpolate the MBES
     f_MBES_T = interp1d(MBES_T, MBES_T)
@@ -348,12 +382,12 @@ if bool_compress:
     V_X_STD = V_X_STD_interp
     V_Y_STD = V_Y_STD_interp
     V_Z_STD = V_Z_STD_interp
-    # YAW = YAW_interp
-    # YAW_STD = YAW_STD_interp
-    # ROLL = ROLL_interp
-    # ROLL_STD = ROLL_STD_interp
-    # PITCH = PITCH_interp
-    # PITCH_STD = PITCH_STD_interp
+    YAW = YAW_interp
+    YAW_STD = YAW_STD_interp
+    ROLL = ROLL_interp
+    ROLL_STD = ROLL_STD_interp
+    PITCH = PITCH_interp
+    PITCH_STD = PITCH_STD_interp
 
     #MBES
     MBES_T = MBES_T_interp
@@ -372,63 +406,23 @@ if bool_compress:
     dvl_VZ = dvl_VZ_interp
     dvl_VSTD = dvl_VSTD_interp
 
-    # sawtooth = lambda x : 2*np.arctan(np.tan(x/2))
-    # YAW = sawtooth(-YAW+np.pi/2)
-    YAW = np.arctan2(V_Y,V_X)
-    rotate_dvl_and_apply_modif = True
+    sawtooth = lambda x : 2*np.arctan(np.tan(x/2))
+    YAW = sawtooth(-YAW+np.pi/2)
+    #Rotate the dvl
+    angle = np.pi/4
+    dvl_v_x = (dvl_VE*np.cos(angle) + dvl_VN*np.sin(angle))*np.cos(YAW)
+    dvl_v_y = (dvl_VN*np.sin(angle) + dvl_VE*np.cos(angle))*np.sin(YAW)
+    dvl_v_z = dvl_VZ
 
-    if rotate_dvl_and_apply_modif:
-        #Rotate the dvl
-        angle = np.pi/4
-        dvl_v_x = (dvl_VE*np.cos(angle) + dvl_VN*np.sin(angle))*np.cos(YAW)
-        dvl_v_y = (dvl_VN*np.sin(angle) + dvl_VE*np.cos(angle))*np.sin(YAW)
-        dvl_v_z = dvl_VZ
 
-        #Apply a mask
-        mask_dvl_v_x = np.abs(dvl_v_x - np.mean(dvl_v_x)) > 1.5*np.std(dvl_v_x)
-        mask_dvl_v_y = np.abs(dvl_v_y - np.mean(dvl_v_y)) > 1.5*np.std(dvl_v_y)
-        mask = mask_dvl_v_x | mask_dvl_v_y
-        print("Total point of DVL taken = ",dvl_v_x[~mask].shape[0]/dvl_v_x.shape[0]*100,"%")
-        dvl_v_x = dvl_v_x[~mask]
-        dvl_v_y = dvl_v_y[~mask]
-        dvl_T = dvl_T[~mask]
-        dvl_VZ = dvl_VZ[~mask]
-        dvl_VSTD = dvl_VSTD[~mask]
-        dvl_BM1R = dvl_BM1R[~mask]
-        dvl_BM2R = dvl_BM2R[~mask]
-        dvl_BM3R = dvl_BM3R[~mask]
-        dvl_BM4R = dvl_BM4R[~mask]
-
-        # Interpolate the DVL
-        f_dvl_T = interp1d(dvl_T,dvl_T)
-        f_dvl_BM1R = interp1d(dvl_T,dvl_BM1R)
-        f_dvl_BM2R = interp1d(dvl_T,dvl_BM2R)
-        f_dvl_BM3R = interp1d(dvl_T,dvl_BM3R)
-        f_dvl_BM4R = interp1d(dvl_T,dvl_BM4R)
-        f_dvl_v_x = interp1d(dvl_T,dvl_v_x)
-        f_dvl_v_y = interp1d(dvl_T,dvl_v_y)
-        f_dvl_VZ = interp1d(dvl_T,dvl_VZ)
-        f_dvl_VSTD = interp1d(dvl_T,dvl_VSTD)
-        dvl_T_interp = f_dvl_T(T_glob)
-        dvl_BM1R_interp = f_dvl_BM1R(T_glob)
-        dvl_BM2R_interp = f_dvl_BM2R(T_glob)
-        dvl_BM3R_interp = f_dvl_BM3R(T_glob)
-        dvl_BM4R_interp = f_dvl_BM4R(T_glob)
-        dvl_v_x_interp = f_dvl_v_x(T_glob)
-        dvl_v_y_interp = f_dvl_v_y(T_glob)
-        dvl_VZ_interp = f_dvl_VZ(T_glob)
-        dvl_VSTD_interp = f_dvl_VSTD(T_glob)
-        dvl_T = dvl_T_interp
-        dvl_BM1R = dvl_BM1R_interp
-        dvl_BM2R = dvl_BM2R_interp
-        dvl_BM3R = dvl_BM3R_interp
-        dvl_BM4R = dvl_BM4R_interp
-        dvl_v_x = dvl_v_x_interp
-        dvl_v_y = dvl_v_y_interp
-        dvl_VZ = dvl_VZ_interp
-        dvl_VSTD = dvl_VSTD_interp
 
 if __name__ == '__main__':
+    def distance_to_bottom(xy,mnt):
+        d_mnt, indices = kd_tree.query(xy)  #Utilise KDTree pour calculer les distances
+        Z = mnt[indices,2] # Récupère les altitudes des points les plus proches
+        return d_mnt, Z
+    x_gps, y_gps = coord2cart((LAT, LON))
+
     import matplotlib.pyplot as plt
     T = (T - T[0])/60
     dvl_T = (dvl_T - dvl_T[0])/60
@@ -436,52 +430,65 @@ if __name__ == '__main__':
     def display_range():
         #######################################
         plt.figure()
-        ax1 = plt.subplot2grid((2, 3), (0, 0))
-        ax2 = plt.subplot2grid((2, 3), (0, 1))
-        ax3 = plt.subplot2grid((2, 3), (1, 0))
-        ax4 = plt.subplot2grid((2, 3), (1, 1))
-        ax5 = plt.subplot2grid((2, 3), (0, 2), rowspan=2)
+        ax1 = plt.subplot2grid((2, 2), (0, 0), rowspan=2)
+        ax5 = plt.subplot2grid((2, 2), (0, 1), rowspan=2)
+        # ax1 = plt.subplot2grid((2, 3), (0, 0))
+        # ax2 = plt.subplot2grid((2, 3), (0, 1))
+        # ax3 = plt.subplot2grid((2, 3), (1, 0))
+        # ax4 = plt.subplot2grid((2, 3), (1, 1))
+        # ax5 = plt.subplot2grid((2, 3), (0, 2), rowspan=2)
 
         mask1 = np.abs(np.diff(MBES_Z)) > 0.001*np.std(MBES_Z)
 
-        ax1.plot(dvl_T, dvl_BM1R, label = "dvl_BM1R", color = 'red')
-        ax1.plot((MBES_T[1:,])[~mask1], (MBES_Z[1:,])[~mask1], label="MBES_Z")
+        d_bottom_mnt = distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze() - np.mean(distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze())
+
+        mean_dvlR = (dvl_BM1R + dvl_BM2R + dvl_BM3R + dvl_BM4R)/4
+        mean_dvlR = mean_dvlR - np.mean(mean_dvlR)
+        ax1.plot(dvl_T, mean_dvlR, label = "dvl_R - mean(dvl_R)", color = 'red')
+        ax1.plot((MBES_T[1:,])[~mask1], (MBES_Z[1:,])[~mask1] - np.mean((MBES_Z[1:,])[~mask1]), label="MBES_Z - mean(MBES_Z)")
+        ax1.plot(T, d_bottom_mnt, label = "d_z_mnt - mean(d_z_mnt)")
         ax1.legend()
         ax1.grid()
         ax1.set_xlabel("Time [min]")
         ax1.set_ylabel("Range [m]")
-        ax1.set_title("dvl_BM1R")
+        ax1.set_title("Range from mean range")
 
-        ax2.plot(dvl_T, dvl_BM2R, label = "dvl_BM2R", color = 'red')
-        ax2.plot((MBES_T[1:,])[~mask1], (MBES_Z[1:,])[~mask1], label="MBES_Z")
-        ax2.legend()
-        ax2.grid()
-        ax2.set_xlabel("Time [min]")
-        ax2.set_ylabel("Range [m]")
-        ax2.set_title("dvl_BM2R")
+        # ax1.plot(dvl_T, dvl_BM1R - np.mean(dvl_BM1R), label = "dvl_BM1R", color = 'red')
+        # ax1.plot((MBES_T[1:,])[~mask1], (MBES_Z[1:,])[~mask1] - np.mean((MBES_Z[1:,])[~mask1]), label="MBES_Z")
+        # ax1.plot(T, d_bottom_mnt, label = "d_mnt")
+        # ax1.legend()
+        # ax1.grid()
+        # ax1.set_xlabel("Time [min]")
+        # ax1.set_ylabel("Range [m]")
+        # ax1.set_title("dvl_BM1R")
+        #
+        # ax2.plot(dvl_T, dvl_BM2R - np.mean(dvl_BM2R), label = "dvl_BM2R", color = 'red')
+        # ax2.plot((MBES_T[1:,])[~mask1], (MBES_Z[1:,])[~mask1] - np.mean((MBES_Z[1:,])[~mask1]), label="MBES_Z")
+        # ax2.plot(T, d_bottom_mnt, label = "d_mnt")
+        # ax2.legend()
+        # ax2.grid()
+        # ax2.set_xlabel("Time [min]")
+        # ax2.set_ylabel("Range [m]")
+        # ax2.set_title("dvl_BM2R")
+        #
+        # ax3.plot(dvl_T, dvl_BM3R - np.mean(dvl_BM3R), label = "dvl_BM3R", color = 'red')
+        # ax3.plot((MBES_T[1:,])[~mask1], (MBES_Z[1:,])[~mask1] - np.mean((MBES_Z[1:,])[~mask1]), label="MBES_Z")
+        # ax3.plot(T, d_bottom_mnt, label = "d_mnt")
+        # ax3.legend()
+        # ax3.grid()
+        # ax3.set_xlabel("Time [min]")
+        # ax3.set_ylabel("Range [m]")
+        # ax3.set_title("dvl_BM3R")
+        #
+        # ax4.plot(dvl_T, dvl_BM4R - np.mean(dvl_BM4R), label = "dvl_BM4R", color = 'red')
+        # ax4.plot((MBES_T[1:,])[~mask1], (MBES_Z[1:,])[~mask1] - np.mean((MBES_Z[1:,])[~mask1]), label="MBES_Z")
+        # ax4.plot(T, d_bottom_mnt, label = "d_mnt")
+        # ax4.legend()
+        # ax4.grid()
+        # ax4.set_xlabel("Time [min]")
+        # ax4.set_ylabel("Range [m]")
+        # ax4.set_title("dvl_BM4R")
 
-        ax3.plot(dvl_T, dvl_BM3R, label = "dvl_BM3R", color = 'red')
-        ax3.plot((MBES_T[1:,])[~mask1], (MBES_Z[1:,])[~mask1], label="MBES_Z")
-        ax3.legend()
-        ax3.grid()
-        ax3.set_xlabel("Time [min]")
-        ax3.set_ylabel("Range [m]")
-        ax3.set_title("dvl_BM3R")
-
-        ax4.plot(dvl_T, dvl_BM4R, label = "dvl_BM4R", color = 'red')
-        ax4.plot((MBES_T[1:,])[~mask1], (MBES_Z[1:,])[~mask1], label="MBES_Z")
-        ax4.legend()
-        ax4.grid()
-        ax4.set_xlabel("Time [min]")
-        ax4.set_ylabel("Range [m]")
-        ax4.set_title("dvl_BM4R")
-
-        def distance_to_bottom(xy,mnt):
-            d_mnt, indices = kd_tree.query(xy)  #Utilise KDTree pour calculer les distances
-            Z = mnt[indices,2] # Récupère les altitudes des points les plus proches
-            return d_mnt, Z
-
-        x_gps, y_gps = coord2cart((LAT, LON))
         ax5.scatter(T[:-1,], np.diff(distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze()), label = "d_mnt", s = 1)
         mean_dvlR = (dvl_BM1R + dvl_BM2R + dvl_BM3R + dvl_BM4R)/4
         ax5.scatter(dvl_T[:-1,], np.diff(mean_dvlR), label = "mean dvl_BMR", color = 'orange', s = 1)
@@ -507,32 +514,10 @@ if __name__ == '__main__':
         plt.ylabel("Error on measuremnts [m]")
         plt.title("Error of dvl range v/s MNT and mbes range v/s MNT")
         plt.plot()
-
     display_range()
     def display_speed():
         ##################################################
         plt.figure()
-        # sawtooth = lambda x : 2*np.arctan(np.tan(x/2))
-        # # YAW = sawtooth(-YAW+np.pi/2)
-        # YAW = np.arctan2(V_Y,V_X)
-        # angle = np.pi/4
-        # dvl_v_x = (dvl_VE*np.cos(angle) + dvl_VN*np.sin(angle))*np.cos(YAW)
-        # dvl_v_y = (dvl_VN*np.sin(angle) + dvl_VE*np.cos(angle))*np.sin(YAW)
-        # # dvl_v_x = (dvl_VE)*np.cos(YAW)
-        # # dvl_v_y = (dvl_VN)*np.sin(YAW)
-        # dvl_v_z = dvl_VZ
-        #
-        # #Apply a mask
-        # mask_dvl_v_x = np.abs(dvl_v_x - np.mean(dvl_v_x)) > 1.5*np.std(dvl_v_x)
-        # mask_dvl_v_y = np.abs(dvl_v_y - np.mean(dvl_v_y)) > 1.5*np.std(dvl_v_y)
-        # mask = mask_dvl_v_x | mask_dvl_v_y
-        # print("Total point of DVL taken = ",dvl_v_x[~mask].shape[0]/dvl_v_x.shape[0]*100,"%")
-        # dvl_v_x = dvl_v_x[~mask]
-        # dvl_v_y = dvl_v_y[~mask]
-        # dvl_T = dvl_T[~mask]
-        # dvl_VZ = dvl_VZ[~mask]
-        # dvl_VSTD = dvl_VSTD[~mask]
-        ###
 
         ax1 = plt.subplot2grid((2, 3), (0, 0))
         ax2 = plt.subplot2grid((2, 3), (0, 1))
@@ -593,6 +578,5 @@ if __name__ == '__main__':
         ax6.set_xlabel("Time [min]")
         ax6.set_ylabel("Error on angle [rad]")
         ax6.set_title("angle of speed")
-
-        plt.show()
     display_speed()
+    plt.show()
