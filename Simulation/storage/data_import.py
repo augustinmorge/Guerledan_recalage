@@ -292,9 +292,10 @@ if bool_compress:
     start_time = max(max(T[0], MBES_T[0]),dvl_T[0])
     end_time = min(min(T[-1], MBES_T[-1]),dvl_T[-1])
 
-    dt = 0.1 #np.mean(np.diff(dvl_T))
-    # dt = np.mean(np.diff(MBES_T))
-    # dt = 0.05 #ins
+    # dt = 0.1 #np.mean(np.diff(dvl_T))
+    # dt = 0.2 #np.mean(np.diff(MBES_T))
+    dt = 0.05 #ins
+
     print(f"dt choosen = {dt}")
     T_glob = np.arange(start_time, end_time, dt)
 
@@ -427,6 +428,9 @@ if __name__ == '__main__':
     T = (T - T[0])/60
     dvl_T = (dvl_T - dvl_T[0])/60
     MBES_T = (MBES_T - MBES_T[0])/60
+    mean_dvlR = (dvl_BM1R + dvl_BM2R + dvl_BM3R + dvl_BM4R)/4
+    print(f"the offset with dt = {dt} for the DVL/MNT is : {np.mean(mean_dvlR) - np.mean(distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze())}")
+    print(f"the offset with dt = {dt} for the MBES/MNT is : {np.mean(MBES_Z) - np.mean(distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze())}")
     def display_range():
         #######################################
         plt.figure()
@@ -514,7 +518,7 @@ if __name__ == '__main__':
         plt.ylabel("Error on measuremnts [m]")
         plt.title("Error of dvl range v/s MNT and mbes range v/s MNT")
         plt.plot()
-    display_range()
+    # display_range()
     def display_speed():
         ##################################################
         plt.figure()
@@ -578,5 +582,5 @@ if __name__ == '__main__':
         ax6.set_xlabel("Time [min]")
         ax6.set_ylabel("Error on angle [rad]")
         ax6.set_title("angle of speed")
-    display_speed()
-    plt.show()
+    # display_speed()
+    # plt.show()

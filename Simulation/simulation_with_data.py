@@ -15,6 +15,9 @@ from storage.data_import import *
 n_particles = int(input("Number of particles: "))
 steps = int(input("number of steps between measures ? "))
 bool_display = (str(input("Display the particles ? [Y/]"))=="Y")
+using_offset = True # str(input("Using offset ? [Y/]")) == "Y"
+
+ct_resampling = 0
 
 import time
 start_time = time.perf_counter()
@@ -32,11 +35,7 @@ def distance_to_bottom(xy,mnt):
     Z = mnt[indices,2] # Récupère les altitudes des points les plus proches
     return d_mnt, Z
 
-def initialize_particles_uniform(n_particles, bounds):
-    # particles = [1/n_particles*np.ones((n_particles,1)),[ \
-    #                        np.random.uniform(bounds[0][0]-20, bounds[0][1]+20, n_particles).reshape(-1,1),
-    #                        np.random.uniform(bounds[1][0]-20, bounds[1][1]+20, n_particles).reshape(-1,1)]]
-
+def initialize_particles_uniform(n_particles):
     particles = []
     index = np.random.randint(0, MNT.shape[0], size = n_particles)
     particles = [MNT[index][:,0].reshape(-1,1), MNT[index][:,1].reshape(-1,1)]
@@ -46,13 +45,13 @@ def initialize_particles_uniform(n_particles, bounds):
 def normalize_weights(weighted_samples):
     return [weighted_samples[0] / np.sum(weighted_samples[0]), weighted_samples[1]]
 
-def validate_state(state, bounds, d_mnt):
+def validate_state(state, d_mnt):
     # # If we are out of the MNT
     # weights = state[0]
-    # weights[d_mnt > 0.5] = 0
+    # weights[d_mnt > 1] = 0
     return(state)
 
-def propagate_sample(samples, forward_motion, angular_motion, process_noise, bounds):
+def propagate_sample(samples, forward_motion, angular_motion, process_noise):
 
     # 1. rotate by given amount plus additive noise sample (index 1 is angular noise standard deviation)
     # Compute forward motion by combining deterministic forward motion with additive zero mean Gaussian noise
@@ -69,7 +68,8 @@ def propagate_sample(samples, forward_motion, angular_motion, process_noise, bou
 
 def compute_likelihood(propagated_states, measurements, measurements_noise, beta, z_particules_mnt):
     d_mnt, new_z_particules_mnt = distance_to_bottom(np.hstack((propagated_states[1][0],propagated_states[1][1])),MNT)
-    d_mbes_particule = new_z_particules_mnt - z_particules_mnt
+    if using_offset : d_mbes_particule = new_z_particules_mnt
+    else : d_mbes_particule = new_z_particules_mnt - z_particules_mnt
 
     # Map difference true and expected distance measurement to probability
     distance = np.abs(d_mbes_particule-measurements)
@@ -89,15 +89,15 @@ def needs_resampling(resampling_threshold):
 
 def update(robot_forward_motion, robot_angular_motion, measurements, \
             measurements_noise, process_noise, particles,resampling_threshold,\
-            resampler, beta, bounds, z_particules_mnt):
+            resampler, beta, z_particules_mnt):
 
     # Propagate the particle state according to the current particle
-    propagated_states = propagate_sample(particles, robot_forward_motion, robot_angular_motion, process_noise, bounds)
+    propagated_states = propagate_sample(particles, robot_forward_motion, robot_angular_motion, process_noise)
 
     # Compute current particle's weight
     d_mnt, p, z_particules_mnt = compute_likelihood(propagated_states, measurements, measurements_noise, beta, z_particules_mnt)
 
-    particules = validate_state(propagated_states, bounds, d_mnt)
+    particules = validate_state(propagated_states, d_mnt)
 
     # Update the probability of the particle
     propagated_states[0] = particles[0] * p
@@ -107,6 +107,8 @@ def update(robot_forward_motion, robot_angular_motion, measurements, \
 
     # Resample if needed
     if needs_resampling(resampling_threshold):
+        global ct_resampling
+        ct_resampling += 1
         particles = resampler.resample(particles, n_particles) #1 = MULTINOMIAL
 
     return(particles, z_particules_mnt)
@@ -142,6 +144,19 @@ def f_measurements(i, previous_measurements):
         measurements = MBES_Z[i,] - previous_measurements #117.61492204 #
         return measurements, MBES_Z[i,], None
 
+def f_measurements_offset(i):
+    if choice_range_sensor == "mnt":
+        x_gps, y_gps = coord2cart((LAT[i,],LON[i,])).flatten()
+        d_mnt, measurements = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)
+        return measurements, d_mnt
+    elif choice_range_sensor == "dvl":
+        mean_range_dvl = (dvl_BM1R[i,] + dvl_BM2R[i,] + dvl_BM3R[i,] + dvl_BM4R[i,])/4
+        measurements = mean_range_dvl - 115.57149562238688
+        return measurements, None
+    else:
+        measurements = MBES_Z[i,] - 117.61544705067318
+        return measurements, None
+
 def test_diverge(ERR, err_max=1000):
     if ERR[-1] > err_max: #Si l'erreur est de plus de 500m il y a un probleme
         print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
@@ -156,13 +171,14 @@ def test_diverge(ERR, err_max=1000):
         return True #Alors on arrete
     return(False)
 
+
 if __name__ == '__main__':
     print("~~~Start of the algorithm~~~")
 
     x_gps_min, y_gps_min = np.min(coord2cart((LAT, LON))[0,:]), np.min(coord2cart((LAT, LON))[1,:])
     x_gps_max, y_gps_max = np.max(coord2cart((LAT, LON))[0,:]), np.max(coord2cart((LAT, LON))[1,:])
-    bounds = [[x_gps_min, x_gps_max], [y_gps_min, y_gps_max]]
-    particles = initialize_particles_uniform(n_particles, bounds)
+    # bounds = [[x_gps_min, x_gps_max], [y_gps_min, y_gps_max]]
+    particles = initialize_particles_uniform(n_particles)
 
     _, z_particules_mnt = distance_to_bottom(np.hstack((particles[1][0],particles[1][1])),MNT)
 
@@ -187,7 +203,6 @@ if __name__ == '__main__':
     lat_std = LAT_STD[idx_ti,]
     lon_std = LON_STD[idx_ti,]
 
-
     if bool_display:
         """ Création des isobates """
         plt.ion()
@@ -211,42 +226,43 @@ if __name__ == '__main__':
     TIME = []; BAR = []; SPEED = []; ERR = []
     STD_X = []; STD_Y = []
     MEASUREMENTS = []
-    # beta = 1/100
-    beta = 10**(-1)
+    beta = 5/100
+    # beta = 1/5
 
     for i in r:
 
         """Set data"""
         t = dvl_T[i,]
         yaw = YAW[i,]
-        v_x = dvl_v_x[i,]
-        v_y = dvl_v_y[i,]
+        yaw_std = YAW_STD[i,]
+        # v_x = dvl_v_x[i,]
+        # v_y = dvl_v_y[i,]
+        v_x = V_X[i,]
+        v_y = V_Y[i,]
         # v_std = np.sqrt(V_X_STD[i,]**2+V_Y_STD[i,]**2)
         v_std = dvl_VSTD[i,]/10
 
-        measurements, previous_measurements, meas_model_distance_std = f_measurements(i, previous_measurements)
+        if using_offset : measurements, meas_model_distance_std = f_measurements_offset(i)
+        else: measurements, previous_measurements, meas_model_distance_std = f_measurements(i, previous_measurements)
 
         """Processing the motion of the robot """
-        robot_forward_motion =  dt*np.sqrt(v_x**2 + v_y**2)# + v_z**2)
+        robot_forward_motion =  dt*np.sqrt(v_x**2 + v_y**2)
         robot_angular_motion = yaw
 
         """ Processing error on measures"""
-        # meas_model_distance_std = None
         measurements_noise = [meas_model_distance_std] ### Attention, std est en mètres !
 
         """ Processing error on algorithm"""
-        # motion_model_forward_std = steps*np.abs(v_std)
         motion_model_forward_std = steps*np.abs(v_std)
-
-        motion_model_turn_std = np.abs(sawtooth(np.arctan2((v_x + np.sign(v_x)*v_std),(v_y)) - np.arctan2((v_x),(v_y+np.sign(v_y)*v_std))))
-        # motion_model_turn_std = YAW_STD[i,]
+        # motion_model_turn_std = np.abs(sawtooth(np.arctan2((v_x + np.sign(v_x)*v_std),(v_y)) - np.arctan2((v_x),(v_y+np.sign(v_y)*v_std))))
+        motion_model_turn_std = yaw_std
         process_noise = [motion_model_forward_std, motion_model_turn_std]
 
         """Process the update"""
         t0 = time.time()
         particles, z_particules_mnt = update(robot_forward_motion, robot_angular_motion, measurements,\
                                                measurements_noise, process_noise, particles,\
-                                                resampling_threshold, resampler, beta, bounds,\
+                                                resampling_threshold, resampler, beta,\
                                                 z_particules_mnt)
 
         """ Affichage en temps réel """
@@ -279,7 +295,7 @@ if __name__ == '__main__':
         x_gps, y_gps = coord2cart((lat,lon)).flatten()
         ERR.append(np.sqrt((x_gps - get_average_state(particles)[0])**2 + (y_gps - get_average_state(particles)[1])**2))
         BAR.append([get_average_state(particles)[0],get_average_state(particles)[1]])
-        SPEED.append(np.sqrt(v_x**2 + v_y**2))# + v_z**2))
+        SPEED.append(np.sqrt(v_x**2 + v_y**2))
 
         var = np.std(np.column_stack((particles[1][0],particles[1][1])),axis=0)
         STD_X.append(var[0])
@@ -289,7 +305,7 @@ if __name__ == '__main__':
         if test_diverge(ERR, 700) : break
 
 
-
+    print(f"Resampling used: {ct_resampling} ({ct_resampling/((idx_tf - idx_ti)/steps)*100}%)")
     elapsed_time = time.perf_counter() - start_time
     print("Elapsed time: {:.2f} seconds".format(elapsed_time))
 
@@ -332,10 +348,29 @@ if __name__ == '__main__':
     # ax3.scatter(TIME, MEASUREMENTS[:,1], color = 'r', label = 'measurements from the MBES')
     # ax3.legend()
 
-    ax3.set_title("Vitesse")
-    ax3.set_xlabel("time [min]")
-    ax3.set_ylabel("||v|| [m/s]")
-    ax3.plot(TIME, SPEED, label = 'speed')
+    # ax3.set_title("Vitesse")
+    # ax3.set_xlabel("time [min]")
+    # ax3.set_ylabel("||v|| [m/s]")
+    # ax3.plot(TIME, SPEED, label = 'speed')
+    # ax3.legend()
+
+    X_gps, Y_gps = coord2cart((LAT, LON))
+    d_bottom_mnt = distance_to_bottom(np.column_stack((X_gps,Y_gps)),MNT)[1].squeeze()
+    mean_dvlR = (dvl_BM1R + dvl_BM2R + dvl_BM3R + dvl_BM4R)/4 - 115.57149562238688
+
+    # ax3.set_title("Different types of bottom measurements")
+    # ax3.set_xlabel("Time [min]")
+    # ax3.set_ylabel("Range [m]")
+    # ax3.plot(dvl_T[steps:,], mean_dvlR[steps:,], label = "z_dvl")
+    # ax3.plot(T[steps:,], d_bottom_mnt, label = "z_mnt")
+    # ax3.plot(MBES_T[steps:,], MBES_Z[steps:,] - 117.61544705067318, label = "z_mbes")
+    # ax3.legend()
+
+    ax3.set_title("Speed")
+    ax3.set_ylabel("v [m/s]")
+    ax3.set_xlabel("t [min]")
+    ax3.plot(dvl_T[steps:,], np.sqrt(dvl_VE[steps:,]**2 + dvl_VN[steps:,]**2), label = "dvl_speed")
+    ax3.plot(T[steps:,], np.sqrt(V_X[steps:,]**2 + V_Y[steps:,]**2), label = "ins_speed")
     ax3.legend()
 
     print("Computing the diagrams..")

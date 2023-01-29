@@ -36,31 +36,32 @@ def coord2cart(coords,coords_ref=wpt_ponton):
 if bool_txt:
     """ Import INS """
     print("Importing the INS-TXT file..")
-    filepath = file_path+"/sbgCenterExport_without_header.txt"
-    data = np.loadtxt(filepath, dtype="U")
-    T = data[:,0]
+    filepath = file_path+"/sbgCenterExport.txt"
+    data_ins = np.genfromtxt(filepath, delimiter='\t', skip_header=2, dtype = "U")
+    T = data_ins[:,0]
     T = np.array([dt.split(":") for dt in T], dtype=np.float64)
     T = 60*60*T[:,0] + 60*T[:,1] + T[:,2]
-    V_Y = np.float64(data[:,1])
-    V_X = np.float64(data[:,2])
-    V_Z = np.float64(data[:,3])
-    LAT = np.float64(data[:,4])
-    LON = np.float64(data[:,5])
+
+    V_Y = np.float64(data_ins[:,1])
+    V_X = np.float64(data_ins[:,2])
+    V_Z = np.float64(data_ins[:,3])
+    LAT = np.float64(data_ins[:,4])
+    LON = np.float64(data_ins[:,5])
 
     #Error on importation
-    LAT_STD = np.float64(data[:,6])
-    LON_STD = np.float64(data[:,7])
-    V_Y_STD = np.float64(data[:,8])
-    V_X_STD = np.float64(data[:,9])
-    V_Z_STD = np.float64(data[:,10])
+    LAT_STD = np.float64(data_ins[:,6])
+    LON_STD = np.float64(data_ins[:,7])
+    V_Y_STD = np.float64(data_ins[:,8])
+    V_X_STD = np.float64(data_ins[:,9])
+    V_Z_STD = np.float64(data_ins[:,10])
 
     # #Attitude
-    YAW = np.float64(data[:,11])
-    YAW_STD = np.float64(data[:,12])
-    ROLL = np.float64(data[:,13])
-    ROLL_STD = np.float64(data[:,14])
-    PITCH = np.float64(data[:,15])
-    PITCH_STD = np.float64(data[:,16])
+    YAW = np.float64(data_ins[:,11])
+    YAW_STD = np.float64(data_ins[:,12])
+    ROLL = np.float64(data_ins[:,13])
+    ROLL_STD = np.float64(data_ins[:,14])
+    PITCH = np.float64(data_ins[:,15])
+    PITCH_STD = np.float64(data_ins[:,16])
 
 
     """ Import DVL """
