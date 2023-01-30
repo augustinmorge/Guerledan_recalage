@@ -1,12 +1,15 @@
 # Recalage à l'aide de bathymétrie pour un AUV
 ***
-We want to recalibrate the state of the AUV using the bathymetry and particle filter.
+The objective of this project is to realign and therefore position an AUV. For this purpose it is assumed that it moves on an already known DTM and that by comparing the values with the background it can estimate its position with the help of a particle filter.
+
+However, we have simplified this problem. Here it will only be a boat. It will move on the plane and so we can compare with the real GPS values.
 
 ## Folders
 ### Documentation
-The bibliography.
-* DVL
-* Particle Filter
+In this folder we have the bibliography used for the project.
+
+* Pathfinder (DVL)
+* Filter (Particule Filter)
 * Subject
 
 ### Resources
@@ -25,15 +28,10 @@ Manual of the different sensors used
 Youtube link for basic explanation of the particulate filter
 [SOURCE](https://www.youtube.com/watch?v=NrzmH_yerBU&ab_channel=MATLAB)
 
-## TODO
-* Decipher the binary data from the DVL
-* Interpolate the DTM
-* Recover single-beam data
-
 ***
 ## Sensors available
-* DVL: Bottom speed/distance slant (no current speed)
-* INS: Gyroscope/Accelerometer -> Speed and position (see how to do)
-* GNSS: RTK (to be processed)
-* MBES multibeam: bathymetry (equi-angle?)
+* DVL: Bottom speed/distance
+* INS: Gyroscope/Accelerometer -> Speed and position
+* GNSS
+* MBES multibeam: bathymetry
 * SVP: Hull velocity meter

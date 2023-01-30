@@ -26,6 +26,7 @@ import matplotlib.pyplot as plt
 from resampler import Resampler
 from tqdm import tqdm
 file_path = os.path.dirname(os.path.abspath(__file__))
+from filter import *
 
 def sawtooth(x):
     return(2*np.arctan(np.tan(x/2)))
@@ -46,9 +47,9 @@ def normalize_weights(weighted_samples):
     return [weighted_samples[0] / np.sum(weighted_samples[0]), weighted_samples[1]]
 
 def validate_state(state, d_mnt):
-    # # If we are out of the MNT
-    # weights = state[0]
-    # weights[d_mnt > 1] = 0
+    # If we are out of the MNT
+    weights = state[0]
+    weights[d_mnt > 1] = 0
     return(state)
 
 def propagate_sample(samples, forward_motion, angular_motion, process_noise):
@@ -228,6 +229,7 @@ if __name__ == '__main__':
     MEASUREMENTS = []
     beta = 5/100
     # beta = 1/5
+    # filter_speed = Low_pass_filter(1., np.array([dvl_v_x[0,], dvl_v_y[0,]]))
 
     for i in r:
 
@@ -235,10 +237,12 @@ if __name__ == '__main__':
         t = dvl_T[i,]
         yaw = YAW[i,]
         yaw_std = YAW_STD[i,]
-        # v_x = dvl_v_x[i,]
-        # v_y = dvl_v_y[i,]
-        v_x = V_X[i,]
-        v_y = V_Y[i,]
+        # v_x, v_y = filter_speed.low_pass_next(np.array([dvl_v_x[i,], dvl_v_y[i,]])).flatten()
+        v_x = dvl_v_x[i,]
+        v_y = dvl_v_y[i,]
+
+        # v_x = V_X[i,]
+        # v_y = V_Y[i,]
         # v_std = np.sqrt(V_X_STD[i,]**2+V_Y_STD[i,]**2)
         v_std = dvl_VSTD[i,]/10
 
@@ -339,6 +343,9 @@ if __name__ == '__main__':
     ax2.set_xlabel("time [min]")
     ax2.set_ylabel("error (m)")
     ax2.plot(TIME, ERR, color = 'b', label = 'erreur')
+    ERR = np.array(ERR)
+    idx_start = int(1/8*TIME.shape[0])
+    ax2.plot(TIME[idx_start:,], np.mean(ERR[idx_start:,])*np.ones(TIME[idx_start:,].shape), label = f"mean error = {np.mean(ERR[idx_start:,])}")
     ax2.legend()
 
     # ax3.set_title("Difference of measurements = {}.".format(np.abs(np.mean(MEASUREMENTS[:,0]) - np.mean(MEASUREMENTS[:,1]))))
@@ -346,12 +353,6 @@ if __name__ == '__main__':
     # ax3.set_ylabel("error (m)")
     # ax3.scatter(TIME, MEASUREMENTS[:,0], color = 'b', label = 'measurements from the MNT')
     # ax3.scatter(TIME, MEASUREMENTS[:,1], color = 'r', label = 'measurements from the MBES')
-    # ax3.legend()
-
-    # ax3.set_title("Vitesse")
-    # ax3.set_xlabel("time [min]")
-    # ax3.set_ylabel("||v|| [m/s]")
-    # ax3.plot(TIME, SPEED, label = 'speed')
     # ax3.legend()
 
     X_gps, Y_gps = coord2cart((LAT, LON))
@@ -369,8 +370,9 @@ if __name__ == '__main__':
     ax3.set_title("Speed")
     ax3.set_ylabel("v [m/s]")
     ax3.set_xlabel("t [min]")
-    ax3.plot(dvl_T[steps:,], np.sqrt(dvl_VE[steps:,]**2 + dvl_VN[steps:,]**2), label = "dvl_speed")
-    ax3.plot(T[steps:,], np.sqrt(V_X[steps:,]**2 + V_Y[steps:,]**2), label = "ins_speed")
+    ax3.plot((dvl_T[steps:,] - dvl_T[steps,])/60, np.sqrt(dvl_VE[steps:,]**2 + dvl_VN[steps:,]**2), label = "dvl_speed")
+    ax3.plot(TIME, SPEED, label = "dvl_speed_filtered")
+    ax3.plot((T[steps:,] - T[steps,])/60, np.sqrt(V_X[steps:,]**2 + V_Y[steps:,]**2), label = "ins_speed")
     ax3.legend()
 
     print("Computing the diagrams..")

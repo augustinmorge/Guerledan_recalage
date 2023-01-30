@@ -248,10 +248,10 @@ if bool_compress:
     dvl_BM2R = dvl["dvl_BM2R"]/100. #en cm -> m
     dvl_BM3R = dvl["dvl_BM3R"]/100. #en cm -> m
     dvl_BM4R = dvl["dvl_BM4R"]/100. #en cm -> m
-    dvl_VE = dvl["dvl_VE"]/1000.
-    dvl_VN = dvl["dvl_VN"]/10000.
-    dvl_VZ = dvl["dvl_VZ"]/10000.
-    dvl_VSTD = dvl["dvl_VSTD"]/10000.
+    dvl_VE = dvl["dvl_VE"]/1100.
+    dvl_VN = dvl["dvl_VN"]/11000.
+    dvl_VZ = dvl["dvl_VZ"]/11000.
+    dvl_VSTD = dvl["dvl_VSTD"]/11000.
     # mask = (dvl_VE == -32.768) | (dvl_VN == -32.768) | (dvl_VZ == -32.768) \
     #         | (dvl_VSTD == -32.768)
     #
@@ -444,28 +444,28 @@ if __name__ == '__main__':
 
         mask1 = np.abs(np.diff(MBES_Z)) > 0.001*np.std(MBES_Z)
 
-        d_bottom_mnt = distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze() - np.mean(distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze())
+        d_bottom_mnt = distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze()
 
         mean_dvlR = (dvl_BM1R + dvl_BM2R + dvl_BM3R + dvl_BM4R)/4
-        mean_dvlR = mean_dvlR - np.mean(mean_dvlR)
-        ax1.plot(dvl_T, mean_dvlR, label = "dvl_R - mean(dvl_R)", color = 'red')
-        ax1.plot((MBES_T[1:,])[~mask1], (MBES_Z[1:,])[~mask1] - np.mean((MBES_Z[1:,])[~mask1]), label="MBES_Z - mean(MBES_Z)")
-        ax1.plot(T, d_bottom_mnt, label = "d_z_mnt - mean(d_z_mnt)")
-        ax1.legend()
-        ax1.grid()
-        ax1.set_xlabel("Time [min]")
-        ax1.set_ylabel("Range [m]")
-        ax1.set_title("Range from mean range")
 
-        # ax1.plot(dvl_T, dvl_BM1R - np.mean(dvl_BM1R), label = "dvl_BM1R", color = 'red')
-        # ax1.plot((MBES_T[1:,])[~mask1], (MBES_Z[1:,])[~mask1] - np.mean((MBES_Z[1:,])[~mask1]), label="MBES_Z")
-        # ax1.plot(T, d_bottom_mnt, label = "d_mnt")
+        # ax1.plot(dvl_T, mean_dvlR - np.mean(mean_dvlR), label = "dvl_R - mean(dvl_R)", color = 'red')
+        # ax1.plot((MBES_T[1:,])[~mask1], (MBES_Z[1:,])[~mask1] - np.mean((MBES_Z[1:,])[~mask1]), label="MBES_Z - mean(MBES_Z)")
+        # ax1.plot(T, d_bottom_mnt - np.mean(d_bottom_mnt), label = "d_z_mnt - mean(d_z_mnt)")
         # ax1.legend()
         # ax1.grid()
         # ax1.set_xlabel("Time [min]")
         # ax1.set_ylabel("Range [m]")
-        # ax1.set_title("dvl_BM1R")
-        #
+        # ax1.set_title("Range from mean range")
+
+        ax1.plot(dvl_T, dvl_BM1R - 115.57108493670452, label = "dvl_BM1R", color = 'red')
+        ax1.plot((MBES_T[1:,])[~mask1], (MBES_Z[1:,])[~mask1] - 117.6152233539319, label="MBES_Z")
+        ax1.plot(T, d_bottom_mnt, label = "d_mnt")
+        ax1.legend()
+        ax1.grid()
+        ax1.set_xlabel("Time [min]")
+        ax1.set_ylabel("Range [m]")
+        ax1.set_title("dvl_BM1R")
+
         # ax2.plot(dvl_T, dvl_BM2R - np.mean(dvl_BM2R), label = "dvl_BM2R", color = 'red')
         # ax2.plot((MBES_T[1:,])[~mask1], (MBES_Z[1:,])[~mask1] - np.mean((MBES_Z[1:,])[~mask1]), label="MBES_Z")
         # ax2.plot(T, d_bottom_mnt, label = "d_mnt")
@@ -518,7 +518,7 @@ if __name__ == '__main__':
         plt.ylabel("Error on measuremnts [m]")
         plt.title("Error of dvl range v/s MNT and mbes range v/s MNT")
         plt.plot()
-    # display_range()
+    display_range()
     def display_speed():
         ##################################################
         plt.figure()
@@ -582,5 +582,12 @@ if __name__ == '__main__':
         ax6.set_xlabel("Time [min]")
         ax6.set_ylabel("Error on angle [rad]")
         ax6.set_title("angle of speed")
-    # display_speed()
+    display_speed()
+    plt.show()
+
+    # plt.figure()
+    # plt.plot(T, PITCH, label = "pitch")
+    # plt.plot(T, ROLL, label = "roll")
+    # plt.plot(T, YAW, label = "yaw")
+    # plt.legend()
     # plt.show()

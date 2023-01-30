@@ -1,8 +1,24 @@
 # Simulation part
 ***
-## Simulation on a lissajou
+## First steps
+### Logs
+We did several tests :
+  * The 13/10/22 at 1pm.
+  * The 13/10/22 at 3pm.
 
-This script is a particle filter implementation in Python. The particle filter is a Monte Carlo method used to estimate the state of a system in the form of a probability distribution.
+You have to download the txt file from :
+  * [1pm](https://mega.nz/fm/2c92naIA) in /storage
+  * [3pm](https://mega.nz/fm/zB0gyKrA) in /storage_afternoon
+
+
+Then go into the storage folder `cd storage` or `cd storage_afternoon` and run /data_import.py with **1** in bool_txt and **0** in bool_compress. Then relaunch ./data_import.py with the opposite.
+
+Once it's done you can look at your map : `./display_mnt.py` or run the simulation.
+
+
+## Simulations
+
+Those script is a particle filter implementation in Python. The particle filter is a Monte Carlo method used to estimate the state of a system in the form of a probability distribution.
 
 The input to the script includes the number of particles, the number of steps between measures, and a flag for whether to display the particles. The script then imports various libraries and defines several functions.
 
@@ -15,7 +31,6 @@ The input to the script includes the number of particles, the number of steps be
 * **propagate_sample** propagates the particles according to a forward motion model and an angular motion model, with added process noise.
 * **compute_importance** calculates the importance weights of the particles based on their distance to the measured position.
 * **resample_particles** resamples the particles according to their importance weights.
-* **plot_particles** plots the particles on a map.
 
 The script then reads the data for the digital elevation model (DEM) and generates a KD-tree for fast nearest neighbor search. It also reads the measurement data and converts the coordinates to Cartesian coordinates using the coord2cart function.
 The script initializes the particles using the initialize_particles_uniform function and the bounds of the DEM. It then enters a loop to iterate through the measurement steps. At each step, it propagates the particles using the propagate_sample function, calculates the importance weights using the compute_importance function, resamples the particles using the resample_particles function, and plots the particles using the plot_particles function if the display flag is set to True.
