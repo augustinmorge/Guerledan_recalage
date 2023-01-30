@@ -39,10 +39,10 @@ Youtube link for basic explanation of the particulate filter
 ## Participants
 Emails :
 
-[Leo Pham-Van](mailto:leo.pham-van@ensta-bretagne.org)
+[Leo Pham-Van](mailto:leo.pham-van@ensta-bretagne.org) Hydrographe
 
-[Laurent Droudun](mailto:laurent.droudun@ensta-bretagne.org)
+[Laurent Droudun](mailto:laurent.droudun@ensta-bretagne.org) Roboticien
 
-[Florian Jerram](mailto:florian.jerram@ensta-bretagne.org)
+[Florian Jerram](mailto:florian.jerram@ensta-bretagne.org) Roboticien
 
-[Augustin MORGE](mailto:augustin.morge@ensta-bretagne.org)
+[Augustin MORGE](mailto:augustin.morge@ensta-bretagne.org) Roboticien
