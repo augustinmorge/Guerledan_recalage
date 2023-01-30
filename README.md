@@ -37,7 +37,12 @@ Youtube link for basic explanation of the particulate filter
 * SVP: Hull velocity meter
 
 ## Participants
+Emails :
+
 [Leo Pham-Van](mailto:leo.pham-van@ensta-bretagne.org)
+
 [Laurent Droudun](mailto:laurent.droudun@ensta-bretagne.org)
+
 [Florian Jerram](mailto:florian.jerram@ensta-bretagne.org)
+
 [Augustin MORGE](mailto:augustin.morge@ensta-bretagne.org)
