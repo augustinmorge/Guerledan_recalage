@@ -538,7 +538,7 @@ if __name__ == '__main__':
         plt.ylabel("Error on measuremnts [m]")
         plt.title("Error of dvl range v/s MNT and mbes range v/s MNT")
         plt.plot()
-    # display_range()
+    display_range()
     def display_speed():
         ##################################################
         plt.figure()
@@ -553,7 +553,10 @@ if __name__ == '__main__':
 
         ax1.plot(dvl_T, dvl_v_x, label="dvl")
         ax1.plot(T, (V_X), label = "ins")
-        # ax1.plot(T, np.cumsum(ACC_X)*0.05 + V_X[0,], label = "dt*acc")
+        # B = ACC_X[:ACC_X.shape[0,]-1,]
+        # C = np.insert(B, 0, 0)
+        # print(np.cumsum(ACC_X)*0.05 + V_X[0,])
+        ax1.plot(T, np.cumsum(ACC_X)*0.05 + V_X[0,], label = "dt*acc")
         ax1.legend()
         ax1.set_title("VE")
         ax1.grid()
@@ -606,7 +609,7 @@ if __name__ == '__main__':
         ax6.set_xlabel("Time [min]")
         ax6.set_ylabel("Error on angle [rad]")
         ax6.set_title("angle of speed")
-    # display_speed()
+    display_speed()
     def display_acc():
         plt.figure()
         plt.plot(T, ACC_X, label = "acc_x")
@@ -616,7 +619,7 @@ if __name__ == '__main__':
         plt.xlabel("time [min]")
         plt.ylabel("acc [m/s2]")
         plt.legend()
-    display_acc()
+    # display_acc()
     plt.show()
 
     # plt.figure()

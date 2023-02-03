@@ -28,6 +28,13 @@ from tqdm import tqdm
 file_path = os.path.dirname(os.path.abspath(__file__))
 from filter import *
 
+# Set adaptive particle filter specific properties
+resolutions = resolutions
+epsilon = epsilon
+upper_quantile = upper_quantile
+minimum_number_of_particles = int(min_number_particles)
+maximum_number_of_particles = int(max_number_particles)
+
 def sawtooth(x):
     return(2*np.arctan(np.tan(x/2)))
 
@@ -92,25 +99,76 @@ def update(robot_forward_motion, robot_angular_motion, measurements, \
             measurements_noise, process_noise, particles,resampling_threshold,\
             resampler, beta, z_particules_mnt):
 
-    # Propagate the particle state according to the current particle
-    propagated_states = propagate_sample(particles, robot_forward_motion, robot_angular_motion, process_noise)
+    new_particles = []
+    bins_with_support = []
+    number_of_new_particles = 0
+    number_of_bins_with_support = 0
+    number_of_required_particles = minimum_number_of_particles
 
-    # Compute current particle's weight
-    d_mnt, p, z_particules_mnt = compute_likelihood(propagated_states, measurements, measurements_noise, beta, z_particules_mnt)
+    while number_of_new_particles < number_of_required_particles:
 
-    particles = validate_state(propagated_states, d_mnt)
+        # Get sample from discrete distribution given by particle weights
+        index_j = generate_sample_index(self.particles)
 
-    # Update the probability of the particle
-    propagated_states[0] = particles[0] * p
+        # Propagate state of selected particle
+        propaged_state = self.propagate_sample(self.particles[index_j][1],
+                                               robot_forward_motion,
+                                               robot_angular_motion)
 
-    # Update particles
-    particles = normalize_weights(propagated_states)
+        # Compute the weight that this propagated state would get with the current measurement
+        importance_weight = self.compute_likelihood(propaged_state, measurements, landmarks)
 
-    # Resample if needed
-    if needs_resampling(resampling_threshold):
-        global ct_resampling
-        ct_resampling += 1
-        particles = resampler.resample(particles, n_particles)
+        # Add weighted particle to new particle set
+        new_particles.append([importance_weight, propaged_state])
+        number_of_new_particles += 1
+
+        # Next, we convert the discrete distribution of all new samples into a histogram. We must check if the new
+        # state (propagated_state) falls in a histogram bin with support or in an empty bin. We keep track of the
+        # number of bins with support. Instead of adopting a (more efficient) tree, a simple list is used to
+        # store all bin indices with support since there is are no performance requirements for our use case.
+
+        # Map state to bin indices
+        indices = [np.floor(propaged_state[0] / self.resolutions[0]),
+                   np.floor(propaged_state[1] / self.resolutions[1]),
+                   np.floor(propaged_state[2] / self.resolutions[2])]
+
+        # Add indices if this bin is empty (i.e. is not in list yet)
+        if indices not in bins_with_support:
+            bins_with_support.append(indices)
+            number_of_bins_with_support += 1
+
+        # Update number of required particles (only defined if number of bins with support above 1)
+        if number_of_bins_with_support > 1:
+            number_of_required_particles = compute_required_number_of_particles_kld(number_of_bins_with_support,
+                                                                                    self.epsilon,
+                                                                                    self.upper_quantile)
+
+        # Make sure number of particles constraints are not violated
+        number_of_required_particles = max(number_of_required_particles, self.minimum_number_of_particles)
+        number_of_required_particles = min(number_of_required_particles, self.maximum_number_of_particles)
+
+    # Store new particle set and normalize weights
+    self.particles = self.normalize_weights(new_particles)
+
+    # # Propagate the particle state according to the current particle
+    # propagated_states = propagate_sample(particles, robot_forward_motion, robot_angular_motion, process_noise)
+    #
+    # # Compute current particle's weight
+    # d_mnt, p, z_particules_mnt = compute_likelihood(propagated_states, measurements, measurements_noise, beta, z_particules_mnt)
+    #
+    # particles = validate_state(propagated_states, d_mnt)
+    #
+    # # Update the probability of the particle
+    # propagated_states[0] = particles[0] * p
+    #
+    # # Update particles
+    # particles = normalize_weights(propagated_states)
+    #
+    # # Resample if needed
+    # if needs_resampling(resampling_threshold):
+    #     global ct_resampling
+    #     ct_resampling += 1
+    #     particles = resampler.resample(particles, n_particles)
 
     return(particles, z_particules_mnt)
 
@@ -192,6 +250,17 @@ if __name__ == '__main__':
 
     dt = dvl_T[steps,] - dvl_T[0,]
     tini = dvl_T[idx_ti,]
+    tf = dvl_T[idx_tf-1,]
+
+    v_x = dvl_VE[idx_ti,]
+    v_y = dvl_VN[idx_ti,]
+    v_z = dvl_VZ[idx_ti,]
+    v_std = dvl_VSTD[idx_ti,]
+
+    lat = LAT[idx_ti,]
+    lon = LON[idx_ti,]
+    lat_std = LAT_STD[idx_ti,]
+    lon_std = LON_STD[idx_ti,]
 
     if bool_display:
         """ Création des isobates """
@@ -216,8 +285,9 @@ if __name__ == '__main__':
     TIME = []; BAR = []; SPEED = []; ERR = []
     STD_X = []; STD_Y = []
     MEASUREMENTS = []
-    beta = 5/100
-    # beta = 1/300 #300 is best
+    # beta = 5/100
+    beta = 1/300 #300 is best
+    # beta = 0.1
     # beta = steps/1000
     # filter_lpf_speed = Low_pass_filter(0.1, np.array([dvl_v_x[0,], dvl_v_y[0,]]))
 

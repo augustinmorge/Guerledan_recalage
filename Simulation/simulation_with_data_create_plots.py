@@ -200,7 +200,7 @@ if __name__ == '__main__':
     # filter_speed = Low_pass_filter(0.4, np.array([dvl_v_x[0,], dvl_v_y[0,]]))
 
     # N_PARTICULES = [j for j in range(500,5500,500)]
-    N_PARTICULES = [500, 1000, 5000]
+    N_PARTICULES = [2000]
     for n_particles in N_PARTICULES:
         ERROR = []
         #For the update
