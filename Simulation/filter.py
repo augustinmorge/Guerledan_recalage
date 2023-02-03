@@ -94,3 +94,18 @@ class Low_pass_filter():
 		new =  self.alpha*new + (1-self.alpha)*self.previous
 		self.previous = new
 		return new
+
+class PIDController:
+    def __init__(self, kp, ki, kd, previous_point):
+        self.kp = kp
+        self.ki = ki
+        self.kd = kd
+        self.previous_point = previous_point
+        self.integral = 0
+
+    def update(self, point, dt):
+        self.integral += point * dt
+        derivative = (point - self.previous_point) / dt
+        output = self.kp * point + self.ki * self.integral + self.kd * derivative
+        self.previous_point = point
+        return output

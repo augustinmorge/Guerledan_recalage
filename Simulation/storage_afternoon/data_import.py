@@ -36,7 +36,7 @@ def coord2cart(coords,coords_ref=wpt_ponton):
 if bool_txt:
     """ Import INS """
     print("Importing the INS-TXT file..")
-    filepath = file_path+"/sbgCenterExport.txt"
+    filepath = file_path+"/IMU_navsight.txt"
     data_ins = np.genfromtxt(filepath, delimiter='\t', skip_header=2, dtype = "U")
     T = data_ins[:,0]
     T = np.array([dt.split(":") for dt in T], dtype=np.float64)
@@ -54,6 +54,22 @@ if bool_txt:
     V_Y_STD = np.float64(data_ins[:,8])
     V_X_STD = np.float64(data_ins[:,9])
     V_Z_STD = np.float64(data_ins[:,10])
+
+    #Attitude
+    YAW = np.float64(data_ins[:,11])
+    YAW_STD = np.float64(data_ins[:,12])
+    ROLL = np.float64(data_ins[:,13])
+    ROLL_STD = np.float64(data_ins[:,14])
+    PITCH = np.float64(data_ins[:,15])
+    PITCH_STD = np.float64(data_ins[:,16])
+
+    # Raw data
+    ACC_X = np.float64(data_ins[:,17])
+    ACC_Y = np.float64(data_ins[:,18])
+    ACC_Z = np.float64(data_ins[:,19])
+    GYR_X = np.float64(data_ins[:,20])
+    GYR_Y = np.float64(data_ins[:,21])
+    GYR_Z = np.float64(data_ins[:,22])
 
     # #Attitude
     YAW = np.float64(data_ins[:,11])
@@ -152,6 +168,7 @@ if bool_txt:
             LAT_STD=LAT_STD, LON_STD=LON_STD, V_X_STD=V_X_STD,\
             V_Y_STD=V_Y_STD, V_Z_STD=V_Z_STD, YAW=YAW, YAW_STD=YAW_STD,\
             ROLL=ROLL, ROLL_STD=ROLL_STD, PITCH=PITCH, PITCH_STD=PITCH_STD,\
+            ACC_X = ACC_X, ACC_Y = ACC_Y, ACC_Z = ACC_Z, GYR_X = GYR_X, GYR_Y = GYR_Y, GYR_Z = GYR_Z,\
             dtype = np.float64, precision = 16)
     np.savez("mnt.npz", MNT=MNT, dtype = np.float64, precision = 16)
     # with open('kd_tree.pkl', 'wb') as f:
@@ -173,6 +190,10 @@ if bool_txt:
                         dvl_VN = dvl_VN,
                         dvl_VZ = dvl_VZ,
                         dvl_VSTD = dvl_VSTD, dtype = np.float64)
+
+    import sys
+    print("Relaunch with compressed data")
+    sys.exit()
 
 if bool_compress:
     """ Load the compressed data """
@@ -198,6 +219,13 @@ if bool_compress:
     ROLL_STD = ins['ROLL_STD']/180*np.pi
     PITCH = ins['PITCH']/180*np.pi
     PITCH_STD = ins['PITCH_STD']/180*np.pi
+
+    ACC_X = ins['ACC_X']
+    ACC_Y = ins['ACC_Y']
+    ACC_Z = ins['ACC_Z']
+    GYR_X = ins['GYR_X']
+    GYR_Y = ins['GYR_Y']
+    GYR_Z = ins['GYR_Z']
 
     mnt = np.load(file_path + "/mnt.npz")
     MNT = mnt['MNT']
@@ -290,6 +318,12 @@ if bool_compress:
     f_ROLL_STD = interp1d(T,ROLL_STD)
     f_PITCH = interp1d(T,PITCH)
     f_PITCH_STD = interp1d(T,PITCH_STD)
+    f_ACC_X = interp1d(T,ACC_X)
+    f_ACC_Y = interp1d(T,ACC_Y)
+    f_ACC_Z = interp1d(T,ACC_Z)
+    f_GYR_X = interp1d(T,GYR_X)
+    f_GYR_Y = interp1d(T,GYR_Y)
+    f_GYR_Z = interp1d(T,GYR_Z)
 
     T_interp = f_T(T_glob)
     LAT_interp = f_LAT(T_glob)
@@ -308,6 +342,12 @@ if bool_compress:
     ROLL_STD_interp = f_ROLL_STD(T_glob)
     PITCH_interp = f_PITCH(T_glob)
     PITCH_STD_interp = f_PITCH_STD(T_glob)
+    ACC_X_interp = f_ACC_X(T_glob)
+    ACC_Y_interp = f_ACC_Y(T_glob)
+    ACC_Z_interp = f_ACC_Z(T_glob)
+    GYR_X_interp = f_GYR_X(T_glob)
+    GYR_Y_interp = f_GYR_Y(T_glob)
+    GYR_Z_interp = f_GYR_Z(T_glob)
 
     # Interpolate the MBES
     f_MBES_T = interp1d(MBES_T, MBES_T)

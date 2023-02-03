@@ -193,7 +193,7 @@ if __name__ == '__main__':
         # v_y = dvl_VN[i,]*np.sin(YAW[i,] - np.pi/2)
 
         # v_z = dvl_VZ[i,]
-        v_std = 0.01 #dvl_VSTD[i,]
+        v_std = 0.02 #dvl_VSTD[i,]
 
         # measurements = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)[1] - previous_measurements
         # _, previous_measurements = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)
@@ -288,9 +288,10 @@ if __name__ == '__main__':
     MEASUREMENTS = np.array(MEASUREMENTS)
 
     plt.suptitle(f"Algorithm with\n{n_particles} particles; 1/{steps} data log used\nTotal time:{int(elapsed_time)}s")
-    ax1 = plt.subplot2grid((2, 2), (0, 0), rowspan=2)
-    ax2 = plt.subplot2grid((2, 2), (0, 1))
-    ax3 = plt.subplot2grid((2, 2), (1, 1))
+    ax1 = plt.subplot2grid((3, 2), (0, 0), rowspan=2)
+    ax2 = plt.subplot2grid((3, 2), (0, 1))
+    ax3 = plt.subplot2grid((3, 2), (1, 1))
+    ax3 = plt.subplot2grid((3, 2), (2, 1))
 
     print("Display the error and the final result..")
     ax1.set_title("Barycentre")
@@ -315,11 +316,11 @@ if __name__ == '__main__':
     ax3.scatter(TIME, MEASUREMENTS[:,1], color = 'r', label = 'measurements from the MBES')
     ax3.legend()
 
-    # ax3.set_title("Vitesse")
-    # ax3.set_xlabel("time [min]")
-    # ax3.set_ylabel("||v|| [m/s]")
-    # ax3.plot(TIME, SPEED, label = 'speed')
-    # ax3.legend()
+    ax4.set_title("Vitesse")
+    ax4.set_xlabel("time [min]")
+    ax4.set_ylabel("||v|| [m/s]")
+    ax4.plot(TIME, SPEED, label = 'speed')
+    ax4.legend()
 
     print("Computing the diagrams..")
 

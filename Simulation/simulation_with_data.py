@@ -47,9 +47,9 @@ def normalize_weights(weighted_samples):
     return [weighted_samples[0] / np.sum(weighted_samples[0]), weighted_samples[1]]
 
 def validate_state(state, d_mnt):
-    # If we are out of the MNT
-    weights = state[0]
-    weights[d_mnt > 1] = 0
+    # # If we are out of the MNT
+    # weights = state[0]
+    # weights[d_mnt > 1] = 0
     return(state)
 
 def propagate_sample(samples, forward_motion, angular_motion, process_noise):
@@ -87,7 +87,7 @@ def compute_likelihood(propagated_states, measurements, measurements_noise, beta
 def needs_resampling(resampling_threshold):
     return 1.0 / np.max(particles[0]) < resampling_threshold
 
-
+previous_meas = 0
 def update(robot_forward_motion, robot_angular_motion, measurements, \
             measurements_noise, process_noise, particles,resampling_threshold,\
             resampler, beta, z_particules_mnt):
@@ -95,22 +95,26 @@ def update(robot_forward_motion, robot_angular_motion, measurements, \
     # Propagate the particle state according to the current particle
     propagated_states = propagate_sample(particles, robot_forward_motion, robot_angular_motion, process_noise)
 
-    # Compute current particle's weight
-    d_mnt, p, z_particules_mnt = compute_likelihood(propagated_states, measurements, measurements_noise, beta, z_particules_mnt)
+    global previous_meas
+    if measurements != previous_meas:
+        # Compute current particle's weight
+        d_mnt, p, z_particules_mnt = compute_likelihood(propagated_states, measurements, measurements_noise, beta, z_particules_mnt)
 
-    particules = validate_state(propagated_states, d_mnt)
+        # particles = validate_state(propagated_states, d_mnt)
 
-    # Update the probability of the particle
-    propagated_states[0] = particles[0] * p
+        # Update the probability of the particle
+        propagated_states[0] = particles[0] * p
 
-    # Update particles
-    particles = normalize_weights(propagated_states)
+        # Update particles
+        particles = normalize_weights(propagated_states)
+
+        previous_meas = measurements
 
     # Resample if needed
     if needs_resampling(resampling_threshold):
         global ct_resampling
         ct_resampling += 1
-        particles = resampler.resample(particles, n_particles) #1 = MULTINOMIAL
+        particles = resampler.resample(particles, n_particles)
 
     return(particles, z_particules_mnt)
 
@@ -135,7 +139,7 @@ def f_measurements(i, previous_measurements):
     if choice_range_sensor == "mnt":
         x_gps, y_gps = coord2cart((LAT[i,],LON[i,])).flatten()
         d_mnt, measurements = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)
-        return measurements-previous_measurements, measurements, d_mnt
+        return measurements-previous_measurements, measurements, None #d_mnt
         # return measurements, measurements, d_mnt
     elif choice_range_sensor == "dvl":
         mean_range_dvl = (dvl_BM1R[i,] + dvl_BM2R[i,] + dvl_BM3R[i,] + dvl_BM4R[i,])/4
@@ -149,7 +153,7 @@ def f_measurements_offset(i):
     if choice_range_sensor == "mnt":
         x_gps, y_gps = coord2cart((LAT[i,],LON[i,])).flatten()
         d_mnt, measurements = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)
-        return measurements, d_mnt
+        return measurements, None #d_mnt
     elif choice_range_sensor == "dvl":
         mean_range_dvl = (dvl_BM1R[i,] + dvl_BM2R[i,] + dvl_BM3R[i,] + dvl_BM4R[i,])/4
         measurements = mean_range_dvl - 115.57149562238688
@@ -227,9 +231,11 @@ if __name__ == '__main__':
     TIME = []; BAR = []; SPEED = []; ERR = []
     STD_X = []; STD_Y = []
     MEASUREMENTS = []
-    beta = 5/100
-    # beta = 1/5
-    # filter_speed = Low_pass_filter(1., np.array([dvl_v_x[0,], dvl_v_y[0,]]))
+    # beta = 5/100
+    # beta = 1/300 #300 is best
+    beta = 0.1
+    # beta = steps/1000
+    # filter_lpf_speed = Low_pass_filter(0.1, np.array([dvl_v_x[0,], dvl_v_y[0,]]))
 
     for i in r:
 
@@ -237,7 +243,7 @@ if __name__ == '__main__':
         t = dvl_T[i,]
         yaw = YAW[i,]
         yaw_std = YAW_STD[i,]
-        # v_x, v_y = filter_speed.low_pass_next(np.array([dvl_v_x[i,], dvl_v_y[i,]])).flatten()
+        # v_x, v_y = filter_lpf_speed.low_pass_next(np.array([dvl_v_x[i,], dvl_v_y[i,]])).flatten()
         v_x = dvl_v_x[i,]
         v_y = dvl_v_y[i,]
 
@@ -306,7 +312,7 @@ if __name__ == '__main__':
         STD_Y.append(var[1])
 
         #Test if the algorithm diverge and why
-        if test_diverge(ERR, 700) : break
+        if test_diverge(ERR, 500) : break
 
 
     print(f"Resampling used: {ct_resampling} ({ct_resampling/((idx_tf - idx_ti)/steps)*100}%)")
@@ -324,10 +330,11 @@ if __name__ == '__main__':
     masque = NORM_STD > max_std
     MEASUREMENTS = np.array(MEASUREMENTS)
 
-    plt.suptitle(f"Algorithm with\n{n_particles} particles; 1/{steps} data log used\nTotal time:{int(elapsed_time)}s")
-    ax1 = plt.subplot2grid((2, 2), (0, 0), rowspan=2)
-    ax2 = plt.subplot2grid((2, 2), (0, 1))
-    ax3 = plt.subplot2grid((2, 2), (1, 1))
+    plt.suptitle(f"Algorithm with {choice_range_sensor}\n{n_particles} particles; 1/{steps} data log used\nTotal time:{int(elapsed_time)}s")
+    ax1 = plt.subplot2grid((3, 2), (0, 0), rowspan=3)
+    ax2 = plt.subplot2grid((3, 2), (0, 1))
+    ax3 = plt.subplot2grid((3, 2), (1, 1))
+    ax4 = plt.subplot2grid((3, 2), (2, 1))
 
     print("Display the error and the final result..")
     ax1.set_title("Barycentre")
@@ -357,23 +364,23 @@ if __name__ == '__main__':
 
     X_gps, Y_gps = coord2cart((LAT, LON))
     d_bottom_mnt = distance_to_bottom(np.column_stack((X_gps,Y_gps)),MNT)[1].squeeze()
-    mean_dvlR = (dvl_BM1R + dvl_BM2R + dvl_BM3R + dvl_BM4R)/4 - 115.57149562238688
+    mean_dvlR = (dvl_BM1R + dvl_BM2R + dvl_BM3R + dvl_BM4R)/4
 
-    # ax3.set_title("Different types of bottom measurements")
-    # ax3.set_xlabel("Time [min]")
-    # ax3.set_ylabel("Range [m]")
-    # ax3.plot(dvl_T[steps:,], mean_dvlR[steps:,], label = "z_dvl")
-    # ax3.plot(T[steps:,], d_bottom_mnt, label = "z_mnt")
-    # ax3.plot(MBES_T[steps:,], MBES_Z[steps:,] - 117.61544705067318, label = "z_mbes")
-    # ax3.legend()
-
-    ax3.set_title("Speed")
-    ax3.set_ylabel("v [m/s]")
-    ax3.set_xlabel("t [min]")
-    ax3.plot((dvl_T[steps:,] - dvl_T[steps,])/60, np.sqrt(dvl_VE[steps:,]**2 + dvl_VN[steps:,]**2), label = "dvl_speed")
-    ax3.plot(TIME, SPEED, label = "dvl_speed_filtered")
-    ax3.plot((T[steps:,] - T[steps,])/60, np.sqrt(V_X[steps:,]**2 + V_Y[steps:,]**2), label = "ins_speed")
+    ax3.set_title("Different types of bottom measurements")
+    ax3.set_xlabel("Time [min]")
+    ax3.set_ylabel("Range [m]")
+    ax3.plot(dvl_T[steps:,], mean_dvlR[steps:,] - 115.57149562238688, label = "z_dvl")
+    ax3.plot(T[steps:,], d_bottom_mnt, label = "z_mnt")
+    ax3.plot(MBES_T[steps:,], MBES_Z[steps:,] - 117.61544705067318, label = "z_mbes")
     ax3.legend()
+
+    ax4.set_title("Speed")
+    ax4.set_ylabel("v [m/s]")
+    ax4.set_xlabel("t [min]")
+    ax4.plot((dvl_T[steps:,] - dvl_T[steps,])/60, np.sqrt(dvl_VE[steps:,]**2 + dvl_VN[steps:,]**2), label = "dvl_speed")
+    ax4.plot(TIME, SPEED, label = "dvl_speed_filtered")
+    ax4.plot((T[steps:,] - T[steps,])/60, np.sqrt(V_X[steps:,]**2 + V_Y[steps:,]**2), label = "ins_speed")
+    ax4.legend()
 
     print("Computing the diagrams..")
 

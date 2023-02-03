@@ -40,7 +40,7 @@ if bool_txt:
                 # Down Velocity Std.	Yaw	Yaw Std.	Roll	Roll Std.	Pitch
                     # Pitch Std.
 
-    filepath = file_path+"/sbgCenterExport.txt"
+    filepath = file_path+"/IMU_trdi.txt"
     data_ins = np.genfromtxt(filepath, delimiter='\t', skip_header=2, dtype = "U")
     T = data_ins[:,0]
     T = np.array([dt.split(":") for dt in T], dtype=np.float64)
@@ -66,6 +66,13 @@ if bool_txt:
     ROLL_STD = np.float64(data_ins[:,14])
     PITCH = np.float64(data_ins[:,15])
     PITCH_STD = np.float64(data_ins[:,16])
+
+    ACC_X = np.float64(data_ins[:,17])
+    ACC_Y = np.float64(data_ins[:,18])
+    ACC_Z = np.float64(data_ins[:,19])
+    GYR_X = np.float64(data_ins[:,20])
+    GYR_Y = np.float64(data_ins[:,21])
+    GYR_Z = np.float64(data_ins[:,22])
 
     """ Import DVL """
     print("Importing the DVL-TXT file..")
@@ -151,6 +158,7 @@ if bool_txt:
             LAT_STD=LAT_STD, LON_STD=LON_STD, V_X_STD=V_X_STD,\
             V_Y_STD=V_Y_STD, V_Z_STD=V_Z_STD, YAW=YAW, YAW_STD=YAW_STD,\
             ROLL=ROLL, ROLL_STD=ROLL_STD, PITCH=PITCH, PITCH_STD=PITCH_STD,\
+            ACC_X = ACC_X, ACC_Y = ACC_Y, ACC_Z = ACC_Z, GYR_X = GYR_X, GYR_Y = GYR_Y, GYR_Z = GYR_Z,\
             dtype = np.float64, precision = 16)
     np.savez("mnt.npz", MNT=MNT, dtype = np.float64, precision = 16)
     # with open('kd_tree.pkl', 'wb') as f:
@@ -202,6 +210,13 @@ if bool_compress:
     PITCH = ins['PITCH']/180*np.pi
     PITCH_STD = ins['PITCH_STD']/180*np.pi
 
+    ACC_X = ins['ACC_X']
+    ACC_Y = ins['ACC_Y']
+    ACC_Z = ins['ACC_Z']
+    GYR_X = ins['GYR_X']
+    GYR_Y = ins['GYR_Y']
+    GYR_Z = ins['GYR_Z']
+
     """ Load INS """
     mnt = np.load(file_path + "/mnt.npz")
     MNT = mnt['MNT']
@@ -248,33 +263,22 @@ if bool_compress:
     dvl_BM2R = dvl["dvl_BM2R"]/100. #en cm -> m
     dvl_BM3R = dvl["dvl_BM3R"]/100. #en cm -> m
     dvl_BM4R = dvl["dvl_BM4R"]/100. #en cm -> m
-    dvl_VE = dvl["dvl_VE"]/1100.
-    dvl_VN = dvl["dvl_VN"]/11000.
-    dvl_VZ = dvl["dvl_VZ"]/11000.
-    dvl_VSTD = dvl["dvl_VSTD"]/11000.
-    # mask = (dvl_VE == -32.768) | (dvl_VN == -32.768) | (dvl_VZ == -32.768) \
-    #         | (dvl_VSTD == -32.768)
-    #
-    # dvl_T = dvl_T[~mask]
-    # dvl_BM1R = dvl_BM1R[~mask]
-    # dvl_BM2R = dvl_BM2R[~mask]
-    # dvl_BM3R = dvl_BM3R[~mask]
-    # dvl_BM4R = dvl_BM4R[~mask]
-    # dvl_VE = dvl_VE[~mask]
-    # dvl_VN = dvl_VN[~mask]
-    # dvl_VZ = dvl_VZ[~mask]
-    # dvl_VSTD = dvl_VSTD[~mask]
+    # dvl_VE = dvl["dvl_VE"]/1100.
+    # dvl_VN = dvl["dvl_VN"]/11000.
+    # dvl_VZ = dvl["dvl_VZ"]/11000.
+    # dvl_VSTD = dvl["dvl_VSTD"]/11000.
+    dvl_VE = dvl["dvl_VE"]/1000.
+    dvl_VN = dvl["dvl_VN"]/10000.
+    dvl_VZ = dvl["dvl_VZ"]/10000.
+    dvl_VSTD = dvl["dvl_VSTD"]/10000.
 
     """ Interpolate data """
     from scipy.interpolate import interp1d
     apply_modif = True
     if apply_modif:
         #Apply a mask
-        # mask_dvl_VE = np.abs(dvl_VE - np.mean(dvl_VE)) > 1.5*np.std(dvl_VE)
-        # mask_dvl_VN = np.abs(dvl_VN - np.mean(dvl_VN)) > 1.5*np.std(dvl_VN)
         mask_dvl_VE = np.abs(dvl_VE - np.mean(dvl_VE)) > 3*np.std(dvl_VE)
         mask_dvl_VN = np.abs(dvl_VN - np.mean(dvl_VN)) > 3*np.std(dvl_VN)
-        # mask = mask_dvl_v_x | mask_dvl_VN
         mask = (mask_dvl_VE) | (mask_dvl_VN) | (dvl_BM1R == 0) | (dvl_BM2R == 0) | (dvl_BM3R == 0) | (dvl_BM4R == 0)
 
         print("Total point of DVL taken = ",dvl_VE[~mask].shape[0]/dvl_VE.shape[0]*100,"%")
@@ -319,6 +323,12 @@ if bool_compress:
     f_ROLL_STD = interp1d(T,ROLL_STD)
     f_PITCH = interp1d(T,PITCH)
     f_PITCH_STD = interp1d(T,PITCH_STD)
+    f_ACC_X = interp1d(T,ACC_X)
+    f_ACC_Y = interp1d(T,ACC_Y)
+    f_ACC_Z = interp1d(T,ACC_Z)
+    f_GYR_X = interp1d(T,GYR_X)
+    f_GYR_Y = interp1d(T,GYR_Y)
+    f_GYR_Z = interp1d(T,GYR_Z)
 
     T_interp = f_T(T_glob)
     LAT_interp = f_LAT(T_glob)
@@ -337,6 +347,12 @@ if bool_compress:
     ROLL_STD_interp = f_ROLL_STD(T_glob)
     PITCH_interp = f_PITCH(T_glob)
     PITCH_STD_interp = f_PITCH_STD(T_glob)
+    ACC_X_interp = f_ACC_X(T_glob)
+    ACC_Y_interp = f_ACC_Y(T_glob)
+    ACC_Z_interp = f_ACC_Z(T_glob)
+    GYR_X_interp = f_GYR_X(T_glob)
+    GYR_Y_interp = f_GYR_Y(T_glob)
+    GYR_Z_interp = f_GYR_Z(T_glob)
 
     # Interpolate the MBES
     f_MBES_T = interp1d(MBES_T, MBES_T)
@@ -389,6 +405,12 @@ if bool_compress:
     ROLL_STD = ROLL_STD_interp
     PITCH = PITCH_interp
     PITCH_STD = PITCH_STD_interp
+    ACC_X = ACC_X_interp
+    ACC_Y = ACC_Y_interp
+    ACC_Z = ACC_Z_interp
+    GYR_X = GYR_X_interp
+    GYR_Y = GYR_Y_interp
+    GYR_Z = GYR_Z_interp
 
     #MBES
     MBES_T = MBES_T_interp
@@ -407,14 +429,12 @@ if bool_compress:
     dvl_VZ = dvl_VZ_interp
     dvl_VSTD = dvl_VSTD_interp
 
-    sawtooth = lambda x : 2*np.arctan(np.tan(x/2))
-    YAW = sawtooth(-YAW+np.pi/2)
+    YAW = -YAW+np.pi/2
     #Rotate the dvl
     angle = np.pi/4
     dvl_v_x = (dvl_VE*np.cos(angle) + dvl_VN*np.sin(angle))*np.cos(YAW)
     dvl_v_y = (dvl_VN*np.sin(angle) + dvl_VE*np.cos(angle))*np.sin(YAW)
     dvl_v_z = dvl_VZ
-
 
 
 if __name__ == '__main__':
@@ -518,7 +538,7 @@ if __name__ == '__main__':
         plt.ylabel("Error on measuremnts [m]")
         plt.title("Error of dvl range v/s MNT and mbes range v/s MNT")
         plt.plot()
-    display_range()
+    # display_range()
     def display_speed():
         ##################################################
         plt.figure()
@@ -533,6 +553,7 @@ if __name__ == '__main__':
 
         ax1.plot(dvl_T, dvl_v_x, label="dvl")
         ax1.plot(T, (V_X), label = "ins")
+        # ax1.plot(T, np.cumsum(ACC_X)*0.05 + V_X[0,], label = "dt*acc")
         ax1.legend()
         ax1.set_title("VE")
         ax1.grid()
@@ -542,6 +563,7 @@ if __name__ == '__main__':
 
         ax2.plot(dvl_T, dvl_v_y, label="dvl")
         ax2.plot(T, (V_Y), label = "ins")
+        # ax2.plot(T, np.cumsum(ACC_Y)*0.05 + dvl_v_y[0,], label = "dt*acc")
         ax2.legend()
         ax2.set_title("VN")
         ax2.grid()
@@ -550,6 +572,7 @@ if __name__ == '__main__':
 
         ax3.scatter(dvl_T, (dvl_VZ), label="dvl")
         ax3.scatter(T, (V_Z), label = "ins")
+        # ax3.plot(T, np.cumsum(ACC_Z)*0.05 + dvl_v_z[0,], label = "dt*acc")
         ax3.legend()
         ax3.set_title("VZ")
         ax3.grid()
@@ -558,6 +581,7 @@ if __name__ == '__main__':
 
         ax4.plot(dvl_T, np.sqrt(dvl_v_x**2 + dvl_v_y**2), label="dvl")
         ax4.plot(T, np.sqrt(V_X**2 + V_Y**2), label = "ins")
+        ax4.plot(T, 0.05**2*np.sqrt(ACC_X**2 + ACC_Y**2), label = "ins")
         ax4.set_title("||V_xy||")
         ax4.legend()
         ax4.grid()
@@ -582,12 +606,37 @@ if __name__ == '__main__':
         ax6.set_xlabel("Time [min]")
         ax6.set_ylabel("Error on angle [rad]")
         ax6.set_title("angle of speed")
-    display_speed()
+    # display_speed()
+    def display_acc():
+        plt.figure()
+        plt.plot(T, ACC_X, label = "acc_x")
+        plt.plot(T, ACC_Y, label = "acc_y")
+        plt.plot(T, ACC_Z, label = "acc_z")
+        plt.grid()
+        plt.xlabel("time [min]")
+        plt.ylabel("acc [m/s2]")
+        plt.legend()
+    display_acc()
     plt.show()
 
     # plt.figure()
     # plt.plot(T, PITCH, label = "pitch")
     # plt.plot(T, ROLL, label = "roll")
     # plt.plot(T, YAW, label = "yaw")
+    # plt.legend()
+    # plt.show()
+
+    # plt.figure()
+    # # V = np.sqrt(V_X**2 + V_Y**2)
+    # plt.plot(T, V_X, label = "ins", color = 'green')
+    # plt.plot(T, dvl_v_x, label = "dvl", color = 'red')
+    # ERR = (V_X - dvl_v_x)
+    # kp = 10
+    # ki = 0
+    # kd = 1
+    # plt.scatter(T[:-1,], kp*ERR[:-1,] + ki*np.cumsum(ERR)[:-1,]*dt + kd*np.diff(ERR)/dt, label = "pid", s = 0.5, color = 'blue')
+    # plt.title("speed")
+    # plt.xlabel("t [min]")
+    # plt.ylabel("speed [m/s]")
     # plt.legend()
     # plt.show()
