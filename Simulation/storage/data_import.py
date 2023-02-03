@@ -295,13 +295,14 @@ if bool_compress:
     # Déterminez les temps de début et de fin communs entre T et MBES_T
     start_time = max(max(T[0], MBES_T[0]),dvl_T[0])
     end_time = min(min(T[-1], MBES_T[-1]),dvl_T[-1])
-
-    # dt = 0.1 #np.mean(np.diff(dvl_T))
+    global dt_br
+    # dt_br = 0.1 #np.mean(np.diff(dvl_T))
+    dt_br = np.mean(np.diff(dvl_T))
     # dt = 0.2 #np.mean(np.diff(MBES_T))
-    dt = 0.05 #ins
+    # dt = 0.05 #ins
 
-    print(f"dt choosen = {dt}")
-    T_glob = np.arange(start_time, end_time, dt)
+    print(f"dt choosen = {dt_br}")
+    T_glob = np.arange(start_time, end_time, dt_br)
 
     # Interpolez les données de T sur le nouveau vecteur de temps T_glob
 
@@ -556,7 +557,7 @@ if __name__ == '__main__':
         # B = ACC_X[:ACC_X.shape[0,]-1,]
         # C = np.insert(B, 0, 0)
         # print(np.cumsum(ACC_X)*0.05 + V_X[0,])
-        ax1.plot(T, np.cumsum(ACC_X)*0.05 + V_X[0,], label = "dt*acc")
+        # ax1.plot(T, np.cumsum(ACC_X)*0.05 + V_X[0,], label = "dt*acc")
         ax1.legend()
         ax1.set_title("VE")
         ax1.grid()
@@ -591,7 +592,7 @@ if __name__ == '__main__':
         ax4.set_xlabel("Time [min]")
         ax4.set_ylabel("Speed [m/s]")
 
-        ax5.scatter(dvl_T, dvl_VSTD, label = "error speed on dvl", s = 0.5)
+        ax5.scatter(dvl_T, dvl_VSTD/10, label = "error speed on dvl", s = 0.5)
         ax5.scatter(T, V_X_STD, label = "error speed on ins on X", s = 0.5)
         ax5.scatter(T, V_Y_STD, label = "error speed on ins on Y", s = 0.5)
         ax5.scatter(T, V_Z_STD, label = "error speed on ins on Z", s = 0.5)

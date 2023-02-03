@@ -165,8 +165,8 @@ def test_diverge(ERR, err_max=1000):
         print(f"dt = {dt}")
         print(f"process_noise = {process_noise}")
         print(f"measurements_noise = {measurements_noise}")
-        print(f"V = {v_x, v_y, v_z}")
-        print(f"pos_std = {lat_std, lon_std}")
+        print(f"V = {v_x, v_y}")
+        print(f"yaw_std = {yaw_std}")
         print(f"speed_std = {v_std}")
         print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         return True #Alors on arrete
@@ -185,9 +185,9 @@ if __name__ == '__main__':
 
     #For the update
     resampler = Resampler()
-    resampling_threshold = 0.5*n_particles
+    resampling_threshold = 2/3*n_particles
 
-    idx_ti = 0 + steps
+    idx_ti = 0
     idx_tf =  dvl_T.shape[0]
 
     dt = dvl_T[steps,] - dvl_T[0,]
@@ -202,10 +202,6 @@ if __name__ == '__main__':
         y = np.linspace(-120, 120, 100)
         X, Y = np.meshgrid(x, y)
 
-        # from PIL import Image
-        # image = Image.open("./storage_afternoon/MNT_G1.png")
-        # image.show()
-
         print("Processing..")
         r = range(idx_ti,idx_tf,steps)
 
@@ -215,11 +211,8 @@ if __name__ == '__main__':
     fig, ax = plt.subplots()
     TIME = []; BAR = []; SPEED = []; ERR = []
     STD_X = []; STD_Y = []
-    MEASUREMENTS = []
     beta = 5/100
-    # beta = 1/300 #300 is best
-    # beta = steps/1000
-    # filter_lpf_speed = Low_pass_filter(0.1, np.array([dvl_v_x[0,], dvl_v_y[0,]]))
+    filter_lpf_speed = Low_pass_filter(1., np.array([dvl_v_x[0,], dvl_v_y[0,]]))
 
     for i in r:
 
@@ -227,14 +220,10 @@ if __name__ == '__main__':
         t = dvl_T[i,]
         yaw = YAW[i,]
         yaw_std = YAW_STD[i,]
-        # v_x, v_y = filter_lpf_speed.low_pass_next(np.array([dvl_v_x[i,], dvl_v_y[i,]])).flatten()
-        v_x = dvl_v_x[i,]
-        v_y = dvl_v_y[i,]
-
-        # v_x = V_X[i,]
-        # v_y = V_Y[i,]
-        # v_std = np.sqrt(V_X_STD[i,]**2+V_Y_STD[i,]**2)
-        v_std = dvl_VSTD[i,]/10
+        v_x, v_y = filter_lpf_speed.low_pass_next(np.array([dvl_v_x[i,], dvl_v_y[i,]])).flatten()
+        # v_std = dvl_VSTD[i,]
+        # v_std = 0.4*10*dt_br
+        v_std = 0.5*10*dt_br
 
         if using_offset : measurements, meas_model_distance_std = f_measurements_offset(i)
         else: measurements, previous_measurements, meas_model_distance_std = f_measurements(i, previous_measurements)
@@ -312,7 +301,6 @@ if __name__ == '__main__':
     NORM_STD = np.sqrt(STD_X**2 + STD_Y**2)
     max_std = 1.5*np.mean(NORM_STD)
     masque = NORM_STD > max_std
-    MEASUREMENTS = np.array(MEASUREMENTS)
 
     plt.suptitle(f"Algorithm with {choice_range_sensor}\n{n_particles} particles; 1/{steps} data log used\nTotal time:{int(elapsed_time)}s")
     ax1 = plt.subplot2grid((3, 2), (0, 0), rowspan=3)
@@ -339,13 +327,6 @@ if __name__ == '__main__':
     ax2.plot(TIME[idx_start:,], np.mean(ERR[idx_start:,])*np.ones(TIME[idx_start:,].shape), label = f"mean error = {np.mean(ERR[idx_start:,])}")
     ax2.legend()
 
-    # ax3.set_title("Difference of measurements = {}.".format(np.abs(np.mean(MEASUREMENTS[:,0]) - np.mean(MEASUREMENTS[:,1]))))
-    # ax3.set_xlabel("time [min]")
-    # ax3.set_ylabel("error (m)")
-    # ax3.scatter(TIME, MEASUREMENTS[:,0], color = 'b', label = 'measurements from the MNT')
-    # ax3.scatter(TIME, MEASUREMENTS[:,1], color = 'r', label = 'measurements from the MBES')
-    # ax3.legend()
-
     X_gps, Y_gps = coord2cart((LAT, LON))
     d_bottom_mnt = distance_to_bottom(np.column_stack((X_gps,Y_gps)),MNT)[1].squeeze()
     mean_dvlR = (dvl_BM1R + dvl_BM2R + dvl_BM3R + dvl_BM4R)/4
@@ -353,15 +334,15 @@ if __name__ == '__main__':
     ax3.set_title("Different types of bottom measurements")
     ax3.set_xlabel("Time [min]")
     ax3.set_ylabel("Range [m]")
-    ax3.plot(dvl_T[steps:,], mean_dvlR[steps:,] - 115.57149562238688, label = "z_dvl")
-    ax3.plot(T[steps:,], d_bottom_mnt, label = "z_mnt")
-    ax3.plot(MBES_T[steps:,], MBES_Z[steps:,] - 117.61544705067318, label = "z_mbes")
+    ax3.plot(dvl_T, mean_dvlR - 115.57149562238688, label = "z_dvl")
+    ax3.plot(T, d_bottom_mnt, label = "z_mnt")
+    ax3.plot(MBES_T, MBES_Z - 117.61544705067318, label = "z_mbes")
     ax3.legend()
 
     ax4.set_title("Speed")
     ax4.set_ylabel("v [m/s]")
     ax4.set_xlabel("t [min]")
-    ax4.plot((dvl_T[steps:,] - dvl_T[steps,])/60, np.sqrt(dvl_VE[steps:,]**2 + dvl_VN[steps:,]**2), label = "dvl_speed")
+    ax4.plot((dvl_T[steps:,] - dvl_T[steps,])/60, np.sqrt(dvl_v_x[steps:,]**2 + dvl_v_y[steps:,]**2), label = "dvl_speed")
     ax4.plot(TIME, SPEED, label = "dvl_speed_filtered")
     ax4.plot((T[steps:,] - T[steps,])/60, np.sqrt(V_X[steps:,]**2 + V_Y[steps:,]**2), label = "ins_speed")
     ax4.legend()
