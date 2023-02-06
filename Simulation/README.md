@@ -7,8 +7,8 @@ We did several tests :
   * The 13/10/22 at 3pm.
 
 You have to download the txt file from :
-  * [1pm](https://mega.nz/fm/2c92naIA) in /storage
-  * [3pm](https://mega.nz/fm/zB0gyKrA) in /storage_afternoon
+  * [1pm](https://mega.nz/folder/LddXFIjJ#8aNVKljeaiCF3S-_OeuZqg) in /storage
+  * [3pm](https://mega.nz/folder/6JMSFIoS#Je4uvVFECIoUeqyPqkgzfQ) in /storage_afternoon
 
 
 Then go into the storage folder `cd storage` or `cd storage_afternoon` and run /data_import.py with **1** in bool_txt and **0** in bool_compress. Then relaunch ./data_import.py with the opposite.

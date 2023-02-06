@@ -11,7 +11,7 @@ else:
         print("You have to select a sensor")
         sys.exit()
 
-from storage.data_import import *
+from storage_afternoon.data_import_new import *
 n_particles = int(input("Number of particles: "))
 steps = int(input("number of steps between measures ? "))
 bool_display = (str(input("Display the particles ? [Y/]"))=="Y")
@@ -78,7 +78,7 @@ def compute_likelihood(propagated_states, measurements, measurements_noise, beta
     if measurements_noise[0] == None:
         p_z_given_x_distance = np.exp(-beta*distance**2)
     else:
-        p_z_given_x_distance = np.exp(-beta*distance/(measurements_noise[0]**2))
+        p_z_given_x_distance = np.exp(-beta*distance**2/(measurements_noise[0]**2))
 
     # p_z_given_x_distance = 1
     # Return importance weight based on all landmarks
@@ -152,10 +152,10 @@ def f_measurements_offset(i):
         return measurements, None #d_mnt
     elif choice_range_sensor == "dvl":
         mean_range_dvl = (dvl_BM1R[i,] + dvl_BM2R[i,] + dvl_BM3R[i,] + dvl_BM4R[i,])/4
-        measurements = mean_range_dvl - 115.57149562238688
+        measurements = mean_range_dvl - 116.48084912914656
         return measurements, None
     else:
-        measurements = MBES_Z[i,] - 117.61544705067318
+        measurements = MBES_Z[i,] - 117.67756491403492
         return measurements, None
 
 def test_diverge(ERR, err_max=1000):
@@ -215,7 +215,8 @@ if __name__ == '__main__':
     # beta = 1/10
     beta = 10**(-1.37)
     filter_lpf_speed = Low_pass_filter(1., np.array([dvl_v_x[0,], dvl_v_y[0,]]))
-
+    filter_lpf_mbes = Low_pass_filter(0.1, np.array([MBES_Z[0,]]))
+    MEASUREMENTS = []
     for i in r:
 
         """Set data"""
@@ -229,6 +230,9 @@ if __name__ == '__main__':
 
         if using_offset : measurements, meas_model_distance_std = f_measurements_offset(i)
         else: measurements, previous_measurements, meas_model_distance_std = f_measurements(i, previous_measurements)
+
+        measurements = filter_lpf_mbes.low_pass_next(np.array([MBES_Z[i,]]))
+        MEASUREMENTS.append(measurements)
 
         """Processing the motion of the robot """
         robot_forward_motion =  dt*np.sqrt(v_x**2 + v_y**2)
@@ -334,12 +338,14 @@ if __name__ == '__main__':
     d_bottom_mnt = distance_to_bottom(np.column_stack((X_gps,Y_gps)),MNT)[1].squeeze()
     mean_dvlR = (dvl_BM1R + dvl_BM2R + dvl_BM3R + dvl_BM4R)/4
 
+    MEASUREMENTS = np.array(MEASUREMENTS)
     ax3.set_title("Different types of bottom measurements")
     ax3.set_xlabel("Time [min]")
     ax3.set_ylabel("Range [m]")
-    ax3.plot(dvl_T, mean_dvlR - 115.57149562238688, label = "z_dvl")
-    ax3.plot(T, d_bottom_mnt, label = "z_mnt")
-    ax3.plot(MBES_T, MBES_Z - 117.61544705067318, label = "z_mbes")
+    ax3.plot(TIME, mean_dvlR - 116.48084912914656, label = "z_dvl")
+    ax3.plot(TIME, d_bottom_mnt, label = "z_mnt")
+    # ax3.plot(MBES_T, MBES_Z - 117.67756491403492, label = "z_mbes")
+    ax3.plot(TIME, MEASUREMENTS - 117.67756491403492, label = "z_mbes")
     ax3.legend()
 
     ax4.set_title("Speed")

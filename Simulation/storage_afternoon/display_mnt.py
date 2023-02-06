@@ -24,7 +24,7 @@ def display_mnt(LON, LAT, mnt):
     ax.set_xlabel('x')
     ax.set_ylabel('y')
 
-    plt.plot(LON,LAT)
+    plt.plot(LON,LAT, color = 'red')
 
     # Show the plot
     plt.savefig("MNT_G1.png", dpi = 200) #augmenter dpi pour une meilleure résolution
@@ -33,7 +33,7 @@ def display_mnt(LON, LAT, mnt):
 
 
 if __name__ == '__main__':
-    from data_import import *
+    from data_import_new import *
     display_mnt(LON, LAT, MNT)
 
     from PIL import Image
