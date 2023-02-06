@@ -8,7 +8,7 @@ import joblib, pickle
 file_path = os.path.dirname(os.path.abspath(__file__))
 
 bool_txt = 0
-data_cropped = 0
+data_cropped = 1
 
 # Définit les coordonnées de référence
 wpt_ponton = (48.1989495, -3.0148023)
@@ -216,7 +216,7 @@ GYR_Z = ins['GYR_Z']
 """ Load INS """
 mnt = np.load(file_path + "/mnt.npz")
 MNT = mnt['MNT']
-if bool_txt:
+if not bool_txt:
     nx_mnt, ny_mnt = coord2cart((MNT[:,1],MNT[:,0]))
     MNT[:,0] = nx_mnt
     MNT[:,1] = ny_mnt
