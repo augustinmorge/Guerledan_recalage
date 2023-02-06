@@ -39,10 +39,10 @@ Youtube link for basic explanation of the particulate filter
 ## Participants
 Emails :
 
-[Leo Pham-Van](mailto:leo.pham-van@ensta-bretagne.org) Hydrographe
+[Léo Pham-Van](mailto:leo.pham-van@ensta-bretagne.org) Hydrographe - Prix Nobel
 
-[Laurent Droudun](mailto:laurent.droudun@ensta-bretagne.org) Roboticien
+[Laurent Droudun](mailto:laurent.droudun@ensta-bretagne.org) Roboticien - Médaille Fields
 
-[Florian Jerram](mailto:florian.jerram@ensta-bretagne.org) Roboticien
+[Florian Jerram](mailto:florian.jerram@ensta-bretagne.org) Roboticien - Prix Goncourt
 
-[Augustin MORGE](mailto:augustin.morge@ensta-bretagne.org) Roboticien
+[Augustin MORGE](mailto:augustin.morge@ensta-bretagne.org) Roboticien - Meilleur patissier

@@ -122,6 +122,13 @@ def get_average_state(particles):
 
     return [avg_x, avg_y]
 
+def get_std_state(particles):
+
+    # Compute weighted average
+    std_x = np.sum(particles[0]*particles[1][0]**2) - np.sum(particles[0]*particles[1][0])**2 # / np.sum(particles[0])
+    std_y = np.sum(particles[0]*particles[1][1]**2) - np.sum(particles[0]*particles[1][1])**2 # / np.sum(particles[0])
+
+    return std_x, std_y
 # Init range sensor
 if choice_range_sensor == "mnt":
     x_gps, y_gps = coord2cart((LAT[0,],LON[0,])).flatten()
@@ -282,10 +289,13 @@ if __name__ == '__main__':
         BAR.append([get_average_state(particles)[0],get_average_state(particles)[1]])
         SPEED.append(np.sqrt(v_x**2 + v_y**2))
 
-        var = np.std(np.column_stack((particles[1][0],particles[1][1])),axis=0)
-        STD_X.append(var[0])
-        STD_Y.append(var[1])
+        # var = np.std(np.column_stack((particles[1][0],particles[1][1])),axis=0)
+        # STD_X.append(var[0])
+        # STD_Y.append(var[1])
 
+        std_x, std_y = get_std_state(particles)
+        STD_X.append(std_x)
+        STD_Y.append(std_y)
         #Test if the algorithm diverge and why
         if test_diverge(ERR, 500) : break
 

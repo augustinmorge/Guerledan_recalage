@@ -465,6 +465,15 @@ if __name__ == '__main__':
 
         mean_dvlR = (dvl_BM1R + dvl_BM2R + dvl_BM3R + dvl_BM4R)/4
 
+        ax1.plot(dvl_T, dvl_BM1R - 115.57108493670452, label = "dvl_BM1R", color = 'red')
+        ax1.plot((MBES_T[1:,])[~mask1], (MBES_Z[1:,])[~mask1] - 117.6152233539319, label="MBES_Z")
+        ax1.plot(T, d_bottom_mnt, label = "d_mnt")
+        ax1.legend()
+        ax1.grid()
+        ax1.set_xlabel("Time [min]")
+        ax1.set_ylabel("Range [m]")
+        ax1.set_title("dvl_BM1R")
+
         # ax1.plot(dvl_T, mean_dvlR - np.mean(mean_dvlR), label = "dvl_R - mean(dvl_R)", color = 'red')
         # ax1.plot((MBES_T[1:,])[~mask1], (MBES_Z[1:,])[~mask1] - np.mean((MBES_Z[1:,])[~mask1]), label="MBES_Z - mean(MBES_Z)")
         # ax1.plot(T, d_bottom_mnt - np.mean(d_bottom_mnt), label = "d_z_mnt - mean(d_z_mnt)")
@@ -474,14 +483,6 @@ if __name__ == '__main__':
         # ax1.set_ylabel("Range [m]")
         # ax1.set_title("Range from mean range")
 
-        ax1.plot(dvl_T, dvl_BM1R - 115.57108493670452, label = "dvl_BM1R", color = 'red')
-        ax1.plot((MBES_T[1:,])[~mask1], (MBES_Z[1:,])[~mask1] - 117.6152233539319, label="MBES_Z")
-        ax1.plot(T, d_bottom_mnt, label = "d_mnt")
-        ax1.legend()
-        ax1.grid()
-        ax1.set_xlabel("Time [min]")
-        ax1.set_ylabel("Range [m]")
-        ax1.set_title("dvl_BM1R")
 
         # ax2.plot(dvl_T, dvl_BM2R - np.mean(dvl_BM2R), label = "dvl_BM2R", color = 'red')
         # ax2.plot((MBES_T[1:,])[~mask1], (MBES_Z[1:,])[~mask1] - np.mean((MBES_Z[1:,])[~mask1]), label="MBES_Z")
