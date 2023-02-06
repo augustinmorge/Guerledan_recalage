@@ -117,16 +117,16 @@ def update(robot_forward_motion, robot_angular_motion, measurements, \
 def get_average_state(particles):
 
     # Compute weighted average
-    avg_x = np.sum(particles[0]*particles[1][0]) / np.sum(particles[0])
-    avg_y = np.sum(particles[0]*particles[1][1]) / np.sum(particles[0])
+    avg_x = np.sum(particles[0]*particles[1][0])
+    avg_y = np.sum(particles[0]*particles[1][1])
 
     return [avg_x, avg_y]
 
 def get_std_state(particles):
 
     # Compute weighted average
-    std_x = np.sum(particles[0]*particles[1][0]**2) - np.sum(particles[0]*particles[1][0])**2 # / np.sum(particles[0])
-    std_y = np.sum(particles[0]*particles[1][1]**2) - np.sum(particles[0]*particles[1][1])**2 # / np.sum(particles[0])
+    std_x = np.sqrt(np.sum(particles[0]*particles[1][0]**2)/n_particles - (np.sum(particles[0]*particles[1][0])/n_particles)**2) # / np.sum(particles[0])
+    std_y = np.sqrt(np.sum(particles[0]*particles[1][1]**2)/n_particles - (np.sum(particles[0]*particles[1][1])/n_particles)**2) # / np.sum(particles[0])
 
     return std_x, std_y
 # Init range sensor
@@ -289,9 +289,9 @@ if __name__ == '__main__':
         BAR.append([get_average_state(particles)[0],get_average_state(particles)[1]])
         SPEED.append(np.sqrt(v_x**2 + v_y**2))
 
-        # var = np.std(np.column_stack((particles[1][0],particles[1][1])),axis=0)
-        # STD_X.append(var[0])
-        # STD_Y.append(var[1])
+        # std = np.std(np.column_stack((particles[1][0],particles[1][1])),axis=0)
+        # STD_X.append(std[0])
+        # STD_Y.append(std[1])
 
         std_x, std_y = get_std_state(particles)
         STD_X.append(std_x)
@@ -311,7 +311,7 @@ if __name__ == '__main__':
     STD_X = np.array(STD_X).squeeze()
     STD_Y = np.array(STD_Y).squeeze()
     NORM_STD = np.sqrt(STD_X**2 + STD_Y**2)
-    max_std = 1.5*np.mean(NORM_STD)
+    max_std = 3*np.mean(NORM_STD)
     masque = NORM_STD > max_std
 
     plt.suptitle(f"Algorithm with {choice_range_sensor}\n{n_particles} particles; 1/{steps} data log used\nTotal time:{int(elapsed_time)}s")
