@@ -352,17 +352,6 @@ GYR_X_interp = f_GYR_X(T_glob)
 GYR_Y_interp = f_GYR_Y(T_glob)
 GYR_Z_interp = f_GYR_Z(T_glob)
 
-# Interpolate the MBES
-f_MBES_T = interp1d(MBES_T, MBES_T)
-f_MBES_X = interp1d(MBES_T, MBES_X)
-f_MBES_Y = interp1d(MBES_T, MBES_Y)
-f_MBES_Z = interp1d(MBES_T, MBES_Z)
-
-MBES_T_interp = f_MBES_T(T_glob)
-MBES_X_interp = f_MBES_X(T_glob)
-MBES_Y_interp = f_MBES_Y(T_glob)
-MBES_Z_interp = f_MBES_Z(T_glob)
-
 # Interpolate the DVL
 f_dvl_T = interp1d(dvl_T,dvl_T)
 f_dvl_BM1R = interp1d(dvl_T,dvl_BM1R)
@@ -410,12 +399,6 @@ GYR_X = GYR_X_interp
 GYR_Y = GYR_Y_interp
 GYR_Z = GYR_Z_interp
 
-#MBES
-MBES_T = MBES_T_interp
-MBES_X = MBES_X_interp
-MBES_Y = MBES_Y_interp
-MBES_Z = MBES_Z_interp
-
 #DVL
 dvl_T = dvl_T_interp
 dvl_BM1R = dvl_BM1R_interp
@@ -441,6 +424,23 @@ if __name__ == '__main__':
         Z = mnt[indices,2] # Récupère les altitudes des points les plus proches
         return d_mnt, Z
     x_gps, y_gps = coord2cart((LAT, LON))
+
+    # Interpolate the MBES
+    f_MBES_T = interp1d(MBES_T, MBES_T)
+    f_MBES_X = interp1d(MBES_T, MBES_X)
+    f_MBES_Y = interp1d(MBES_T, MBES_Y)
+    f_MBES_Z = interp1d(MBES_T, MBES_Z)
+
+    MBES_T_interp = f_MBES_T(T_glob)
+    MBES_X_interp = f_MBES_X(T_glob)
+    MBES_Y_interp = f_MBES_Y(T_glob)
+    MBES_Z_interp = f_MBES_Z(T_glob)
+
+    #MBES
+    MBES_T = MBES_T_interp
+    MBES_X = MBES_X_interp
+    MBES_Y = MBES_Y_interp
+    MBES_Z = MBES_Z_interp
 
     import matplotlib.pyplot as plt
     T = (T - T[0])/60
