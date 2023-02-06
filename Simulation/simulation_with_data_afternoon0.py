@@ -145,6 +145,7 @@ def f_measurements(i, previous_measurements):
         measurements = MBES_Z[i,] - previous_measurements #117.61492204 #
         return measurements, MBES_Z[i,], None
 
+ct_mbes = 0
 def f_measurements_offset(i):
     if choice_range_sensor == "mnt":
         x_gps, y_gps = coord2cart((LAT[i,],LON[i,])).flatten()
@@ -152,11 +153,13 @@ def f_measurements_offset(i):
         return measurements, None #d_mnt
     elif choice_range_sensor == "dvl":
         mean_range_dvl = (dvl_BM1R[i,] + dvl_BM2R[i,] + dvl_BM3R[i,] + dvl_BM4R[i,])/4
-        measurements = mean_range_dvl - 116.48084912914656
+        measurements = mean_range_dvl - 115.57149562238688
         return measurements, None
     else:
-        measurements = MBES_Z[i,] - 117.67756491403492
-        return measurements, None
+        global ct_mbes
+        while MBES_T[ct_mbes,] <= T[i,]:
+            ct_mbes += 1
+        return(MBES_Z[ct_mbes,] - 117.61544705067318, None)
 
 def test_diverge(ERR, err_max=1000):
     if ERR[-1] > err_max: #Si l'erreur est de plus de 500m il y a un probleme
