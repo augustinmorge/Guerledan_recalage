@@ -12,9 +12,9 @@ else:
         sys.exit()
 
 from storage.data_import import *
-n_particles = int(input("Number of particles: "))
-steps = int(input("number of steps between measures ? "))
-bool_display = (str(input("Display the particles ? [Y/]"))=="Y")
+n_particles = 1000#int(input("Number of particles: "))
+steps = 10#int(input("number of steps between measures ? "))
+bool_display = False #(str(input("Display the particles ? [Y/]"))=="Y")
 using_offset = True # str(input("Using offset ? [Y/]")) == "Y"
 
 ct_resampling = 0
@@ -27,13 +27,21 @@ from resampler import Resampler
 from tqdm import tqdm
 file_path = os.path.dirname(os.path.abspath(__file__))
 from filter import *
+import bisect
+# resolutions_grid = [0.2, 0.2, 0.3]
+epsilon = 0.15
+upper_quantile = 3
+min_number_of_particles = 500
+max_number_of_particles = 5000
 
 # Set adaptive particle filter specific properties
-resolutions = resolutions
+# resolutions = resolutions
 epsilon = epsilon
 upper_quantile = upper_quantile
-minimum_number_of_particles = int(min_number_particles)
-maximum_number_of_particles = int(max_number_particles)
+minimum_number_of_particles = int(min_number_of_particles)
+maximum_number_of_particles = int(max_number_of_particles)
+
+
 
 def sawtooth(x):
     return(2*np.arctan(np.tan(x/2)))
@@ -63,13 +71,15 @@ def propagate_sample(samples, forward_motion, angular_motion, process_noise):
 
     # 1. rotate by given amount plus additive noise sample (index 1 is angular noise standard deviation)
     # Compute forward motion by combining deterministic forward motion with additive zero mean Gaussian noise
+    propagated_sample = copy.deepcopy(samples)
     forward_displacement = np.random.normal(forward_motion, process_noise[0], n_particles).reshape(-1,1)
     # forward_displacement_y = np.random.normal(forward_motion, process_noise[0], n_particles).reshape(n_particles,1)
     angular_motion = np.random.normal(angular_motion, process_noise[1],n_particles).reshape(-1,1)
 
     # 2. move forward
-    samples[1][0] += forward_displacement*np.cos(angular_motion)
-    samples[1][1] += forward_displacement*np.sin(angular_motion)
+    print(propagated_sample[1])
+    propagated_sample[0] += forward_displacement*np.cos(angular_motion)
+    propagated_sample[1] += forward_displacement*np.sin(angular_motion)
 
     # Make sure we stay within cyclic world
     return samples
@@ -97,7 +107,7 @@ def needs_resampling(resampling_threshold):
 
 def update(robot_forward_motion, robot_angular_motion, measurements, \
             measurements_noise, process_noise, particles,resampling_threshold,\
-            resampler, beta, z_particules_mnt):
+            resampler, beta):
 
     new_particles = []
     bins_with_support = []
@@ -108,15 +118,33 @@ def update(robot_forward_motion, robot_angular_motion, measurements, \
     while number_of_new_particles < number_of_required_particles:
 
         # Get sample from discrete distribution given by particle weights
-        index_j = generate_sample_index(self.particles)
+        # index_j = generate_sample_index(earticles)
+        # Check input
+
+        if len(particles[0]) < 1:
+            print("Cannot sample from empty set")
+            return -1
+
+        # Get list with only weights
+        weights = particles[0]
+
+        # Compute cumulative sum for all weights
+        Q = np.cumsum(weights).tolist()
+
+        # Draw a random sample u in [0, sum_all_weights]
+        u = np.random.uniform(0, Q[-1], 1)[0]
+        index_j = bisect.bisect_left(Q, u)
 
         # Propagate state of selected particle
-        propaged_state = self.propagate_sample(self.particles[index_j][1],
-                                               robot_forward_motion,
-                                               robot_angular_motion)
+        selected_particles = [particles[1][0][index_j], particles[1][1][index_j]]
+        print(selected_particles)
+        propaged_state = propagate_sample(selected_particles,
+                                           robot_forward_motion,
+                                           robot_angular_motion,
+                                           process_noise)
 
         # Compute the weight that this propagated state would get with the current measurement
-        importance_weight = self.compute_likelihood(propaged_state, measurements, landmarks)
+        importance_weight = eompute_likelihood(propaged_state, measurements, landmarks)
 
         # Add weighted particle to new particle set
         new_particles.append([importance_weight, propaged_state])
@@ -128,9 +156,9 @@ def update(robot_forward_motion, robot_angular_motion, measurements, \
         # store all bin indices with support since there is are no performance requirements for our use case.
 
         # Map state to bin indices
-        indices = [np.floor(propaged_state[0] / self.resolutions[0]),
-                   np.floor(propaged_state[1] / self.resolutions[1]),
-                   np.floor(propaged_state[2] / self.resolutions[2])]
+        indices = [np.floor(propaged_state[0] / eesolutions[0]),
+                   np.floor(propaged_state[1] / eesolutions[1]),
+                   np.floor(propaged_state[2] / eesolutions[2])]
 
         # Add indices if this bin is empty (i.e. is not in list yet)
         if indices not in bins_with_support:
@@ -139,38 +167,35 @@ def update(robot_forward_motion, robot_angular_motion, measurements, \
 
         # Update number of required particles (only defined if number of bins with support above 1)
         if number_of_bins_with_support > 1:
+            def compute_required_number_of_particles_kld(k, epsilon, upper_quantile):
+                """
+                Compute the number of samples needed within a particle filter when k bins in the multidimensional histogram contain
+                samples. Use Wilson-Hilferty transformation to approximate the quantiles of the chi-squared distribution as proposed
+                by Fox (2003).
+
+                :param epsilon: Maxmimum allowed distance (error) between true and estimated distribution.
+                :param upper_quantile: Upper standard normal distribution quantile for (1-delta) where delta is the probability that
+                the error on the estimated distribution will be less than epsilon.
+                :param k: Number of bins containing samples.
+                :return: Number of required particles.
+                """
+                # Helper variable (part between curly brackets in (7) in Fox paper
+                x = 1.0 - 2.0 / (9.0*(k-1)) + np.sqrt(2.0 / (9.0*(k-1))) * upper_quantile
+                return np.ceil((k-1) / (2.0*epsilon) * x * x * x)
+
             number_of_required_particles = compute_required_number_of_particles_kld(number_of_bins_with_support,
-                                                                                    self.epsilon,
-                                                                                    self.upper_quantile)
+                                                                                    epsilon,
+                                                                                    epper_quantile)
+
 
         # Make sure number of particles constraints are not violated
-        number_of_required_particles = max(number_of_required_particles, self.minimum_number_of_particles)
-        number_of_required_particles = min(number_of_required_particles, self.maximum_number_of_particles)
+        number_of_required_particles = max(number_of_required_particles, einimum_number_of_particles)
+        number_of_required_particles = min(number_of_required_particles, eaximum_number_of_particles)
 
     # Store new particle set and normalize weights
-    self.particles = self.normalize_weights(new_particles)
+    earticles = eormalize_weights(new_particles)
 
-    # # Propagate the particle state according to the current particle
-    # propagated_states = propagate_sample(particles, robot_forward_motion, robot_angular_motion, process_noise)
-    #
-    # # Compute current particle's weight
-    # d_mnt, p, z_particules_mnt = compute_likelihood(propagated_states, measurements, measurements_noise, beta, z_particules_mnt)
-    #
-    # particles = validate_state(propagated_states, d_mnt)
-    #
-    # # Update the probability of the particle
-    # propagated_states[0] = particles[0] * p
-    #
-    # # Update particles
-    # particles = normalize_weights(propagated_states)
-    #
-    # # Resample if needed
-    # if needs_resampling(resampling_threshold):
-    #     global ct_resampling
-    #     ct_resampling += 1
-    #     particles = resampler.resample(particles, n_particles)
-
-    return(particles, z_particules_mnt)
+    return(particles)
 
 def get_average_state(particles):
 
@@ -188,20 +213,6 @@ elif choice_range_sensor == "dvl":
     previous_measurements = (dvl_BM1R[0,] + dvl_BM2R[0,] + dvl_BM3R[0,] + dvl_BM4R[0,])/4 #range__Z[0,]
 else:
     previous_measurements = MBES_Z[0,]
-
-def f_measurements(i, previous_measurements):
-    if choice_range_sensor == "mnt":
-        x_gps, y_gps = coord2cart((LAT[i,],LON[i,])).flatten()
-        d_mnt, measurements = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)
-        return measurements-previous_measurements, measurements, None #d_mnt
-        # return measurements, measurements, d_mnt
-    elif choice_range_sensor == "dvl":
-        mean_range_dvl = (dvl_BM1R[i,] + dvl_BM2R[i,] + dvl_BM3R[i,] + dvl_BM4R[i,])/4
-        measurements = mean_range_dvl - previous_measurements #117.61492204 #
-        return measurements, mean_range_dvl, None
-    else:
-        measurements = MBES_Z[i,] - previous_measurements #117.61492204 #
-        return measurements, MBES_Z[i,], None
 
 def f_measurements_offset(i):
     if choice_range_sensor == "mnt":
@@ -306,8 +317,7 @@ if __name__ == '__main__':
         # v_std = np.sqrt(V_X_STD[i,]**2+V_Y_STD[i,]**2)
         v_std = dvl_VSTD[i,]/10
 
-        if using_offset : measurements, meas_model_distance_std = f_measurements_offset(i)
-        else: measurements, previous_measurements, meas_model_distance_std = f_measurements(i, previous_measurements)
+        measurements, meas_model_distance_std = f_measurements_offset(i)
 
         """Processing the motion of the robot """
         robot_forward_motion =  dt*np.sqrt(v_x**2 + v_y**2)
@@ -324,10 +334,9 @@ if __name__ == '__main__':
 
         """Process the update"""
         t0 = time.time()
-        particles, z_particules_mnt = update(robot_forward_motion, robot_angular_motion, measurements,\
+        particles = update(robot_forward_motion, robot_angular_motion, measurements,\
                                                measurements_noise, process_noise, particles,\
-                                                resampling_threshold, resampler, beta,\
-                                                z_particules_mnt)
+                                                resampling_threshold, resampler, beta)
 
         """ Affichage en temps réel """
         if bool_display:

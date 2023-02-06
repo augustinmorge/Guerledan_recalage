@@ -212,6 +212,8 @@ if __name__ == '__main__':
     TIME = []; BAR = []; SPEED = []; ERR = []
     STD_X = []; STD_Y = []
     beta = 5/100
+    # beta = 1/10
+    # beta = 0.06
     filter_lpf_speed = Low_pass_filter(1., np.array([dvl_v_x[0,], dvl_v_y[0,]]))
 
     for i in r:
@@ -223,7 +225,7 @@ if __name__ == '__main__':
         v_x, v_y = filter_lpf_speed.low_pass_next(np.array([dvl_v_x[i,], dvl_v_y[i,]])).flatten()
         # v_std = dvl_VSTD[i,]
         # v_std = 0.4*10*dt_br
-        v_std = 0.5*10*dt_br
+        v_std = 0.4*10*dt_br
 
         if using_offset : measurements, meas_model_distance_std = f_measurements_offset(i)
         else: measurements, previous_measurements, meas_model_distance_std = f_measurements(i, previous_measurements)
@@ -323,7 +325,8 @@ if __name__ == '__main__':
     ax2.set_ylabel("error (m)")
     ax2.plot(TIME, ERR, color = 'b', label = 'erreur')
     ERR = np.array(ERR)
-    idx_start = int(1/8*TIME.shape[0])
+    # idx_start = int(1/8*TIME.shape[0])
+    idx_start = 0
     ax2.plot(TIME[idx_start:,], np.mean(ERR[idx_start:,])*np.ones(TIME[idx_start:,].shape), label = f"mean error = {np.mean(ERR[idx_start:,])}")
     ax2.legend()
 

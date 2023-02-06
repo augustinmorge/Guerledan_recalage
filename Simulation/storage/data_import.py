@@ -8,8 +8,6 @@ import joblib, pickle
 file_path = os.path.dirname(os.path.abspath(__file__))
 
 bool_txt = 0
-bool_compress = 1
-if bool_txt*bool_compress or not(bool_txt+bool_compress): import sys; print("Please choose txt or compressed data"); sys.exit()
 data_cropped = 1
 
 # Définit les coordonnées de référence
@@ -154,6 +152,7 @@ if bool_txt:
     kd_tree = KDTree(vec_mnt, metric="euclidean")
 
     """ Uncomment the following section to save the data """
+    print("Saving the data into compressed ones")
     np.savez("ins.npz", T=T, LAT=LAT, LON=LON, V_X=V_X, V_Y=V_Y, V_Z=V_Z,\
             LAT_STD=LAT_STD, LON_STD=LON_STD, V_X_STD=V_X_STD,\
             V_Y_STD=V_Y_STD, V_Z_STD=V_Z_STD, YAW=YAW, YAW_STD=YAW_STD,\
@@ -181,261 +180,258 @@ if bool_txt:
                         dvl_VZ = dvl_VZ,
                         dvl_VSTD = dvl_VSTD, dtype = np.float64)
 
-    import sys
-    print("Relaunch with data compressed")
-    sys.exit()
+    print("Compressed data saved !")
 
-if bool_compress:
-    """ Load the compressed data """
+""" Load the compressed data """
 
-    """ Load INS """
-    print("Loading the compressed data..")
-    ins = np.load(file_path + "/ins.npz")
-    T = ins['T']
-    LAT = ins['LAT']
-    LON = ins['LON']
-    V_X = ins['V_X']
-    V_Y = ins['V_Y']
-    V_Z = ins['V_Z']
-    LAT_STD = ins['LAT_STD']
-    LON_STD = ins['LON_STD']
-    V_X_STD = ins['V_X_STD']
-    V_Y_STD = ins['V_Y_STD']
-    V_Z_STD = ins['V_Z_STD']
+""" Load INS """
+print("Loading the compressed data..")
+ins = np.load(file_path + "/ins.npz")
+T = ins['T']
+LAT = ins['LAT']
+LON = ins['LON']
+V_X = ins['V_X']
+V_Y = ins['V_Y']
+V_Z = ins['V_Z']
+LAT_STD = ins['LAT_STD']
+LON_STD = ins['LON_STD']
+V_X_STD = ins['V_X_STD']
+V_Y_STD = ins['V_Y_STD']
+V_Z_STD = ins['V_Z_STD']
 
-    YAW = ins['YAW']/180*np.pi
-    YAW_STD = ins['YAW_STD']/180*np.pi
-    ROLL = ins['ROLL']/180*np.pi
-    ROLL_STD = ins['ROLL_STD']/180*np.pi
-    PITCH = ins['PITCH']/180*np.pi
-    PITCH_STD = ins['PITCH_STD']/180*np.pi
+YAW = ins['YAW']/180*np.pi
+YAW_STD = ins['YAW_STD']/180*np.pi
+ROLL = ins['ROLL']/180*np.pi
+ROLL_STD = ins['ROLL_STD']/180*np.pi
+PITCH = ins['PITCH']/180*np.pi
+PITCH_STD = ins['PITCH_STD']/180*np.pi
 
-    ACC_X = ins['ACC_X']
-    ACC_Y = ins['ACC_Y']
-    ACC_Z = ins['ACC_Z']
-    GYR_X = ins['GYR_X']
-    GYR_Y = ins['GYR_Y']
-    GYR_Z = ins['GYR_Z']
+ACC_X = ins['ACC_X']
+ACC_Y = ins['ACC_Y']
+ACC_Z = ins['ACC_Z']
+GYR_X = ins['GYR_X']
+GYR_Y = ins['GYR_Y']
+GYR_Z = ins['GYR_Z']
 
-    """ Load INS """
-    mnt = np.load(file_path + "/mnt.npz")
-    MNT = mnt['MNT']
-    nx_mnt, ny_mnt = coord2cart((MNT[:,1],MNT[:,0]))
-    MNT[:,0] = nx_mnt
-    MNT[:,1] = ny_mnt
+""" Load INS """
+mnt = np.load(file_path + "/mnt.npz")
+MNT = mnt['MNT']
+nx_mnt, ny_mnt = coord2cart((MNT[:,1],MNT[:,0]))
+MNT[:,0] = nx_mnt
+MNT[:,1] = ny_mnt
 
 
-    """ Load the KD-Tree """
-    # Load the KD tree object from the file
-    # with open(file_path+'/kd_tree.pkl', 'rb') as f:
-    #     kd_tree = pickle.load(f)
-    with open(file_path+'/kd_tree.joblib', 'rb') as f:
-        kd_tree = joblib.load(f)
+""" Load the KD-Tree """
+# Load the KD tree object from the file
+# with open(file_path+'/kd_tree.pkl', 'rb') as f:
+#     kd_tree = pickle.load(f)
+with open(file_path+'/kd_tree.joblib', 'rb') as f:
+    kd_tree = joblib.load(f)
 
 
-    """ Load the MBES """
-    # Load data from npz file
-    mbes = np.load(file_path + "/mbes.npz")
-    BEAMS, MBES_X, MBES_Y, MBES_Z, MBES_T = mbes['BEAMS'], mbes['MBES_X'], mbes['MBES_Y'], mbes['MBES_Z'], mbes['MBES_T']
+""" Load the MBES """
+# Load data from npz file
+mbes = np.load(file_path + "/mbes.npz")
+BEAMS, MBES_X, MBES_Y, MBES_Z, MBES_T = mbes['BEAMS'], mbes['MBES_X'], mbes['MBES_Y'], mbes['MBES_Z'], mbes['MBES_T']
 
-    # Find the indices where the value of BEAMS decreases
-    indices = np.where(np.diff(BEAMS) < 0)[0]
+# Find the indices where the value of BEAMS decreases
+indices = np.where(np.diff(BEAMS) < 0)[0]
 
-    # Append the last index to indices
-    indices = np.append(indices, BEAMS.shape[0]-1)
+# Append the last index to indices
+indices = np.append(indices, BEAMS.shape[0]-1)
 
-    # Use only the middle of the beams
-    MBES_T = np.array(MBES_T[(indices[:-1]+indices[1:])//2])
-    MBES_X = np.array(MBES_X[(indices[:-1]+indices[1:])//2])
-    MBES_Y = np.array(MBES_Y[(indices[:-1]+indices[1:])//2])
-    MBES_Z = np.array(MBES_Z[(indices[:-1]+indices[1:])//2])
+# Use only the middle of the beams
+MBES_T = np.array(MBES_T[(indices[:-1]+indices[1:])//2])
+MBES_X = np.array(MBES_X[(indices[:-1]+indices[1:])//2])
+MBES_Y = np.array(MBES_Y[(indices[:-1]+indices[1:])//2])
+MBES_Z = np.array(MBES_Z[(indices[:-1]+indices[1:])//2])
 
-    # Use the average on all the beams
-    # MBES_T = np.array([np.mean(MBES_T[indices[i]:indices[i+1]]) for i in range(len(indices)-1)])
-    # MBES_X = np.array([np.mean(MBES_X[indices[i]:indices[i+1]]) for i in range(len(indices)-1)])
-    # MBES_Y = np.array([np.mean(MBES_Y[indices[i]:indices[i+1]]) for i in range(len(indices)-1)])
-    # MBES_Z = np.array([np.mean(MBES_Z[indices[i]:indices[i+1]]) for i in range(len(indices)-1)])
+# Use the average on all the beams
+# MBES_T = np.array([np.mean(MBES_T[indices[i]:indices[i+1]]) for i in range(len(indices)-1)])
+# MBES_X = np.array([np.mean(MBES_X[indices[i]:indices[i+1]]) for i in range(len(indices)-1)])
+# MBES_Y = np.array([np.mean(MBES_Y[indices[i]:indices[i+1]]) for i in range(len(indices)-1)])
+# MBES_Z = np.array([np.mean(MBES_Z[indices[i]:indices[i+1]]) for i in range(len(indices)-1)])
 
-    """ Load the DVL """
-    dvl = np.load(file_path + "/dvl.npz")
-    dvl_T = dvl["dvl_T"]
-    dvl_BM1R = dvl["dvl_BM1R"]/100. #en cm -> m
-    dvl_BM2R = dvl["dvl_BM2R"]/100. #en cm -> m
-    dvl_BM3R = dvl["dvl_BM3R"]/100. #en cm -> m
-    dvl_BM4R = dvl["dvl_BM4R"]/100. #en cm -> m
-    # dvl_VE = dvl["dvl_VE"]/1100.
-    # dvl_VN = dvl["dvl_VN"]/11000.
-    # dvl_VZ = dvl["dvl_VZ"]/11000.
-    # dvl_VSTD = dvl["dvl_VSTD"]/11000.
-    dvl_VE = dvl["dvl_VE"]/1000.
-    dvl_VN = dvl["dvl_VN"]/10000.
-    dvl_VZ = dvl["dvl_VZ"]/10000.
-    dvl_VSTD = dvl["dvl_VSTD"]/10000.
+""" Load the DVL """
+dvl = np.load(file_path + "/dvl.npz")
+dvl_T = dvl["dvl_T"]
+dvl_BM1R = dvl["dvl_BM1R"]/100. #en cm -> m
+dvl_BM2R = dvl["dvl_BM2R"]/100. #en cm -> m
+dvl_BM3R = dvl["dvl_BM3R"]/100. #en cm -> m
+dvl_BM4R = dvl["dvl_BM4R"]/100. #en cm -> m
+# dvl_VE = dvl["dvl_VE"]/1100.
+# dvl_VN = dvl["dvl_VN"]/11000.
+# dvl_VZ = dvl["dvl_VZ"]/11000.
+# dvl_VSTD = dvl["dvl_VSTD"]/11000.
+dvl_VE = dvl["dvl_VE"]/1000.
+dvl_VN = dvl["dvl_VN"]/10000.
+dvl_VZ = dvl["dvl_VZ"]/10000.
+dvl_VSTD = dvl["dvl_VSTD"]/10000.
 
-    """ Interpolate data """
-    from scipy.interpolate import interp1d
-    apply_modif = True
-    if apply_modif:
-        #Apply a mask
-        mask_dvl_VE = np.abs(dvl_VE - np.mean(dvl_VE)) > 3*np.std(dvl_VE)
-        mask_dvl_VN = np.abs(dvl_VN - np.mean(dvl_VN)) > 3*np.std(dvl_VN)
-        mask = (mask_dvl_VE) | (mask_dvl_VN) | (dvl_BM1R == 0) | (dvl_BM2R == 0) | (dvl_BM3R == 0) | (dvl_BM4R == 0)
+""" Interpolate data """
+from scipy.interpolate import interp1d
+apply_modif = True
+if apply_modif:
+    #Apply a mask
+    mask_dvl_VE = np.abs(dvl_VE - np.mean(dvl_VE)) > 3*np.std(dvl_VE)
+    mask_dvl_VN = np.abs(dvl_VN - np.mean(dvl_VN)) > 3*np.std(dvl_VN)
+    mask = (mask_dvl_VE) | (mask_dvl_VN) | (dvl_BM1R == 0) | (dvl_BM2R == 0) | (dvl_BM3R == 0) | (dvl_BM4R == 0)
 
-        print("Total point of DVL taken = ",dvl_VE[~mask].shape[0]/dvl_VE.shape[0]*100,"%")
-        dvl_VE = dvl_VE[~mask]
-        dvl_VN = dvl_VN[~mask]
-        dvl_T = dvl_T[~mask]
-        dvl_VZ = dvl_VZ[~mask]
-        dvl_VSTD = dvl_VSTD[~mask]
-        dvl_BM1R = dvl_BM1R[~mask]
-        dvl_BM2R = dvl_BM2R[~mask]
-        dvl_BM3R = dvl_BM3R[~mask]
-        dvl_BM4R = dvl_BM4R[~mask]
+    print("Total point of DVL taken = ",dvl_VE[~mask].shape[0]/dvl_VE.shape[0]*100,"%")
+    dvl_VE = dvl_VE[~mask]
+    dvl_VN = dvl_VN[~mask]
+    dvl_T = dvl_T[~mask]
+    dvl_VZ = dvl_VZ[~mask]
+    dvl_VSTD = dvl_VSTD[~mask]
+    dvl_BM1R = dvl_BM1R[~mask]
+    dvl_BM2R = dvl_BM2R[~mask]
+    dvl_BM3R = dvl_BM3R[~mask]
+    dvl_BM4R = dvl_BM4R[~mask]
 
-    # Déterminez les temps de début et de fin communs entre T et MBES_T
-    start_time = max(max(T[0], MBES_T[0]),dvl_T[0])
-    end_time = min(min(T[-1], MBES_T[-1]),dvl_T[-1])
-    global dt_br
-    # dt_br = 0.1 #np.mean(np.diff(dvl_T))
-    dt_br = np.mean(np.diff(dvl_T))
-    # dt = 0.2 #np.mean(np.diff(MBES_T))
-    # dt = 0.05 #ins
+# Déterminez les temps de début et de fin communs entre T et MBES_T
+start_time = max(max(T[0], MBES_T[0]),dvl_T[0])
+end_time = min(min(T[-1], MBES_T[-1]),dvl_T[-1])
+global dt_br
+# dt_br = 0.1 #np.mean(np.diff(dvl_T))
+dt_br = np.mean(np.diff(dvl_T))
+# dt = 0.2 #np.mean(np.diff(MBES_T))
+# dt = 0.05 #ins
 
-    print(f"dt choosen = {dt_br}")
-    T_glob = np.arange(start_time, end_time, dt_br)
+print(f"dt choosen = {dt_br}")
+T_glob = np.arange(start_time, end_time, dt_br)
 
-    # Interpolez les données de T sur le nouveau vecteur de temps T_glob
+# Interpolez les données de T sur le nouveau vecteur de temps T_glob
 
-    # Interpolate the INS
-    f_T = interp1d(T, T)
-    f_LAT = interp1d(T, LAT)
-    f_LON = interp1d(T, LON)
-    f_V_X = interp1d(T, V_X)
-    f_V_Y = interp1d(T, V_Y)
-    f_V_Z = interp1d(T, V_Z)
-    f_LAT_STD = interp1d(T, LAT_STD)
-    f_LON_STD = interp1d(T, LON_STD)
-    f_V_X_STD = interp1d(T, V_X_STD)
-    f_V_Y_STD = interp1d(T, V_Y_STD)
-    f_V_Z_STD = interp1d(T, V_Z_STD)
-    f_YAW = interp1d(T,YAW)
-    f_YAW_STD = interp1d(T,YAW_STD)
-    f_ROLL = interp1d(T,ROLL)
-    f_ROLL_STD = interp1d(T,ROLL_STD)
-    f_PITCH = interp1d(T,PITCH)
-    f_PITCH_STD = interp1d(T,PITCH_STD)
-    f_ACC_X = interp1d(T,ACC_X)
-    f_ACC_Y = interp1d(T,ACC_Y)
-    f_ACC_Z = interp1d(T,ACC_Z)
-    f_GYR_X = interp1d(T,GYR_X)
-    f_GYR_Y = interp1d(T,GYR_Y)
-    f_GYR_Z = interp1d(T,GYR_Z)
+# Interpolate the INS
+f_T = interp1d(T, T)
+f_LAT = interp1d(T, LAT)
+f_LON = interp1d(T, LON)
+f_V_X = interp1d(T, V_X)
+f_V_Y = interp1d(T, V_Y)
+f_V_Z = interp1d(T, V_Z)
+f_LAT_STD = interp1d(T, LAT_STD)
+f_LON_STD = interp1d(T, LON_STD)
+f_V_X_STD = interp1d(T, V_X_STD)
+f_V_Y_STD = interp1d(T, V_Y_STD)
+f_V_Z_STD = interp1d(T, V_Z_STD)
+f_YAW = interp1d(T,YAW)
+f_YAW_STD = interp1d(T,YAW_STD)
+f_ROLL = interp1d(T,ROLL)
+f_ROLL_STD = interp1d(T,ROLL_STD)
+f_PITCH = interp1d(T,PITCH)
+f_PITCH_STD = interp1d(T,PITCH_STD)
+f_ACC_X = interp1d(T,ACC_X)
+f_ACC_Y = interp1d(T,ACC_Y)
+f_ACC_Z = interp1d(T,ACC_Z)
+f_GYR_X = interp1d(T,GYR_X)
+f_GYR_Y = interp1d(T,GYR_Y)
+f_GYR_Z = interp1d(T,GYR_Z)
 
-    T_interp = f_T(T_glob)
-    LAT_interp = f_LAT(T_glob)
-    LON_interp = f_LON(T_glob)
-    V_X_interp = f_V_X(T_glob)
-    V_Y_interp = f_V_Y(T_glob)
-    V_Z_interp = f_V_Z(T_glob)
-    LAT_STD_interp = f_LAT_STD(T_glob)
-    LON_STD_interp = f_LON_STD(T_glob)
-    V_X_STD_interp = f_V_X_STD(T_glob)
-    V_Y_STD_interp = f_V_Y_STD(T_glob)
-    V_Z_STD_interp = f_V_Z_STD(T_glob)
-    YAW_interp = f_YAW(T_glob)
-    YAW_STD_interp = f_YAW_STD(T_glob)
-    ROLL_interp = f_ROLL(T_glob)
-    ROLL_STD_interp = f_ROLL_STD(T_glob)
-    PITCH_interp = f_PITCH(T_glob)
-    PITCH_STD_interp = f_PITCH_STD(T_glob)
-    ACC_X_interp = f_ACC_X(T_glob)
-    ACC_Y_interp = f_ACC_Y(T_glob)
-    ACC_Z_interp = f_ACC_Z(T_glob)
-    GYR_X_interp = f_GYR_X(T_glob)
-    GYR_Y_interp = f_GYR_Y(T_glob)
-    GYR_Z_interp = f_GYR_Z(T_glob)
+T_interp = f_T(T_glob)
+LAT_interp = f_LAT(T_glob)
+LON_interp = f_LON(T_glob)
+V_X_interp = f_V_X(T_glob)
+V_Y_interp = f_V_Y(T_glob)
+V_Z_interp = f_V_Z(T_glob)
+LAT_STD_interp = f_LAT_STD(T_glob)
+LON_STD_interp = f_LON_STD(T_glob)
+V_X_STD_interp = f_V_X_STD(T_glob)
+V_Y_STD_interp = f_V_Y_STD(T_glob)
+V_Z_STD_interp = f_V_Z_STD(T_glob)
+YAW_interp = f_YAW(T_glob)
+YAW_STD_interp = f_YAW_STD(T_glob)
+ROLL_interp = f_ROLL(T_glob)
+ROLL_STD_interp = f_ROLL_STD(T_glob)
+PITCH_interp = f_PITCH(T_glob)
+PITCH_STD_interp = f_PITCH_STD(T_glob)
+ACC_X_interp = f_ACC_X(T_glob)
+ACC_Y_interp = f_ACC_Y(T_glob)
+ACC_Z_interp = f_ACC_Z(T_glob)
+GYR_X_interp = f_GYR_X(T_glob)
+GYR_Y_interp = f_GYR_Y(T_glob)
+GYR_Z_interp = f_GYR_Z(T_glob)
 
-    # Interpolate the MBES
-    f_MBES_T = interp1d(MBES_T, MBES_T)
-    f_MBES_X = interp1d(MBES_T, MBES_X)
-    f_MBES_Y = interp1d(MBES_T, MBES_Y)
-    f_MBES_Z = interp1d(MBES_T, MBES_Z)
+# Interpolate the MBES
+f_MBES_T = interp1d(MBES_T, MBES_T)
+f_MBES_X = interp1d(MBES_T, MBES_X)
+f_MBES_Y = interp1d(MBES_T, MBES_Y)
+f_MBES_Z = interp1d(MBES_T, MBES_Z)
 
-    MBES_T_interp = f_MBES_T(T_glob)
-    MBES_X_interp = f_MBES_X(T_glob)
-    MBES_Y_interp = f_MBES_Y(T_glob)
-    MBES_Z_interp = f_MBES_Z(T_glob)
+MBES_T_interp = f_MBES_T(T_glob)
+MBES_X_interp = f_MBES_X(T_glob)
+MBES_Y_interp = f_MBES_Y(T_glob)
+MBES_Z_interp = f_MBES_Z(T_glob)
 
-    # Interpolate the DVL
-    f_dvl_T = interp1d(dvl_T,dvl_T)
-    f_dvl_BM1R = interp1d(dvl_T,dvl_BM1R)
-    f_dvl_BM2R = interp1d(dvl_T,dvl_BM2R)
-    f_dvl_BM3R = interp1d(dvl_T,dvl_BM3R)
-    f_dvl_BM4R = interp1d(dvl_T,dvl_BM4R)
-    f_dvl_VE = interp1d(dvl_T,dvl_VE)
-    f_dvl_VN = interp1d(dvl_T,dvl_VN)
-    f_dvl_VZ = interp1d(dvl_T,dvl_VZ)
-    f_dvl_VSTD = interp1d(dvl_T,dvl_VSTD)
+# Interpolate the DVL
+f_dvl_T = interp1d(dvl_T,dvl_T)
+f_dvl_BM1R = interp1d(dvl_T,dvl_BM1R)
+f_dvl_BM2R = interp1d(dvl_T,dvl_BM2R)
+f_dvl_BM3R = interp1d(dvl_T,dvl_BM3R)
+f_dvl_BM4R = interp1d(dvl_T,dvl_BM4R)
+f_dvl_VE = interp1d(dvl_T,dvl_VE)
+f_dvl_VN = interp1d(dvl_T,dvl_VN)
+f_dvl_VZ = interp1d(dvl_T,dvl_VZ)
+f_dvl_VSTD = interp1d(dvl_T,dvl_VSTD)
 
-    dvl_T_interp = f_dvl_T(T_glob)
-    dvl_BM1R_interp = f_dvl_BM1R(T_glob)
-    dvl_BM2R_interp = f_dvl_BM2R(T_glob)
-    dvl_BM3R_interp = f_dvl_BM3R(T_glob)
-    dvl_BM4R_interp = f_dvl_BM4R(T_glob)
-    dvl_VE_interp = f_dvl_VE(T_glob)
-    dvl_VN_interp = f_dvl_VN(T_glob)
-    dvl_VZ_interp = f_dvl_VZ(T_glob)
-    dvl_VSTD_interp = f_dvl_VSTD(T_glob)
+dvl_T_interp = f_dvl_T(T_glob)
+dvl_BM1R_interp = f_dvl_BM1R(T_glob)
+dvl_BM2R_interp = f_dvl_BM2R(T_glob)
+dvl_BM3R_interp = f_dvl_BM3R(T_glob)
+dvl_BM4R_interp = f_dvl_BM4R(T_glob)
+dvl_VE_interp = f_dvl_VE(T_glob)
+dvl_VN_interp = f_dvl_VN(T_glob)
+dvl_VZ_interp = f_dvl_VZ(T_glob)
+dvl_VSTD_interp = f_dvl_VSTD(T_glob)
 
-    # Update the previous vector
-    #INS
-    T = T_interp
-    LAT = LAT_interp
-    LON = LON_interp
-    V_X = V_X_interp
-    V_Y = V_Y_interp
-    V_Z = V_Z_interp
-    LAT_STD = LAT_STD_interp
-    LON_STD = LON_STD_interp
-    V_X_STD = V_X_STD_interp
-    V_Y_STD = V_Y_STD_interp
-    V_Z_STD = V_Z_STD_interp
-    YAW = YAW_interp
-    YAW_STD = YAW_STD_interp
-    ROLL = ROLL_interp
-    ROLL_STD = ROLL_STD_interp
-    PITCH = PITCH_interp
-    PITCH_STD = PITCH_STD_interp
-    ACC_X = ACC_X_interp
-    ACC_Y = ACC_Y_interp
-    ACC_Z = ACC_Z_interp
-    GYR_X = GYR_X_interp
-    GYR_Y = GYR_Y_interp
-    GYR_Z = GYR_Z_interp
+# Update the previous vector
+#INS
+T = T_interp
+LAT = LAT_interp
+LON = LON_interp
+V_X = V_X_interp
+V_Y = V_Y_interp
+V_Z = V_Z_interp
+LAT_STD = LAT_STD_interp
+LON_STD = LON_STD_interp
+V_X_STD = V_X_STD_interp
+V_Y_STD = V_Y_STD_interp
+V_Z_STD = V_Z_STD_interp
+YAW = YAW_interp
+YAW_STD = YAW_STD_interp
+ROLL = ROLL_interp
+ROLL_STD = ROLL_STD_interp
+PITCH = PITCH_interp
+PITCH_STD = PITCH_STD_interp
+ACC_X = ACC_X_interp
+ACC_Y = ACC_Y_interp
+ACC_Z = ACC_Z_interp
+GYR_X = GYR_X_interp
+GYR_Y = GYR_Y_interp
+GYR_Z = GYR_Z_interp
 
-    #MBES
-    MBES_T = MBES_T_interp
-    MBES_X = MBES_X_interp
-    MBES_Y = MBES_Y_interp
-    MBES_Z = MBES_Z_interp
+#MBES
+MBES_T = MBES_T_interp
+MBES_X = MBES_X_interp
+MBES_Y = MBES_Y_interp
+MBES_Z = MBES_Z_interp
 
-    #DVL
-    dvl_T = dvl_T_interp
-    dvl_BM1R = dvl_BM1R_interp
-    dvl_BM2R = dvl_BM2R_interp
-    dvl_BM3R = dvl_BM3R_interp
-    dvl_BM4R = dvl_BM4R_interp
-    dvl_VE = dvl_VE_interp
-    dvl_VN = dvl_VN_interp
-    dvl_VZ = dvl_VZ_interp
-    dvl_VSTD = dvl_VSTD_interp
+#DVL
+dvl_T = dvl_T_interp
+dvl_BM1R = dvl_BM1R_interp
+dvl_BM2R = dvl_BM2R_interp
+dvl_BM3R = dvl_BM3R_interp
+dvl_BM4R = dvl_BM4R_interp
+dvl_VE = dvl_VE_interp
+dvl_VN = dvl_VN_interp
+dvl_VZ = dvl_VZ_interp
+dvl_VSTD = dvl_VSTD_interp
 
-    YAW = -YAW+np.pi/2
-    #Rotate the dvl
-    angle = np.pi/4
-    dvl_v_x = (dvl_VE*np.cos(angle) + dvl_VN*np.sin(angle))*np.cos(YAW)
-    dvl_v_y = (dvl_VN*np.sin(angle) + dvl_VE*np.cos(angle))*np.sin(YAW)
-    dvl_v_z = dvl_VZ
+YAW = -YAW+np.pi/2
+#Rotate the dvl
+angle = np.pi/4
+dvl_v_x = (dvl_VE*np.cos(angle) + dvl_VN*np.sin(angle))*np.cos(YAW)
+dvl_v_y = (dvl_VN*np.sin(angle) + dvl_VE*np.cos(angle))*np.sin(YAW)
+dvl_v_z = dvl_VZ
 
 
 if __name__ == '__main__':
@@ -450,8 +446,8 @@ if __name__ == '__main__':
     dvl_T = (dvl_T - dvl_T[0])/60
     MBES_T = (MBES_T - MBES_T[0])/60
     mean_dvlR = (dvl_BM1R + dvl_BM2R + dvl_BM3R + dvl_BM4R)/4
-    print(f"the offset with dt = {dt} for the DVL/MNT is : {np.mean(mean_dvlR) - np.mean(distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze())}")
-    print(f"the offset with dt = {dt} for the MBES/MNT is : {np.mean(MBES_Z) - np.mean(distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze())}")
+    print(f"the offset with dt = {dt_br} for the DVL/MNT is : {np.mean(mean_dvlR) - np.mean(distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze())}")
+    print(f"the offset with dt = {dt_br} for the MBES/MNT is : {np.mean(MBES_Z) - np.mean(distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze())}")
     def display_range():
         #######################################
         plt.figure()
