@@ -38,7 +38,7 @@ def normalize_weights(weighted_samples):
 def validate_state(state, d_mnt):
     # # If we are out of the MNT
     # weights = state[0]
-    # weights[d_mnt > 1] = 0
+    # weights[d_mnt.all() > 1] = 0
     return(state)
 
 def propagate_sample(samples, forward_motion, angular_motion, process_noise):
@@ -57,56 +57,51 @@ def propagate_sample(samples, forward_motion, angular_motion, process_noise):
     return samples
 
 def compute_likelihood(propagated_states, measurements, measurements_noise, beta, z_particules_mnt, yaw):
-    th = np.pi/4
-    pi2_janus = 60*np.pi/180
     dvl_BM1R, dvl_BM2R, dvl_BM3R, dvl_BM4R = [measurements[i] for i in range(4)]
-    th = np.pi/4
-    opp_angle = np.tan(60*np.pi/180)
+    use_4_beams = False
+    if use_4_beams:
+        th = np.pi/4
+        pi2_janus = 60*np.pi/180
+        th = np.pi/4
+        opp_angle = np.tan(60*np.pi/180)
 
-    dp_x_B1 = -dvl_BM1R/opp_angle*np.sin(yaw-th)
-    dp_y_B1 = dvl_BM1R/opp_angle*np.cos(yaw-th)
+        dp_x_B1 = -dvl_BM1R/opp_angle*np.sin(yaw-th)
+        dp_y_B1 = dvl_BM1R/opp_angle*np.cos(yaw-th)
 
-    dp_x_B2 = dvl_BM2R/opp_angle*np.sin(yaw-th)
-    dp_y_B2 = -dvl_BM2R/opp_angle*np.cos(yaw-th)
+        dp_x_B2 = dvl_BM2R/opp_angle*np.sin(yaw-th)
+        dp_y_B2 = -dvl_BM2R/opp_angle*np.cos(yaw-th)
 
-    dp_x_B3 = dvl_BM3R/opp_angle*np.cos(yaw-th)
-    dp_y_B3 = dvl_BM3R/opp_angle*np.sin(yaw-th)
+        dp_x_B3 = dvl_BM3R/opp_angle*np.cos(yaw-th)
+        dp_y_B3 = dvl_BM3R/opp_angle*np.sin(yaw-th)
 
-    dp_x_B4 = -dvl_BM4R/opp_angle*np.cos(yaw-th)
-    dp_y_B4 = -dvl_BM4R/opp_angle*np.sin(yaw-th)
+        dp_x_B4 = -dvl_BM4R/opp_angle*np.cos(yaw-th)
+        dp_y_B4 = -dvl_BM4R/opp_angle*np.sin(yaw-th)
 
-    d_mnt_B1, d_mbes_particule_B1 = distance_to_bottom(np.hstack((propagated_states[1][0]+dp_x_B1,propagated_states[1][1]+dp_y_B1)),MNT)
-    d_mnt_B2, d_mbes_particule_B2 = distance_to_bottom(np.hstack((propagated_states[1][0]+dp_x_B2,propagated_states[1][1]+dp_y_B2)),MNT)
-    d_mnt_B3, d_mbes_particule_B3 = distance_to_bottom(np.hstack((propagated_states[1][0]+dp_x_B3,propagated_states[1][1]+dp_y_B3)),MNT)
-    d_mnt_B4, d_mbes_particule_B4 = distance_to_bottom(np.hstack((propagated_states[1][0]+dp_x_B4,propagated_states[1][1]+dp_y_B4)),MNT)
+        d_mnt_B1, d_mbes_particule_B1 = distance_to_bottom(np.hstack((propagated_states[1][0]+dp_x_B1,propagated_states[1][1]+dp_y_B1)),MNT)
+        d_mnt_B2, d_mbes_particule_B2 = distance_to_bottom(np.hstack((propagated_states[1][0]+dp_x_B2,propagated_states[1][1]+dp_y_B2)),MNT)
+        d_mnt_B3, d_mbes_particule_B3 = distance_to_bottom(np.hstack((propagated_states[1][0]+dp_x_B3,propagated_states[1][1]+dp_y_B3)),MNT)
+        d_mnt_B4, d_mbes_particule_B4 = distance_to_bottom(np.hstack((propagated_states[1][0]+dp_x_B4,propagated_states[1][1]+dp_y_B4)),MNT)
 
-    # Map difference true and expected distance measurement to probability
-    distance_B1 = np.abs(d_mbes_particule_B1-dvl_BM1R)
-    distance_B2 = np.abs(d_mbes_particule_B2-dvl_BM2R)
-    distance_B3 = np.abs(d_mbes_particule_B3-dvl_BM3R)
-    distance_B4 = np.abs(d_mbes_particule_B4-dvl_BM4R)
+        # Map difference true and expected distance measurement to probability
+        distance_B1 = np.abs(d_mbes_particule_B1-dvl_BM1R)
+        distance_B2 = np.abs(d_mbes_particule_B2-dvl_BM2R)
+        distance_B3 = np.abs(d_mbes_particule_B3-dvl_BM3R)
+        distance_B4 = np.abs(d_mbes_particule_B4-dvl_BM4R)
 
-    h1, h2, h3, h4 = d_mnt_B1, d_mnt_B2, d_mnt_B3, d_mnt_B4
-    mean_range_dvl = (h1*h2)/(h1+h2) + (h3*h4)/(h3+h4) - 115.57149562238688
+    h1, h2, h3, h4 = dvl_BM1R, dvl_BM2R, dvl_BM3R, dvl_BM4R
+    mean_range_dvl = (h1*h2)/(h1+h2) + (h3*h4)/(h3+h4)
 
-    # print('distances : ', distance_B1[5], distance_B2[5], distance_B3[5], distance_B4[5])
-    # print('d_mbes_particules : ', d_mbes_particule_B1[5], d_mbes_particule_B2[5], d_mbes_particule_B3[5], d_mbes_particule_B4[5])
-    # print('dvl_BMR : ', dvl_BM1R, dvl_BM2R, dvl_BM3R, dvl_BM4R)
-
+    d_mnt, new_z_particules_mnt = distance_to_bottom(np.hstack((propagated_states[1][0],propagated_states[1][1])),MNT)
     if measurements_noise[0] == None:
-        # p_z_given_x_distance = (np.exp(-beta*distance_B1**2)+np.exp(-beta*distance_B2**2)+np.exp(-beta*distance_B3**2)+np.exp(-beta*distance_B4**2))/4
-        d = np.abs(distance_to_bottom(np.hstack((propagated_states[1][0],propagated_states[1][1])),MNT)[1] - mean_range_dvl)
-        # print(np.mean(distance_to_bottom(np.hstack((propagated_states[1][0],propagated_states[1][1])),MNT)[1]))
-        # print(np.mean(mean_range_dvl),"\n")
+        d = np.abs(new_z_particules_mnt - mean_range_dvl)
         p_z_given_x_distance = np.exp(-beta*d**2)
+        if use_4_beams:
+            p_z_given_x_distance *= np.exp(-beta*distance_B1**2)*np.exp(-beta*distance_B2**2)*np.exp(-beta*distance_B3**2)*np.exp(-beta*distance_B4**2)
     else:
-        p_z_given_x_distance = np.exp(-beta*distance_B1/(measurements_noise[0]**2))*np.exp(-beta*distance_B2/(measurements_noise[0]**2))*np.exp(-beta*distance_B3/(measurements_noise[0]**2))*np.exp(-beta*distance_B4/(measurements_noise[0]**2))
-
-    # print('proba : ', p_z_given_x_distance[5])
-    # p_z_given_x_distance = 1
-    # Return importance weight based on all landmarks
-    d_mnt = np.array([d_mnt_B1, d_mnt_B2, d_mnt_B3, d_mnt_B4])
-    new_z_particules_mnt = np.array([d_mbes_particule_B1, d_mbes_particule_B2, d_mbes_particule_B3, d_mbes_particule_B4])
+        d = np.abs(distance_to_bottom(np.hstack((propagated_states[1][0],propagated_states[1][1])),MNT)[1] - mean_range_dvl)
+        p_z_given_x_distance = np.exp(-beta*d**2/(measurements_noise[0]**2))
+        if use_4_beams:
+            p_z_given_x_distance *= np.exp(-beta*distance_B1/(measurements_noise[0]**2))*np.exp(-beta*distance_B2/(measurements_noise[0]**2))*np.exp(-beta*distance_B3/(measurements_noise[0]**2))*np.exp(-beta*distance_B4/(measurements_noise[0]**2))
 
     return d_mnt, p_z_given_x_distance, new_z_particules_mnt
 
@@ -158,8 +153,8 @@ def get_std_state(particles):
 
 def f_measurements_offset(i):
     # range_dvl = np.array([dvl_BM1R[i,], dvl_BM2R[i,], dvl_BM3R[i,], dvl_BM4R[i,]])
-    dvl_BM1R[i,], dvl_BM2R[i,], dvl_BM3R[i,], dvl_BM4R[i,] = \
-        filter_lpf_dvlr.low_pass_next(np.array([dvl_BM1R[i,], dvl_BM2R[i,], dvl_BM3R[i,], dvl_BM4R[i,]])).flatten()
+    # dvl_BM1R[i,], dvl_BM2R[i,], dvl_BM3R[i,], dvl_BM4R[i,] = \
+    #     filter_lpf_dvlr.low_pass_next(np.array([dvl_BM1R[i,], dvl_BM2R[i,], dvl_BM3R[i,], dvl_BM4R[i,]])).flatten()
     range_dvl = np.array([dvl_BM1R[i,], dvl_BM2R[i,], dvl_BM3R[i,], dvl_BM4R[i,]])
     measurements = range_dvl - 115.57149562238688
     return measurements, None
@@ -203,14 +198,12 @@ if __name__ == '__main__':
         """ Création des isobates """
         plt.ion()
 
-
         x = np.linspace(-np.min(LON), 120, 100)
         y = np.linspace(-120, 120, 100)
         X, Y = np.meshgrid(x, y)
 
         print("Processing..")
         r = range(idx_ti,idx_tf,steps)
-
 
     else : r = tqdm(range(idx_ti,idx_tf,steps))
 
@@ -231,7 +224,6 @@ if __name__ == '__main__':
         yaw_std = YAW_STD[i,]
         v_x, v_y = filter_lpf_speed.low_pass_next(np.array([dvl_v_x[i,], dvl_v_y[i,]])).flatten()
         # v_std = dvl_VSTD[i,]
-        # v_std = 0.4*10*dt_br
         v_std = 0.4*10*dt_br
 
         if using_offset : measurements, meas_model_distance_std = f_measurements_offset(i)
@@ -289,17 +281,11 @@ if __name__ == '__main__':
         BAR.append([get_average_state(particles)[0],get_average_state(particles)[1]])
         SPEED.append(np.sqrt(v_x**2 + v_y**2))
 
-        # std = np.std(np.column_stack((particles[1][0],particles[1][1])),axis=0)
-        # STD_X.append(std[0])
-        # STD_Y.append(std[1])
-
         std_x, std_y = get_std_state(particles)
         STD_X.append(std_x)
         STD_Y.append(std_y)
         #Test if the algorithm diverge and why
         if test_diverge(ERR, 500) : break
-
-
 
 
     print(f"Resampling used: {ct_resampling} ({ct_resampling/((idx_tf - idx_ti)/steps)*100}%)")
