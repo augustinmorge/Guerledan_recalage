@@ -406,6 +406,17 @@ dvl_v_x = (dvl_VE*np.cos(angle) + dvl_VN*np.sin(angle))*np.cos(YAW)
 dvl_v_y = (dvl_VN*np.sin(angle) + dvl_VE*np.cos(angle))*np.sin(YAW)
 dvl_v_z = dvl_VZ
 
+dp_x_B1 = -dvl_BM1R/np.tan(60*np.pi/180)*np.sin(YAW-np.pi/4)
+dp_y_B1 = dvl_BM1R/np.tan(60*np.pi/180)*np.cos(YAW-np.pi/4)
+
+dp_x_B2 = dvl_BM2R/np.tan(60*np.pi/180)*np.sin(YAW-np.pi/4)
+dp_y_B2 = -dvl_BM2R/np.tan(60*np.pi/180)*np.cos(YAW-np.pi/4)
+
+dp_x_B3 = dvl_BM3R/np.tan(60*np.pi/180)*np.cos(YAW-np.pi/4)
+dp_y_B3 = dvl_BM3R/np.tan(60*np.pi/180)*np.sin(YAW-np.pi/4)
+
+dp_x_B4 = -dvl_BM4R/np.tan(60*np.pi/180)*np.cos(YAW-np.pi/4)
+dp_y_B4 = -dvl_BM4R/np.tan(60*np.pi/180)*np.sin(YAW-np.pi/4)
 
 if __name__ == '__main__':
     def distance_to_bottom(xy,mnt):
@@ -565,6 +576,7 @@ if __name__ == '__main__':
         plt.ylabel("acc [m/s2]")
         plt.legend()
     # display_acc()
+    print(dvl_BM1R)
     def display_beams():
         plt.figure()
         ax1 = plt.subplot2grid((2, 2), (0, 0))
@@ -574,22 +586,20 @@ if __name__ == '__main__':
 
         # d_bottom_mnt = distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze()
         # ax1.plot(T, d_bottom_mnt, label = "d_mnt")
-        ax1.plot(dvl_T, dvl_BM1R - 115.5714023521081, label = "dvl_BM1R_raw", color = 'red')
-        dp_x_B1 = -dvl_BM1R/np.tan(60*np.pi/180)*np.cos(YAW-np.pi/4)
-        dp_y_B1 = -dvl_BM1R/np.tan(60*np.pi/180)*np.sin(YAW-np.pi/4)
+        dvl_BM1R_new = dvl_BM1R - 115.5714023521081
+        ax1.plot(dvl_T, dvl_BM1R_new, label = "dvl_BM1R_new_raw", color = 'red')
+        alpha = 0.9
+        ax1.legend(dvl_T[1:,],alpha*dvl_BM1R_new[1:,]-(1-alpha)*dvl_BM1R_new[:-1,], color = 'purple', label = "gléfiltrélol")
         d_bottom_mnt = distance_to_bottom(np.column_stack((x_gps+dp_x_B1,y_gps+dp_y_B1)),MNT)[1].squeeze()
         ax1.plot(T, d_bottom_mnt, label = "d_mnt_beam1", color = 'green')
-        ax1.legend()
         ax1.grid()
         ax1.set_xlabel("Time [min]")
         ax1.set_ylabel("Range [m]")
-        ax1.set_title("dvl_BM1R")
+        ax1.set_title("dvl_BM1R_new")
 
         # d_bottom_mnt = distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze()
         # ax2.plot(T, d_bottom_mnt, label = "d_mnt")
         ax2.plot(dvl_T, dvl_BM2R - 115.5714023521081, label = "dvl_BM2R_raw", color = 'red')
-        dp_x_B2 = dvl_BM2R/np.tan(60*np.pi/180)*np.cos(YAW-np.pi/4)
-        dp_y_B2 = dvl_BM2R/np.tan(60*np.pi/180)*np.sin(YAW-np.pi/4)
         d_bottom_mnt = distance_to_bottom(np.column_stack((x_gps+dp_x_B2,y_gps+dp_y_B2)),MNT)[1].squeeze()
         ax2.plot(T, d_bottom_mnt, label = "d_mnt_beam2", color = 'green')
         ax2.legend()
@@ -601,8 +611,6 @@ if __name__ == '__main__':
         # d_bottom_mnt = distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze()
         # ax3.plot(T, d_bottom_mnt, label = "d_mnt")
         ax3.plot(dvl_T, dvl_BM3R - 115.5714023521081, label = "dvl_BM3R_raw", color = 'red')
-        dp_x_B3 = dvl_BM3R/np.tan(60*np.pi/180)*np.cos(YAW-np.pi/4)
-        dp_y_B3 = dvl_BM3R/np.tan(60*np.pi/180)*np.sin(YAW-np.pi/4)
         d_bottom_mnt = distance_to_bottom(np.column_stack((x_gps+dp_x_B3,y_gps+dp_y_B3)),MNT)[1].squeeze()
         ax3.plot(T, d_bottom_mnt, label = "d_mnt_beam3", color = 'green')
         ax3.legend()
@@ -614,8 +622,6 @@ if __name__ == '__main__':
         # d_bottom_mnt = distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze()
         # ax4.plot(T, d_bottom_mnt, label = "d_mnt")
         ax4.plot(dvl_T, dvl_BM4R - 115.5714023521081, label = "dvl_BM4R_raw", color = 'red')
-        dp_x_B4 = -dvl_BM4R/np.tan(60*np.pi/180)*np.cos(YAW-np.pi/4)
-        dp_y_B4 = -dvl_BM4R/np.tan(60*np.pi/180)*np.sin(YAW-np.pi/4)
         d_bottom_mnt = distance_to_bottom(np.column_stack((x_gps+dp_x_B4,y_gps+dp_y_B4)),MNT)[1].squeeze()
         ax4.plot(T, d_bottom_mnt, label = "d_mnt_beam4", color = 'green')
         ax4.legend()

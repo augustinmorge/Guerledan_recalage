@@ -1,17 +1,4 @@
 #!/usr/bin/env python3
-# import sys
-# print("You can run your program adding mbes or dvl or mnt at the end of the arguments")
-# if len(sys.argv[1:])>=1:
-#     for arg in sys.argv[1:]:
-#         if arg == "mnt" or arg == "dvl" or arg == "mbes":
-#             choice_range_sensor = arg
-# else:
-#     choice_range_sensor = str(input("Choose your way to measure the bottom range [mnt/dvl/mbes]: "))
-#     if choice_range_sensor not in ["mnt","dvl","mbes"]:
-#         print("You have to select a sensor")
-#         sys.exit()
-
-choice_range_sensor = "dvl"
 
 from storage.data_import import *
 n_particles = int(input("Number of particles: "))
@@ -72,48 +59,47 @@ def propagate_sample(samples, forward_motion, angular_motion, process_noise):
 def compute_likelihood(propagated_states, measurements, measurements_noise, beta, z_particules_mnt, yaw):
     th = np.pi/4
     pi2_janus = 60*np.pi/180
-    dp_x_B1 = -measurements[0]/np.tan(pi2_janus)*np.sin(yaw-th)
-    dp_y_B1 = measurements[0]/np.tan(pi2_janus)*np.cos(yaw-th)
-    dp_x_B2 = measurements[1]/np.tan(pi2_janus)*np.sin(yaw-th)
-    dp_y_B2 = -measurements[1]/np.tan(pi2_janus)*np.cos(yaw-th)
-    dp_x_B3 = measurements[2]/np.tan(pi2_janus)*np.cos(yaw-th)
-    dp_y_B3 = measurements[2]/np.tan(pi2_janus)*np.sin(yaw-th)
-    dp_x_B4 = -measurements[3]/np.tan(pi2_janus)*np.cos(yaw-th)
-    dp_y_B4 = -measurements[3]/np.tan(pi2_janus)*np.sin(yaw-th)
+    dvl_BM1R, dvl_BM2R, dvl_BM3R, dvl_BM4R = [measurements[i] for i in range(4)]
+    th = np.pi/4
+    opp_angle = np.tan(60*np.pi/180)
 
-    d_mnt_B1, new_z_particules_mnt_B1 = distance_to_bottom(np.hstack((propagated_states[1][0]+dp_x_B1,propagated_states[1][1]+dp_y_B1)),MNT)
-    if using_offset : d_mbes_particule_B1 = new_z_particules_mnt_B1
-    else : d_mbes_particule_B1 = new_z_particules_mnt_B1 - z_particules_mnt
+    dp_x_B1 = -dvl_BM1R/opp_angle*np.sin(yaw-th)
+    dp_y_B1 = dvl_BM1R/opp_angle*np.cos(yaw-th)
 
-    d_mnt_B2, new_z_particules_mnt_B2 = distance_to_bottom(np.hstack((propagated_states[1][0]+dp_x_B2,propagated_states[1][1]+dp_y_B2)),MNT)
-    if using_offset : d_mbes_particule_B2 = new_z_particules_mnt_B2
-    else : d_mbes_particule_B2 = new_z_particules_mnt_B2 - z_particules_mnt
+    dp_x_B2 = dvl_BM2R/opp_angle*np.sin(yaw-th)
+    dp_y_B2 = -dvl_BM2R/opp_angle*np.cos(yaw-th)
 
-    d_mnt_B3, new_z_particules_mnt_B3 = distance_to_bottom(np.hstack((propagated_states[1][0]+dp_x_B3,propagated_states[1][1]+dp_y_B3)),MNT)
-    if using_offset : d_mbes_particule_B3 = new_z_particules_mnt_B3
-    else : d_mbes_particule_B3 = new_z_particules_mnt_B3 - z_particules_mnt
+    dp_x_B3 = dvl_BM3R/opp_angle*np.cos(yaw-th)
+    dp_y_B3 = dvl_BM3R/opp_angle*np.sin(yaw-th)
 
-    d_mnt_B4, new_z_particules_mnt_B4 = distance_to_bottom(np.hstack((propagated_states[1][0]+dp_x_B4,propagated_states[1][1]+dp_y_B4)),MNT)
-    if using_offset : d_mbes_particule_B4 = new_z_particules_mnt_B4
-    else : d_mbes_particule_B4 = new_z_particules_mnt_B4 - z_particules_mnt
+    dp_x_B4 = -dvl_BM4R/opp_angle*np.cos(yaw-th)
+    dp_y_B4 = -dvl_BM4R/opp_angle*np.sin(yaw-th)
+
+    d_mnt_B1, d_mbes_particule_B1 = distance_to_bottom(np.hstack((propagated_states[1][0]+dp_x_B1,propagated_states[1][1]+dp_y_B1)),MNT)
+    d_mnt_B2, d_mbes_particule_B2 = distance_to_bottom(np.hstack((propagated_states[1][0]+dp_x_B2,propagated_states[1][1]+dp_y_B2)),MNT)
+    d_mnt_B3, d_mbes_particule_B3 = distance_to_bottom(np.hstack((propagated_states[1][0]+dp_x_B3,propagated_states[1][1]+dp_y_B3)),MNT)
+    d_mnt_B4, d_mbes_particule_B4 = distance_to_bottom(np.hstack((propagated_states[1][0]+dp_x_B4,propagated_states[1][1]+dp_y_B4)),MNT)
 
     # Map difference true and expected distance measurement to probability
-    distance_B1 = np.abs(d_mbes_particule_B1-measurements[0])
-    distance_B2 = np.abs(d_mbes_particule_B2-measurements[1])
-    distance_B3 = np.abs(d_mbes_particule_B3-measurements[2])
-    distance_B4 = np.abs(d_mbes_particule_B4-measurements[3])
-    print('distances : ', distance_B1[5], distance_B2[5], distance_B3[5], distance_B4[5])
+    distance_B1 = np.abs(d_mbes_particule_B1-dvl_BM1R)
+    distance_B2 = np.abs(d_mbes_particule_B2-dvl_BM2R)
+    distance_B3 = np.abs(d_mbes_particule_B3-dvl_BM3R)
+    distance_B4 = np.abs(d_mbes_particule_B4-dvl_BM4R)
+
+    # print('distances : ', distance_B1[5], distance_B2[5], distance_B3[5], distance_B4[5])
+    # print('d_mbes_particules : ', d_mbes_particule_B1[5], d_mbes_particule_B2[5], d_mbes_particule_B3[5], d_mbes_particule_B4[5])
+    # print('dvl_BMR : ', dvl_BM1R, dvl_BM2R, dvl_BM3R, dvl_BM4R)
 
     if measurements_noise[0] == None:
-        p_z_given_x_distance = np.exp(-beta*distance_B1**2)*np.exp(-beta*distance_B2**2)*np.exp(-beta*distance_B3**2)*np.exp(-beta*distance_B4**2)
+        p_z_given_x_distance = np.exp(-beta*distance_B1**2)#*np.exp(-beta*distance_B2**2)*np.exp(-beta*distance_B3**2)*np.exp(-beta*distance_B4**2)
     else:
         p_z_given_x_distance = np.exp(-beta*distance_B1/(measurements_noise[0]**2))*np.exp(-beta*distance_B2/(measurements_noise[0]**2))*np.exp(-beta*distance_B3/(measurements_noise[0]**2))*np.exp(-beta*distance_B4/(measurements_noise[0]**2))
 
-    print('proba : ', p_z_given_x_distance[5])
+    # print('proba : ', p_z_given_x_distance[5])
     # p_z_given_x_distance = 1
     # Return importance weight based on all landmarks
     d_mnt = np.array([d_mnt_B1, d_mnt_B2, d_mnt_B3, d_mnt_B4])
-    new_z_particules_mnt = np.array([new_z_particules_mnt_B1, new_z_particules_mnt_B2, new_z_particules_mnt_B3, new_z_particules_mnt_B4])
+    new_z_particules_mnt = np.array([d_mbes_particule_B1, d_mbes_particule_B2, d_mbes_particule_B3, d_mbes_particule_B4])
     return d_mnt, p_z_given_x_distance, new_z_particules_mnt
 
 def needs_resampling(resampling_threshold):
@@ -161,41 +147,14 @@ def get_std_state(particles):
     std_y = np.sqrt(np.sum(particles[0]*particles[1][1]**2)/n_particles - (np.sum(particles[0]*particles[1][1])/n_particles)**2) # / np.sum(particles[0])
 
     return std_x, std_y
-# Init range sensor
-if choice_range_sensor == "mnt":
-    x_gps, y_gps = coord2cart((LAT[0,],LON[0,])).flatten()
-    d_mnt, previous_measurements = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)
-elif choice_range_sensor == "dvl":
-    previous_measurements = np.array([dvl_BM1R[0,], dvl_BM2R[0,], dvl_BM3R[0,], dvl_BM4R[0,]]) #range__Z[0,]
-else:
-    previous_measurements = MBES_Z[0,]
-
-def f_measurements(i, previous_measurements):
-    if choice_range_sensor == "mnt":
-        x_gps, y_gps = coord2cart((LAT[i,],LON[i,])).flatten()
-        d_mnt, measurements = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)
-        return measurements-previous_measurements, measurements, None #d_mnt
-        # return measurements, measurements, d_mnt
-    elif choice_range_sensor == "dvl":
-        range_dvl = np.array([dvl_BM1R[i,], dvl_BM2R[i,], dvl_BM3R[i,], dvl_BM4R[i,]])
-        measurements = range_dvl - previous_measurements #117.61492204 #
-        return measurements, range_dvl, None
-    else:
-        measurements = MBES_Z[i,] - previous_measurements #117.61492204 #
-        return measurements, MBES_Z[i,], None
 
 def f_measurements_offset(i):
-    if choice_range_sensor == "mnt":
-        x_gps, y_gps = coord2cart((LAT[i,],LON[i,])).flatten()
-        d_mnt, measurements = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)
-        return measurements, None #d_mnt
-    elif choice_range_sensor == "dvl":
-        range_dvl = np.array([dvl_BM1R[i,], dvl_BM2R[i,], dvl_BM3R[i,], dvl_BM4R[i,]])
-        measurements = range_dvl - 115.57149562238688
-        return measurements, None
-    else:
-        measurements = MBES_Z[i,] - 117.61544705067318
-        return measurements, None
+    # range_dvl = np.array([dvl_BM1R[i,], dvl_BM2R[i,], dvl_BM3R[i,], dvl_BM4R[i,]])
+    dvl_BM1R[i,], dvl_BM2R[i,], dvl_BM3R[i,], dvl_BM4R[i,] = \
+        filter_lpf_dvlr.low_pass_next(np.array([dvl_BM1R[i,], dvl_BM2R[i,], dvl_BM3R[i,], dvl_BM4R[i,]])).flatten()
+    range_dvl = np.array([dvl_BM1R[i,], dvl_BM2R[i,], dvl_BM3R[i,], dvl_BM4R[i,]])
+    measurements = range_dvl - 115.57149562238688
+    return measurements, None
 
 def test_diverge(ERR, err_max=1000):
     if ERR[-1] > err_max: #Si l'erreur est de plus de 500m il y a un probleme
@@ -252,10 +211,10 @@ if __name__ == '__main__':
     STD_X = []; STD_Y = []
     # beta = 5/100
     # beta = 1/10
-    beta = 10**(-1.37)
-    # beta = 1/10000
+    # beta = 10**(-1.37)
+    beta = 1/1000
     filter_lpf_speed = Low_pass_filter(1., np.array([dvl_v_x[0,], dvl_v_y[0,]]))
-
+    filter_lpf_dvlr = Low_pass_filter(0.1, np.array([dvl_BM1R[0,], dvl_BM2R[0,], dvl_BM3R[0,], dvl_BM4R[0,]]))
     for i in r:
 
         """Set data"""
@@ -347,7 +306,7 @@ if __name__ == '__main__':
     max_std = 3*np.mean(NORM_STD)
     masque = NORM_STD > max_std
 
-    plt.suptitle(f"Algorithm with {choice_range_sensor}\n{n_particles} particles; 1/{steps} data log used\nTotal time:{int(elapsed_time)}s")
+    plt.suptitle(f"Algorithm with dvl \n{n_particles} particles; 1/{steps} data log used\nTotal time:{int(elapsed_time)}s")
     ax1 = plt.subplot2grid((3, 2), (0, 0), rowspan=3)
     ax2 = plt.subplot2grid((3, 2), (0, 1))
     ax3 = plt.subplot2grid((3, 2), (1, 1))
