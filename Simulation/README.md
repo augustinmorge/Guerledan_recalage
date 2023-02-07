@@ -6,7 +6,7 @@ We did several tests :
   * The 13/10/22 at 1pm.
   * The 13/10/22 at 3pm.
 
-You have to download the txt file from :
+You have to download the .txt file from :
   * [1pm](https://mega.nz/folder/LddXFIjJ#8aNVKljeaiCF3S-_OeuZqg) in /storage
   * [3pm](https://mega.nz/folder/6JMSFIoS#Je4uvVFECIoUeqyPqkgzfQ) in /storage_afternoon
 
@@ -15,8 +15,18 @@ Then go into the storage folder `cd storage` or `cd storage_afternoon` and run /
 
 Once it's done you can look at your map : `./display_mnt.py` or run the simulation.
 
+This is the trajectory and the DTM of the first test for example:
+
+<div style="text-align:center">
+<p align="center">
+<img src="https://github.com/augustinmorge/Guerledan_recalage/blob/main/Simulation/storage/MNT_G1.png" width="300" title="DVL : Pathfinder">
+</p>
+</div>
+
 
 ## Simulations
+
+### Explainations
 
 Those script is a particle filter implementation in Python. The particle filter is a Monte Carlo method used to estimate the state of a system in the form of a probability distribution.
 
@@ -47,10 +57,12 @@ The script then enters a loop where it performs the following steps at each iter
 
 At the end of the loop, the script prints the elapsed time and the estimated position.
 
-## How the run the program ?
+### How the run the program ?
 ***
 run `./simulation.py` for just a simuation with a lissajou curb
 
 run `./simulation_with_data.py`for the simulation with our data
 
-run `./simulation_with_data_\&beams.py`for a simulation with data using beams
+## Folders
+  * *storage*: store the logs of the tests and create compressed files inside (npz, joblib,..)
+  * *mnt* : The DTM used for the tests. It's the one by EDF in 2013. It has its own folder because we use the same for every tests.
