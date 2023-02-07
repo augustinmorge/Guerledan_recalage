@@ -586,10 +586,20 @@ if __name__ == '__main__':
 
         # d_bottom_mnt = distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze()
         # ax1.plot(T, d_bottom_mnt, label = "d_mnt")
+
+        def passe_bas(x, alpha):
+            N = x.shape[0]
+            y = np.zeros_like(x)
+            y[0] = x[0]
+            for i in range(1, N):
+                y[i] = alpha * x[i] + (1 - alpha) * y[i-1]
+            return y
+
         dvl_BM1R_new = dvl_BM1R - 115.5714023521081
         ax1.plot(dvl_T, dvl_BM1R_new, label = "dvl_BM1R_new_raw", color = 'red')
         alpha = 0.9
-        ax1.legend(dvl_T[1:,],alpha*dvl_BM1R_new[1:,]-(1-alpha)*dvl_BM1R_new[:-1,], color = 'purple', label = "gléfiltrélol")
+        # ax1.legend(dvl_T[1:,],alpha*dvl_BM1R_new[1:,]-(1-alpha)*dvl_BM1R_new[:-1,], color = 'purple', label = "gléfiltrélol")
+        ax1.plot(dvl_T,passe_bas(dvl_BM1R_new, 0.01), color = 'purple', label = "gléfiltrélol")
         d_bottom_mnt = distance_to_bottom(np.column_stack((x_gps+dp_x_B1,y_gps+dp_y_B1)),MNT)[1].squeeze()
         ax1.plot(T, d_bottom_mnt, label = "d_mnt_beam1", color = 'green')
         ax1.grid()
