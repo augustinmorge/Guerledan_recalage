@@ -86,12 +86,19 @@ def compute_likelihood(propagated_states, measurements, measurements_noise, beta
     distance_B3 = np.abs(d_mbes_particule_B3-dvl_BM3R)
     distance_B4 = np.abs(d_mbes_particule_B4-dvl_BM4R)
 
+    h1, h2, h3, h4 = d_mnt_B1, d_mnt_B2, d_mnt_B3, d_mnt_B4
+    mean_range_dvl = (h1*h2)/(h1+h2) + (h3*h4)/(h3+h4) - 115.57149562238688
+
     # print('distances : ', distance_B1[5], distance_B2[5], distance_B3[5], distance_B4[5])
     # print('d_mbes_particules : ', d_mbes_particule_B1[5], d_mbes_particule_B2[5], d_mbes_particule_B3[5], d_mbes_particule_B4[5])
     # print('dvl_BMR : ', dvl_BM1R, dvl_BM2R, dvl_BM3R, dvl_BM4R)
 
     if measurements_noise[0] == None:
-        p_z_given_x_distance = np.exp(-beta*distance_B1**2)#*np.exp(-beta*distance_B2**2)*np.exp(-beta*distance_B3**2)*np.exp(-beta*distance_B4**2)
+        # p_z_given_x_distance = (np.exp(-beta*distance_B1**2)+np.exp(-beta*distance_B2**2)+np.exp(-beta*distance_B3**2)+np.exp(-beta*distance_B4**2))/4
+        d = np.abs(distance_to_bottom(np.hstack((propagated_states[1][0],propagated_states[1][1])),MNT)[1] - mean_range_dvl)
+        # print(np.mean(distance_to_bottom(np.hstack((propagated_states[1][0],propagated_states[1][1])),MNT)[1]))
+        # print(np.mean(mean_range_dvl),"\n")
+        p_z_given_x_distance = np.exp(-beta*d**2)
     else:
         p_z_given_x_distance = np.exp(-beta*distance_B1/(measurements_noise[0]**2))*np.exp(-beta*distance_B2/(measurements_noise[0]**2))*np.exp(-beta*distance_B3/(measurements_noise[0]**2))*np.exp(-beta*distance_B4/(measurements_noise[0]**2))
 
@@ -100,6 +107,7 @@ def compute_likelihood(propagated_states, measurements, measurements_noise, beta
     # Return importance weight based on all landmarks
     d_mnt = np.array([d_mnt_B1, d_mnt_B2, d_mnt_B3, d_mnt_B4])
     new_z_particules_mnt = np.array([d_mbes_particule_B1, d_mbes_particule_B2, d_mbes_particule_B3, d_mbes_particule_B4])
+
     return d_mnt, p_z_given_x_distance, new_z_particules_mnt
 
 def needs_resampling(resampling_threshold):
@@ -211,8 +219,8 @@ if __name__ == '__main__':
     STD_X = []; STD_Y = []
     # beta = 5/100
     # beta = 1/10
-    # beta = 10**(-1.37)
-    beta = 1/1000
+    beta = 10**(-1.37)
+    # beta = 1/1000
     filter_lpf_speed = Low_pass_filter(1., np.array([dvl_v_x[0,], dvl_v_y[0,]]))
     filter_lpf_dvlr = Low_pass_filter(0.1, np.array([dvl_BM1R[0,], dvl_BM2R[0,], dvl_BM3R[0,], dvl_BM4R[0,]]))
     for i in r:
@@ -292,6 +300,8 @@ if __name__ == '__main__':
         if test_diverge(ERR, 500) : break
 
 
+
+
     print(f"Resampling used: {ct_resampling} ({ct_resampling/((idx_tf - idx_ti)/steps)*100}%)")
     elapsed_time = time.perf_counter() - start_time
     print("Elapsed time: {:.2f} seconds".format(elapsed_time))
@@ -342,6 +352,9 @@ if __name__ == '__main__':
     # ax3.plot(dvl_T, mean_dvlR - 115.57149562238688, label = "z_dvl")
     ax3.plot(T, d_bottom_mnt, label = "z_mnt")
     ax3.plot(MBES_T, MBES_Z - 117.61544705067318, label = "z_mbes")
+    h1, h2, h3, h4 = dvl_BM1R, dvl_BM2R, dvl_BM3R, dvl_BM4R
+    mean_range_dvl = (h1*h2)/(h1+h2) + (h3*h4)/(h3+h4)
+    ax3.plot(dvl_T, mean_range_dvl - 115.5714023521081, label = "mean_dvl")
     ax3.legend()
 
 
