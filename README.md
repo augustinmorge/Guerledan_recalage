@@ -31,6 +31,7 @@ Youtube link for basic explanation of the particulate filter
 ***
 ## Sensors available
 * DVL: Bottom speed/distance
+![Pathfinder](https://geo-matching.com/uploads/default/m/i/migrationtaxfjy.jpg)
 * INS: Gyroscope/Accelerometer -> Speed and position
 * GNSS
 * MBES multibeam: bathymetry
