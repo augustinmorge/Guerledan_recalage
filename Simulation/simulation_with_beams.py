@@ -72,10 +72,10 @@ def propagate_sample(samples, forward_motion, angular_motion, process_noise):
 def compute_likelihood(propagated_states, measurements, measurements_noise, beta, z_particules_mnt, yaw):
     th = np.pi/4
     pi2_janus = 60*np.pi/180
-    dp_x_B1 = -measurements[0]/np.tan(pi2_janus)*np.cos(yaw-th)
-    dp_y_B1 = -measurements[0]/np.tan(pi2_janus)*np.sin(yaw-th)
-    dp_x_B2 = measurements[1]/np.tan(pi2_janus)*np.cos(yaw-th)
-    dp_y_B2 = measurements[1]/np.tan(pi2_janus)*np.sin(yaw-th)
+    dp_x_B1 = -measurements[0]/np.tan(pi2_janus)*np.sin(yaw-th)
+    dp_y_B1 = measurements[0]/np.tan(pi2_janus)*np.cos(yaw-th)
+    dp_x_B2 = measurements[1]/np.tan(pi2_janus)*np.sin(yaw-th)
+    dp_y_B2 = -measurements[1]/np.tan(pi2_janus)*np.cos(yaw-th)
     dp_x_B3 = measurements[2]/np.tan(pi2_janus)*np.cos(yaw-th)
     dp_y_B3 = measurements[2]/np.tan(pi2_janus)*np.sin(yaw-th)
     dp_x_B4 = -measurements[3]/np.tan(pi2_janus)*np.cos(yaw-th)

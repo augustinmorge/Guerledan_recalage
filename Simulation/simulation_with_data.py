@@ -74,11 +74,14 @@ def compute_likelihood(propagated_states, measurements, measurements_noise, beta
 
     # Map difference true and expected distance measurement to probability
     distance = np.abs(d_mbes_particule-measurements)
+    print('distance : ', distance[5])
 
     if measurements_noise[0] == None:
         p_z_given_x_distance = np.exp(-beta*distance**2)
     else:
         p_z_given_x_distance = np.exp(-beta*distance/(measurements_noise[0]**2))
+
+    print('proba : ', p_z_given_x_distance[5])
 
     # p_z_given_x_distance = 1
     # Return importance weight based on all landmarks
