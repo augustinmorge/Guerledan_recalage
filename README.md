@@ -30,12 +30,14 @@ Youtube link for basic explanation of the particulate filter
 
 ***
 ## Sensors available
-* DVL: Bottom speed/distance
+We use sensors on the "Panopee",a famous boat of the school ENSTA Bretagne.
 <div style="text-align:center">
 <p align="center">
-  <img src="https://geo-matching.com/uploads/default/m/i/migrationtaxfjy.jpg" width="750" title="Ragazza Proboat">
+<img src="https://guerledan.ensta-bretagne.fr/wp-content/uploads/2017/03/1_panopee.jpg" width="300" title="DVL : Pathfinder">
 </p>
 </div>
+
+* DVL: Bottom speed/distance
 * INS: Gyroscope/Accelerometer -> Speed and position
 * GNSS
 * MBES multibeam: bathymetry
