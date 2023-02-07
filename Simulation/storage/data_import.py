@@ -125,29 +125,23 @@ if bool_txt:
     MNT = []
     if data_cropped: #Choose the txt file
         MNT_txt = np.loadtxt(file_path+"/../mnt/guerledan_cropped.txt", dtype = str)
-        for i in MNT_txt:
-            MNT.append(i.split(','))
-            MNT[-1] = [np.float64(MNT[-1][0]), np.float64(MNT[-1][1]), np.float64(MNT[-1][2])]
-        MNT = np.array(MNT)
-
     else: #Choose the compressed file
         MNT_txt = np.loadtxt(file_path+"/../mnt/guerledan_EDF_2013-06_MNT1m.tiff.txt", dtype = str)
 
-        #Flip the MNT
-        for i in MNT_txt:
-            MNT.append(i.split(','))
-            MNT[-1] = [np.float64(MNT[-1][0]), np.float64(MNT[-1][1]), np.float64(MNT[-1][2]+'.'+MNT[-1][3])]
-        MNT = np.array(MNT)
+    #Flip the MNT
+    for i in MNT_txt:
+        MNT.append(i.split(','))
+        MNT[-1] = [np.float64(MNT[-1][0]), np.float64(MNT[-1][1]), np.float64(MNT[-1][2]+'.'+MNT[-1][3])]
+    MNT = np.array(MNT)
 
-        #Transform the proj
-        gcs = pyproj.CRS('epsg:4326')
-        proj = pyproj.CRS('epsg:2154')
-        lat_mnt, lon_mnt = pyproj.transform(proj, gcs, MNT[:,0], MNT[:,1]) # Convert x and y values to latitude and longitude values
-        MNT[:,0], MNT[:,1] = lon_mnt, lat_mnt
-
+    #Transform the proj
+    gcs = pyproj.CRS('epsg:4326')
+    proj = pyproj.CRS('epsg:2154')
+    lat_mnt, lon_mnt = pyproj.transform(proj, gcs, MNT[:,0], MNT[:,1]) # Convert x and y values to latitude and longitude values
+    nx_mnt, ny_mnt = coord2cart((lat_mnt,lon_mnt))
+    MNT[:,0], MNT[:,1] = nx_mnt, ny_mnt
 
     print("Building KDTree..")
-    nx_mnt, ny_mnt = coord2cart((MNT[:,1],MNT[:,0]))
     vec_mnt = np.vstack((nx_mnt, ny_mnt)).T
     kd_tree = KDTree(vec_mnt, metric="euclidean")
 
@@ -216,11 +210,6 @@ GYR_Z = ins['GYR_Z']
 """ Load INS """
 mnt = np.load(file_path + "/mnt.npz")
 MNT = mnt['MNT']
-if not bool_txt:
-    nx_mnt, ny_mnt = coord2cart((MNT[:,1],MNT[:,0]))
-    MNT[:,0] = nx_mnt
-    MNT[:,1] = ny_mnt
-
 
 """ Load the KD-Tree """
 # Load the KD tree object from the file
