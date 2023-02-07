@@ -26,6 +26,8 @@ This is the trajectory and the DTM of the first test for example:
 
 ## Simulations
 
+### Explainations
+
 Those script is a particle filter implementation in Python. The particle filter is a Monte Carlo method used to estimate the state of a system in the form of a probability distribution.
 
 The input to the script includes the number of particles, the number of steps between measures, and a flag for whether to display the particles. The script then imports various libraries and defines several functions.
@@ -55,8 +57,12 @@ The script then enters a loop where it performs the following steps at each iter
 
 At the end of the loop, the script prints the elapsed time and the estimated position.
 
-## How the run the program ?
+### How the run the program ?
 ***
 run `./simulation.py` for just a simuation with a lissajou curb
 
 run `./simulation_with_data.py`for the simulation with our data
+
+## Folders
+  * *storage*: store the logs of the tests and create compressed files inside (npz, joblib,..)
+  * *mnt* : The DTM used for the tests. It's the one by EDF in 2013. It has its own folder because we use the same for every tests.
