@@ -196,7 +196,6 @@ if __name__ == '__main__':
     #For the update
     resampler = Resampler()
     resampling_threshold = 2/3*n_particles
-
     idx_ti = 0
     idx_tf =  dvl_T.shape[0]
 
@@ -273,7 +272,7 @@ if __name__ == '__main__':
             ax.set_xlim([x_gps_min - 100,x_gps_max + 100])
             ax.set_ylim([y_gps_min - 100,y_gps_max + 100])
             ax.scatter(x_gps, y_gps ,color='blue', label = 'True position panopée', s = 100)
-            ax.scatter(particles[1][0], particles[1][1], color = 'red', s = 0.8, label = "particles") # Affiche toutes les particules
+            ax.scatter(particles[1][0], particles[1][1], color = 'red', s = 0.8, label = "particles",alpha=particles[0][:,0]/pow(np.max(particles[0][:,0]),3/4)) # Affiche toutes les particules
             bx, by = get_average_state(particles)[0], get_average_state(particles)[1] #barycentre des particules
             ax.scatter(bx, by , color = 'green', label = 'Estimation of particles')
 
