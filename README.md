@@ -37,11 +37,11 @@ We use sensors on the "Panopee",a famous boat of the school ENSTA Bretagne.
 </p>
 </div>
 
-* DVL: Bottom speed/distance
-* INS: Gyroscope/Accelerometer -> Speed and position
-* GNSS
-* MBES multibeam: bathymetry
-* SVP: Hull velocity meter
+* *DVL*: Bottom speed/distance
+* *INS*: Gyroscope/Accelerometer -> Speed and position
+* *GNSS*
+* *MBES* multibeam: bathymetry
+* *SVP*: Hull velocity meter
 
 ## Participants
 Emails :

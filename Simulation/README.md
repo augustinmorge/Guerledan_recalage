@@ -6,7 +6,7 @@ We did several tests :
   * The 13/10/22 at 1pm.
   * The 13/10/22 at 3pm.
 
-You have to download the txt file from :
+You have to download the .txt file from :
   * [1pm](https://mega.nz/folder/LddXFIjJ#8aNVKljeaiCF3S-_OeuZqg) in /storage
   * [3pm](https://mega.nz/folder/6JMSFIoS#Je4uvVFECIoUeqyPqkgzfQ) in /storage_afternoon
 
@@ -14,6 +14,14 @@ You have to download the txt file from :
 Then go into the storage folder `cd storage` or `cd storage_afternoon` and run /data_import.py with **1** in bool_txt and **0** in bool_compress. Then relaunch ./data_import.py with the opposite.
 
 Once it's done you can look at your map : `./display_mnt.py` or run the simulation.
+
+This is the trajectory and the DTM of the first test for example:
+
+<div style="text-align:center">
+<p align="center">
+<img src="https://github.com/augustinmorge/Guerledan_recalage/blob/main/Simulation/storage/MNT_G1.png" width="300" title="DVL : Pathfinder">
+</p>
+</div>
 
 
 ## Simulations
@@ -52,5 +60,3 @@ At the end of the loop, the script prints the elapsed time and the estimated pos
 run `./simulation.py` for just a simuation with a lissajou curb
 
 run `./simulation_with_data.py`for the simulation with our data
-
-run `./simulation_with_data_\&beams.py`for a simulation with data using beams
