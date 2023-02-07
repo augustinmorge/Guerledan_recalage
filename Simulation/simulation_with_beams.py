@@ -71,15 +71,15 @@ def propagate_sample(samples, forward_motion, angular_motion, process_noise):
 
 def compute_likelihood(propagated_states, measurements, measurements_noise, beta, z_particules_mnt, yaw):
     th = np.pi/4
-    pi2_janus = np.pi/2-30*np.pi/180
+    pi2_janus = 60*np.pi/180
     dp_x_B1 = -measurements[0]/np.tan(pi2_janus)*np.cos(yaw-th)
     dp_y_B1 = -measurements[0]/np.tan(pi2_janus)*np.sin(yaw-th)
     dp_x_B2 = measurements[1]/np.tan(pi2_janus)*np.cos(yaw-th)
     dp_y_B2 = measurements[1]/np.tan(pi2_janus)*np.sin(yaw-th)
-    dp_x_B3 = measurements[2]/np.tan(pi2_janus)*np.sin(yaw-th)
-    dp_y_B3 = measurements[2]/np.tan(pi2_janus)*np.cos(yaw-th)
-    dp_x_B4 = -measurements[3]/np.tan(pi2_janus)*np.sin(yaw-th)
-    dp_y_B4 = -measurements[3]/np.tan(pi2_janus)*np.cos(yaw-th)
+    dp_x_B3 = measurements[2]/np.tan(pi2_janus)*np.cos(yaw-th)
+    dp_y_B3 = measurements[2]/np.tan(pi2_janus)*np.sin(yaw-th)
+    dp_x_B4 = -measurements[3]/np.tan(pi2_janus)*np.cos(yaw-th)
+    dp_y_B4 = -measurements[3]/np.tan(pi2_janus)*np.sin(yaw-th)
 
     d_mnt_B1, new_z_particules_mnt_B1 = distance_to_bottom(np.hstack((propagated_states[1][0]+dp_x_B1,propagated_states[1][1]+dp_y_B1)),MNT)
     if using_offset : d_mbes_particule_B1 = new_z_particules_mnt_B1
@@ -102,12 +102,14 @@ def compute_likelihood(propagated_states, measurements, measurements_noise, beta
     distance_B2 = np.abs(d_mbes_particule_B2-measurements[1])
     distance_B3 = np.abs(d_mbes_particule_B3-measurements[2])
     distance_B4 = np.abs(d_mbes_particule_B4-measurements[3])
+    print('distances : ', distance_B1[5], distance_B2[5], distance_B3[5], distance_B4[5])
 
     if measurements_noise[0] == None:
         p_z_given_x_distance = np.exp(-beta*distance_B1**2)*np.exp(-beta*distance_B2**2)*np.exp(-beta*distance_B3**2)*np.exp(-beta*distance_B4**2)
     else:
         p_z_given_x_distance = np.exp(-beta*distance_B1/(measurements_noise[0]**2))*np.exp(-beta*distance_B2/(measurements_noise[0]**2))*np.exp(-beta*distance_B3/(measurements_noise[0]**2))*np.exp(-beta*distance_B4/(measurements_noise[0]**2))
 
+    print('proba : ', p_z_given_x_distance[5])
     # p_z_given_x_distance = 1
     # Return importance weight based on all landmarks
     d_mnt = np.array([d_mnt_B1, d_mnt_B2, d_mnt_B3, d_mnt_B4])
@@ -251,6 +253,7 @@ if __name__ == '__main__':
     # beta = 5/100
     # beta = 1/10
     beta = 10**(-1.37)
+    # beta = 1/10000
     filter_lpf_speed = Low_pass_filter(1., np.array([dvl_v_x[0,], dvl_v_y[0,]]))
 
     for i in r:
