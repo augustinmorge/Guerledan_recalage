@@ -74,14 +74,11 @@ def compute_likelihood(propagated_states, measurements, measurements_noise, beta
 
     # Map difference true and expected distance measurement to probability
     distance = np.abs(d_mbes_particule-measurements)
-    print('distance : ', distance[5])
 
     if measurements_noise[0] == None:
         p_z_given_x_distance = np.exp(-beta*distance**2)
     else:
         p_z_given_x_distance = np.exp(-beta*distance/(measurements_noise[0]**2))
-
-    print('proba : ', p_z_given_x_distance[5])
 
     # p_z_given_x_distance = 1
     # Return importance weight based on all landmarks
@@ -137,7 +134,8 @@ if choice_range_sensor == "mnt":
     x_gps, y_gps = coord2cart((LAT[0,],LON[0,])).flatten()
     d_mnt, previous_measurements = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)
 elif choice_range_sensor == "dvl":
-    previous_measurements = (dvl_BM1R[0,] + dvl_BM2R[0,] + dvl_BM3R[0,] + dvl_BM4R[0,])/4 #range__Z[0,]
+    h1, h2, h3, h4 = dvl_BM1R[0,], dvl_BM2R[0,], dvl_BM3R[0,], dvl_BM4R[0,]
+    previous_measurements = (h1*h2)/(h1+h2) + (h3*h4)/(h3+h4) #range__Z[0,]
 else:
     previous_measurements = MBES_Z[0,]
 
@@ -148,7 +146,8 @@ def f_measurements(i, previous_measurements):
         return measurements-previous_measurements, measurements, None #d_mnt
         # return measurements, measurements, d_mnt
     elif choice_range_sensor == "dvl":
-        mean_range_dvl = (dvl_BM1R[i,] + dvl_BM2R[i,] + dvl_BM3R[i,] + dvl_BM4R[i,])/4
+        h1, h2, h3, h4 = dvl_BM1R[0,], dvl_BM2R[0,], dvl_BM3R[0,], dvl_BM4R[0,]
+        mean_range_dvl = (h1*h2)/(h1+h2) + (h3*h4)/(h3+h4)
         measurements = mean_range_dvl - previous_measurements #117.61492204 #
         return measurements, mean_range_dvl, None
     else:
@@ -162,7 +161,8 @@ def f_measurements_offset(i):
         d_mnt, measurements = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)
         return measurements, None #d_mnt
     elif choice_range_sensor == "dvl":
-        mean_range_dvl = (dvl_BM1R[i,] + dvl_BM2R[i,] + dvl_BM3R[i,] + dvl_BM4R[i,])/4
+        h1, h2, h3, h4 = dvl_BM1R[0,], dvl_BM2R[0,], dvl_BM3R[0,], dvl_BM4R[0,]
+        mean_range_dvl = (h1*h2)/(h1+h2) + (h3*h4)/(h3+h4)
         measurements = mean_range_dvl - 115.57149562238688
         return measurements, None
     else:
