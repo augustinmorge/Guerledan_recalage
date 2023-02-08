@@ -60,7 +60,12 @@ def compute_likelihood(propagated_states, measurements, measurements_noise, beta
     th = np.pi/4
     pi2_janus = 60*np.pi/180
     dvl_BM1R, dvl_BM2R, dvl_BM3R, dvl_BM4R = [measurements[i] for i in range(4)]
-    opp_angle = np.tan(60*np.pi/180)
+    use_4_beams = True
+    if use_4_beams:
+        th = np.pi/4
+        pi2_janus = 60*np.pi/180
+
+        opp_angle = np.tan(60*np.pi/180)
 
     dp_x_B1 = -dvl_BM1R/opp_angle*np.sin(yaw-th)
     dp_y_B1 = dvl_BM1R/opp_angle*np.cos(yaw-th)
@@ -92,10 +97,13 @@ def compute_likelihood(propagated_states, measurements, measurements_noise, beta
     # print('dvl_BMR : ', dvl_BM1R, dvl_BM2R, dvl_BM3R, dvl_BM4R)
 
     if measurements_noise[0] == None:
-        p1, p2, p3, p4 = np.exp(-beta*distance_B1**2), np.exp(-beta*distance_B2**2), np.exp(-beta*distance_B3**2), np.exp(-beta*distance_B4**2)
-        # p_z_given_x_distance = (p1*p2)/(p1+p2)+(p3*p4)/(p3+p4)
-        p_z_given_x_distance = (p1+p2+p3+p4)/4
-        # p_z_given_x_distance = p1*p2*p3*p4
+        d = np.abs(new_z_particules_mnt - mean_range_dvl)
+        p_z_given_x_distance = np.exp(-beta*d**2)
+        if use_4_beams : #1000 1/4
+            # p_z_given_x_distance *= (np.exp(-beta/100*pow(distance_B3,1/4))+np.exp(-beta/100*pow(distance_B4,1/4))+np.exp(-beta/100*pow(distance_B2,1/4))+np.exp(-beta/100*pow(distance_B1,1/4)))/4
+            p_z_given_x_distance *= (np.exp(-beta/300*pow(distance_B3,1))*np.exp(-beta/300*pow(distance_B4,1))*np.exp(-beta/300*pow(distance_B2,1))*np.exp(-beta/300*pow(distance_B1,1)))
+
+        # p1, p2, p3, p4 = np.exp(-beta*distance_B1**2), np.exp(-beta*distance_B2**2), np.exp(-beta*distance_B3**2), np.exp(-beta*distance_B4**2)
     else:
         p_z_given_x_distance = np.exp(-beta*distance_B1/(measurements_noise[0]**2))*np.exp(-beta*distance_B2/(measurements_noise[0]**2))*np.exp(-beta*distance_B3/(measurements_noise[0]**2))*np.exp(-beta*distance_B4/(measurements_noise[0]**2))
 
@@ -249,8 +257,7 @@ if __name__ == '__main__':
         yaw_std = YAW_STD[i,]
         v_x, v_y = filter_lpf_speed.low_pass_next(np.array([dvl_v_x[i,], dvl_v_y[i,]])).flatten()
         # v_std = dvl_VSTD[i,]
-        # v_std = 0.4*10*dt_br
-        v_std = 0.4*10*dt_br
+        v_std = 0.2*dt_br*10
 
         if using_offset : measurements, meas_model_distance_std = f_measurements_offset(i)
         else: measurements, previous_measurements, meas_model_distance_std = f_measurements(i, previous_measurements)
@@ -281,7 +288,7 @@ if __name__ == '__main__':
             lon = LON[i,]
             x_gps, y_gps = coord2cart((lat,lon)).flatten()
             ax.cla()
-            print("Temps de calcul: ",time.time() - t0)
+            # print("Temps de calcul: ",time.time() - t0)
             t1 = time.time()
             ax.plot(coord2cart((LAT[idx_ti:idx_tf,], LON[idx_ti:idx_tf,]))[0,:], coord2cart((LAT[idx_ti:idx_tf,], LON[idx_ti:idx_tf,]))[1,:])
             ax.set_title("Particle filter with {} particles with z = {}m".format(n_particles, measurements))
@@ -295,7 +302,7 @@ if __name__ == '__main__':
             ax.legend()
 
             plt.pause(0.00001)
-            print("Temps d'affichage: ",time.time()-t1,"\n")
+            # print("Temps d'affichage: ",time.time()-t1,"\n")
 
         #Add variables useful to display graphs at the end of the program
         TIME.append(t)
