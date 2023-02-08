@@ -579,10 +579,11 @@ if __name__ == '__main__':
     print(dvl_BM1R)
     def display_beams():
         plt.figure()
-        ax1 = plt.subplot2grid((2, 2), (0, 0))
-        ax2 = plt.subplot2grid((2, 2), (0, 1))
-        ax3 = plt.subplot2grid((2, 2), (1, 0))
-        ax4 = plt.subplot2grid((2, 2), (1, 1))
+        ax1 = plt.subplot2grid((2, 3), (0, 0))
+        ax2 = plt.subplot2grid((2, 3), (0, 1))
+        ax3 = plt.subplot2grid((2, 3), (1, 0))
+        ax4 = plt.subplot2grid((2, 3), (1, 1))
+        ax5 = plt.subplot2grid((2, 3), (0, 2), rowspan=2)
 
         # d_bottom_mnt = distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze()
         # ax1.plot(T, d_bottom_mnt, label = "d_mnt")
@@ -639,6 +640,18 @@ if __name__ == '__main__':
         ax4.set_xlabel("Time [min]")
         ax4.set_ylabel("Range [m]")
         ax4.set_title("dvl_BM4R")
+
+        h1, h2, h3, h4 = dvl_BM1R, dvl_BM2R, dvl_BM3R, dvl_BM4R
+        mean_range_dvl = (h1*h2)/(h1+h2) + (h3*h4)/(h3+h4) - 115.57149562238688
+        d_bottom_mnt = distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze()
+        ax5.plot(dvl_T, mean_range_dvl, label = "mean_range_dvl", color = 'red')
+        ax5.plot(T, d_bottom_mnt, label = "d_bottom_mnt", color = 'green')
+        ax5.legend()
+        ax5.grid()
+        ax5.set_xlabel("Time [min]")
+        ax5.set_ylabel("Range [m]")
+        ax5.set_title("mean_range_dvl")
+
 
     display_beams()
     plt.show()

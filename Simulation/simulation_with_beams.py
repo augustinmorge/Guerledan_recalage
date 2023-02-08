@@ -60,7 +60,6 @@ def compute_likelihood(propagated_states, measurements, measurements_noise, beta
     th = np.pi/4
     pi2_janus = 60*np.pi/180
     dvl_BM1R, dvl_BM2R, dvl_BM3R, dvl_BM4R = [measurements[i] for i in range(4)]
-    th = np.pi/4
     opp_angle = np.tan(60*np.pi/180)
 
     dp_x_B1 = -dvl_BM1R/opp_angle*np.sin(yaw-th)
@@ -85,13 +84,18 @@ def compute_likelihood(propagated_states, measurements, measurements_noise, beta
     distance_B2 = np.abs(d_mbes_particule_B2-dvl_BM2R)
     distance_B3 = np.abs(d_mbes_particule_B3-dvl_BM3R)
     distance_B4 = np.abs(d_mbes_particule_B4-dvl_BM4R)
+    # print('distance : ', distance_B2[127])
+
 
     # print('distances : ', distance_B1[5], distance_B2[5], distance_B3[5], distance_B4[5])
     # print('d_mbes_particules : ', d_mbes_particule_B1[5], d_mbes_particule_B2[5], d_mbes_particule_B3[5], d_mbes_particule_B4[5])
     # print('dvl_BMR : ', dvl_BM1R, dvl_BM2R, dvl_BM3R, dvl_BM4R)
 
     if measurements_noise[0] == None:
-        p_z_given_x_distance = (np.exp(-beta*distance_B1**2)+np.exp(-beta*distance_B2**2)+np.exp(-beta*distance_B3**2)+np.exp(-beta*distance_B4**2))/4
+        p1, p2, p3, p4 = np.exp(-beta*distance_B1**2), np.exp(-beta*distance_B2**2), np.exp(-beta*distance_B3**2), np.exp(-beta*distance_B4**2)
+        # p_z_given_x_distance = (p1*p2)/(p1+p2)+(p3*p4)/(p3+p4)
+        p_z_given_x_distance = (p1+p2+p3+p4)/4
+        # p_z_given_x_distance = p1*p2*p3*p4
     else:
         p_z_given_x_distance = np.exp(-beta*distance_B1/(measurements_noise[0]**2))*np.exp(-beta*distance_B2/(measurements_noise[0]**2))*np.exp(-beta*distance_B3/(measurements_noise[0]**2))*np.exp(-beta*distance_B4/(measurements_noise[0]**2))
 
@@ -178,8 +182,30 @@ if __name__ == '__main__':
     x_gps_max, y_gps_max = np.max(coord2cart((LAT, LON))[0,:]), np.max(coord2cart((LAT, LON))[1,:])
     # bounds = [[x_gps_min, x_gps_max], [y_gps_min, y_gps_max]]
     particles = initialize_particles_uniform(n_particles)
+    # _, z_particules_mnt = distance_to_bottom(np.hstack((particles[1][0],particles[1][1])),MNT)
 
-    _, z_particules_mnt = distance_to_bottom(np.hstack((particles[1][0],particles[1][1])),MNT)
+    th = np.pi/4
+    pi2_janus = 60*np.pi/180
+    dvl_BM1R_0, dvl_BM2R_0, dvl_BM3R_0, dvl_BM4R_0 = dvl_BM1R[0,]-115.57149562238688, dvl_BM2R[0,]-115.57149562238688, dvl_BM3R[0,]-115.57149562238688, dvl_BM4R[0,]-115.57149562238688
+    opp_angle = np.tan(60*np.pi/180)
+
+    dp_x_B1 = -dvl_BM1R_0/opp_angle*np.sin(YAW[0,]-th)
+    dp_y_B1 = dvl_BM1R_0/opp_angle*np.cos(YAW[0,]-th)
+
+    dp_x_B2 = dvl_BM2R_0/opp_angle*np.sin(YAW[0,]-th)
+    dp_y_B2 = -dvl_BM2R_0/opp_angle*np.cos(YAW[0,]-th)
+
+    dp_x_B3 = dvl_BM3R_0/opp_angle*np.cos(YAW[0,]-th)
+    dp_y_B3 = dvl_BM3R_0/opp_angle*np.sin(YAW[0,]-th)
+
+    dp_x_B4 = -dvl_BM4R_0/opp_angle*np.cos(YAW[0,]-th)
+    dp_y_B4 = -dvl_BM4R_0/opp_angle*np.sin(YAW[0,]-th)
+
+    _, z_particules_mnt_B1 = distance_to_bottom(np.hstack((particles[1][0]+dp_x_B1,particles[1][1]+dp_y_B1)),MNT)
+    _, z_particules_mnt_B2 = distance_to_bottom(np.hstack((particles[1][0]+dp_x_B2,particles[1][1]+dp_y_B2)),MNT)
+    _, z_particules_mnt_B3 = distance_to_bottom(np.hstack((particles[1][0]+dp_x_B3,particles[1][1]+dp_y_B3)),MNT)
+    _, z_particules_mnt_B4 = distance_to_bottom(np.hstack((particles[1][0]+dp_x_B4,particles[1][1]+dp_y_B4)),MNT)
+    z_particules_mnt = np.array([z_particules_mnt_B1, z_particules_mnt_B2, z_particules_mnt_B3, z_particules_mnt_B4])
 
     #For the update
     resampler = Resampler()
