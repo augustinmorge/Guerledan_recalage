@@ -95,6 +95,9 @@ BK0
 #EY 0 0 0 0 0 0 0 0
 ; Set output data format to #PD0
 #PD0
+
+CE1
+#PE10000
 ;-------------------------------------------------------------------------
 ; Save this setup to non-volatile memory in the Pathfinder
 CK
