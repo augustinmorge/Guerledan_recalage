@@ -60,16 +60,12 @@ def compute_likelihood(propagated_states, measurements, measurements_noise, beta
     th = np.pi/4
     pi2_janus = 60*np.pi/180
     dvl_BM1R, dvl_BM2R, dvl_BM3R, dvl_BM4R = [measurements[i] for i in range(4)]
-<<<<<<< HEAD
     use_4_beams = True
     if use_4_beams:
         th = np.pi/4
         pi2_janus = 60*np.pi/180
 
         opp_angle = np.tan(60*np.pi/180)
-=======
-    opp_angle = np.tan(60*np.pi/180)
->>>>>>> 6a5a256e0cff9bc08eb89b798f49b878f4008bd2
 
     dp_x_B1 = -dvl_BM1R/opp_angle*np.sin(yaw-th)
     dp_y_B1 = dvl_BM1R/opp_angle*np.cos(yaw-th)
