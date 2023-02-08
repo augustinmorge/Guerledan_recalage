@@ -91,7 +91,7 @@ def compute_likelihood(propagated_states, measurements, measurements_noise, beta
     # print('dvl_BMR : ', dvl_BM1R, dvl_BM2R, dvl_BM3R, dvl_BM4R)
 
     if measurements_noise[0] == None:
-        p_z_given_x_distance = np.exp(-beta*distance_B1**2)#*np.exp(-beta*distance_B2**2)*np.exp(-beta*distance_B3**2)*np.exp(-beta*distance_B4**2)
+        p_z_given_x_distance = (np.exp(-beta*distance_B1**2)+np.exp(-beta*distance_B2**2)+np.exp(-beta*distance_B3**2)+np.exp(-beta*distance_B4**2))/4
     else:
         p_z_given_x_distance = np.exp(-beta*distance_B1/(measurements_noise[0]**2))*np.exp(-beta*distance_B2/(measurements_noise[0]**2))*np.exp(-beta*distance_B3/(measurements_noise[0]**2))*np.exp(-beta*distance_B4/(measurements_noise[0]**2))
 
