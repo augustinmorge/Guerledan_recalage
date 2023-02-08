@@ -1,0 +1,1505 @@
+{
+	"device":	{
+		"productCode":	"NAVSIGHT-S-RU",
+		"serialNumber":	"053000271",
+		"hwRevision":	"1.6.0.0",
+		"calibVersion":	"1.1.0.0",
+		"mnfDate":	"01/06/21",
+		"macAddress":	"98:5C:93:00:04:8B",
+		"fmwVersion":	"4.0.328-stable",
+		"btVersion":	"3.4.35-stable",
+		"imu":	{
+			"id":	"ekinoxISubseaV1",
+			"productCode":	"EKINOX2-ISU-G4A2-V1",
+			"serialNumber":	"032000111",
+			"hwRevision":	"2.0.0.0",
+			"btVersion":	"1.9.128-stable",
+			"fmwVersion":	"1.4.8-stable"
+		}
+	},
+	"settings":	{
+		"oem":	{
+			"label":	""
+		},
+		"imu":	{
+			"model":	"ekinoxISubseaV1",
+			"refPoint":	"bareImu",
+			"customRefPoint":	[0, 0, 0],
+			"alignment":	{
+				"rough":	["forward", "right"],
+				"fine":	[0, 0, 0]
+			}
+		},
+		"mechanicalSetup":	{
+			"alignment":	{
+				"rough":	["forward", "right"],
+				"fine":	[0, 0, 0]
+			},
+			"leverArms":	{
+				"cog":	[1, 0, 0.5],
+				"output1":	[0, 0, 0],
+				"output2":	[1.253000020980835, 1.2350000143051147, 1.64300000667572],
+				"output3":	[1.253000020980835, 1.2350000143051147, 1.4739999771118164]
+			},
+			"vehicleSize":	{
+				"customSize":	true,
+				"size":	[7, 0, 2.0999999046325684]
+			}
+		},
+		"insFilter":	{
+			"motionProfile":	"marineUnderwater",
+			"useRtkHeave":	true,
+			"validityThresholds":	{
+				"rollPitch":	0.20001956820487976,
+				"heading":	0.80002099275589,
+				"velocity":	0.1,
+				"position":	0.8
+			}
+		},
+		"aiding":	{
+			"gnss1":	{
+				"model":	"internal",
+				"source":	"internal",
+				"sync":	"internal",
+				"headingMode":	"dualAntennaKnownLeverArm",
+				"antenna":	"AERAT1675_382   NONE",
+				"leverArmPrimary":	[-0.48200002312660217, 0.017000000923871994, -1.562999963760376],
+				"leverArmSecondary":	[2.9330000877380371, 0.0469999983906746, -1.6819999217987061],
+				"usePosition":	"auto",
+				"useDualAntenna":	"auto"
+			},
+			"gnss2":	{
+				"model":	"nmea",
+				"source":	"none",
+				"sync":	"none",
+				"headingMode":	"singleAntenna",
+				"antenna":	"GENERIC",
+				"leverArmPrimary":	[0, 0, 0],
+				"leverArmSecondary":	[0, 0, 0],
+				"usePosition":	"never",
+				"useDualAntenna":	"never"
+			},
+			"odometer":	{
+				"model":	"pulse",
+				"source":	"none",
+				"leverArm":	[0, 0, 0],
+				"gain":	1,
+				"gainError":	100,
+				"useVelocity":	"auto",
+				"reverse":	false
+			},
+			"airData":	{
+				"model":	"ahrs5000",
+				"source":	"none",
+				"leverArm":	[0, 0, 0],
+				"useAirSpeed":	"auto",
+				"useAltitude":	"auto"
+			},
+			"dvl":	{
+				"model":	"teledyne",
+				"source":	"eth3",
+				"sync":	"eventInE",
+				"leverArm":	[1.253, 1.235, 1.643],
+				"alignment":	{
+					"rough":	["forward", "right"],
+					"fine":	[0, 0, 0]
+				},
+				"useWaterVel":	"auto",
+				"useBottomVel":	"auto"
+			},
+			"depth":	{
+				"model":	"genericNmea",
+				"source":	"none",
+				"useDepth":	"auto"
+			},
+			"usbl":	{
+				"model":	"nmeaSSB",
+				"source":	"none",
+				"useDepth":	"auto"
+			},
+			"diffCorr":	{
+				"source":	"comD",
+				"ggaInterval":	"off"
+			}
+		},
+		"dataLogger":	{
+			"mode":	"startOn",
+			"sessionName":	"recalage",
+			"sessionNameLocked":	false
+		},
+		"network":	{
+			"ipv4":	{
+				"mode":	"static",
+				"ip":	"192.168.20.2",
+				"netmask":	"255.255.255.0",
+				"gateway":	"192.168.20.254",
+				"dns1":	"0.0.0.0",
+				"dns2":	"0.0.0.0"
+			},
+			"ntp":	{
+				"enabled":	false
+			},
+			"ntrip":	{
+				"hostname":	"192.168.20.102",
+				"port":	2101,
+				"mountPoint":	"VRS32",
+				"authEnabled":	false,
+				"username":	"ENSTA1",
+				"password":	"06091603"
+			},
+			"ptp":	{
+				"enabled":	false
+			}
+		},
+		"ports":	{
+			"can":	{
+				"mode":	"off",
+				"bitrate":	20
+			},
+			"comA":	{
+				"mode":	"rs232",
+				"parity":	"none",
+				"baudrate":	115200
+			},
+			"comB":	{
+				"mode":	"rs232",
+				"parity":	"none",
+				"baudrate":	115200
+			},
+			"comC":	{
+				"mode":	"rs232",
+				"parity":	"none",
+				"baudrate":	115200
+			},
+			"comD":	{
+				"mode":	"rs232",
+				"parity":	"none",
+				"baudrate":	115200
+			},
+			"comE":	{
+				"mode":	"rs232",
+				"parity":	"none",
+				"baudrate":	115200
+			},
+			"eth0":	{
+				"protocol":	"udp",
+				"udpIp":	"192.168.20.11",
+				"udpOutPort":	5678,
+				"udpInPort":	5679,
+				"tcpClientHost":	"0.0.0.0",
+				"tcpClientPort":	0,
+				"tcpServerPort":	0
+			},
+			"eth1":	{
+				"protocol":	"udp",
+				"udpIp":	"192.168.20.102",
+				"udpOutPort":	1234,
+				"udpInPort":	0,
+				"tcpClientHost":	"10.0.1.102",
+				"tcpClientPort":	5678,
+				"tcpServerPort":	5001
+			},
+			"eth2":	{
+				"protocol":	"udp",
+				"udpIp":	"192.168.20.102",
+				"udpOutPort":	10183,
+				"udpInPort":	0,
+				"tcpClientHost":	"0.0.0.0",
+				"tcpClientPort":	0,
+				"tcpServerPort":	0
+			},
+			"eth3":	{
+				"protocol":	"udp",
+				"udpIp":	"192.168.20.102",
+				"udpOutPort":	0,
+				"udpInPort":	1034,
+				"tcpClientHost":	"10.0.1.102",
+				"tcpClientPort":	5678,
+				"tcpServerPort":	6001
+			},
+			"eth4":	{
+				"protocol":	"off",
+				"udpIp":	"255.255.255.255",
+				"udpOutPort":	5678,
+				"udpInPort":	0,
+				"tcpClientHost":	"0.0.0.0",
+				"tcpClientPort":	0,
+				"tcpServerPort":	0
+			}
+		},
+		"output":	{
+			"comA":	{
+				"nmea":	{
+					"talkerId":	"GP",
+					"mode":	"extended",
+					"alwaysOutputTime":	false
+				},
+				"leverArm":	"imu",
+				"startThreshold":	"powerOn",
+				"messages":	{
+					"status":	"off",
+					"ekfEuler":	"off",
+					"ekfQuat":	"off",
+					"ekfNav":	"off",
+					"shipMotion":	"off",
+					"shipMotionHp":	"off",
+					"utcTime":	"off",
+					"mag":	"off",
+					"magCalib":	"off",
+					"gps1Vel":	"off",
+					"gps1Pos":	"off",
+					"gps1Hdt":	"off",
+					"gps1Raw":	"off",
+					"gps2Vel":	"off",
+					"gps2Pos":	"off",
+					"gps2Hdt":	"off",
+					"gps2Raw":	"off",
+					"odoVel":	"off",
+					"dvlBottomTrack":	"off",
+					"dvlWaterTrack":	"off",
+					"eventA":	"off",
+					"eventB":	"off",
+					"eventC":	"off",
+					"eventD":	"off",
+					"eventE":	"off",
+					"pressure":	"off",
+					"usbl":	"off",
+					"airData":	"off",
+					"depth":	"off",
+					"GGA":	"25ms",
+					"RMC":	"off",
+					"VTG":	"off",
+					"ZDA":	"off",
+					"HDT":	"off",
+					"ROT":	"off",
+					"GST":	"off",
+					"VBW":	"off",
+					"DPT":	"off",
+					"GGK":	"off",
+					"PPS":	"off",
+					"TSS1":	"off",
+					"KVH":	"off",
+					"PD0":	"off",
+					"PRDID":	"off",
+					"SIMRAD1000":	"off",
+					"SIMRAD3000":	"off",
+					"SEAPATHB26":	"off",
+					"DOLOGHRP":	"off",
+					"AHRS500":	"off",
+					"ADA_01":	"off",
+					"AT_ITINS":	"off",
+					"KMB":	"off",
+					"PHINF":	"off",
+					"PHTRO":	"off",
+					"PHLIN":	"off",
+					"PHOCT":	"off",
+					"INDYN":	"off",
+					"PSBGB":	"off",
+					"PSBGI":	"off",
+					"PASHR":	"off",
+					"debug0":	"off",
+					"debug1":	"off",
+					"debug2":	"off",
+					"debug3":	"off",
+					"imuData":	"off",
+					"imuShort":	"off",
+					"eventOutA":	"off",
+					"eventOutB":	"off",
+					"diag":	"off",
+					"rtcmRaw":	"off"
+				}
+			},
+			"comB":	{
+				"nmea":	{
+					"talkerId":	"GP",
+					"mode":	"extended",
+					"alwaysOutputTime":	false
+				},
+				"leverArm":	"imu",
+				"startThreshold":	"powerOn",
+				"messages":	{
+					"status":	"off",
+					"ekfEuler":	"off",
+					"ekfQuat":	"off",
+					"ekfNav":	"off",
+					"shipMotion":	"off",
+					"shipMotionHp":	"off",
+					"utcTime":	"off",
+					"mag":	"off",
+					"magCalib":	"off",
+					"gps1Vel":	"off",
+					"gps1Pos":	"off",
+					"gps1Hdt":	"off",
+					"gps1Raw":	"off",
+					"gps2Vel":	"off",
+					"gps2Pos":	"off",
+					"gps2Hdt":	"off",
+					"gps2Raw":	"off",
+					"odoVel":	"off",
+					"dvlBottomTrack":	"off",
+					"dvlWaterTrack":	"off",
+					"eventA":	"off",
+					"eventB":	"off",
+					"eventC":	"off",
+					"eventD":	"off",
+					"eventE":	"off",
+					"pressure":	"off",
+					"usbl":	"off",
+					"airData":	"off",
+					"depth":	"off",
+					"GGA":	"off",
+					"RMC":	"off",
+					"VTG":	"off",
+					"ZDA":	"off",
+					"HDT":	"50ms",
+					"ROT":	"off",
+					"GST":	"off",
+					"VBW":	"off",
+					"DPT":	"off",
+					"GGK":	"off",
+					"PPS":	"off",
+					"TSS1":	"off",
+					"KVH":	"off",
+					"PD0":	"off",
+					"PRDID":	"off",
+					"SIMRAD1000":	"off",
+					"SIMRAD3000":	"50ms",
+					"SEAPATHB26":	"off",
+					"DOLOGHRP":	"off",
+					"AHRS500":	"off",
+					"ADA_01":	"off",
+					"AT_ITINS":	"off",
+					"KMB":	"off",
+					"PHINF":	"off",
+					"PHTRO":	"off",
+					"PHLIN":	"off",
+					"PHOCT":	"off",
+					"INDYN":	"off",
+					"PSBGB":	"off",
+					"PSBGI":	"off",
+					"PASHR":	"off",
+					"debug0":	"off",
+					"debug1":	"off",
+					"debug2":	"off",
+					"debug3":	"off",
+					"imuData":	"off",
+					"imuShort":	"off",
+					"eventOutA":	"off",
+					"eventOutB":	"off",
+					"diag":	"off",
+					"rtcmRaw":	"off"
+				}
+			},
+			"comC":	{
+				"nmea":	{
+					"talkerId":	"GP",
+					"mode":	"extended",
+					"alwaysOutputTime":	false
+				},
+				"leverArm":	"imu",
+				"startThreshold":	"powerOn",
+				"messages":	{
+					"status":	"off",
+					"ekfEuler":	"off",
+					"ekfQuat":	"off",
+					"ekfNav":	"off",
+					"shipMotion":	"off",
+					"shipMotionHp":	"off",
+					"utcTime":	"off",
+					"mag":	"off",
+					"magCalib":	"off",
+					"gps1Vel":	"off",
+					"gps1Pos":	"off",
+					"gps1Hdt":	"off",
+					"gps1Raw":	"off",
+					"gps2Vel":	"off",
+					"gps2Pos":	"off",
+					"gps2Hdt":	"off",
+					"gps2Raw":	"off",
+					"odoVel":	"off",
+					"dvlBottomTrack":	"off",
+					"dvlWaterTrack":	"off",
+					"eventA":	"off",
+					"eventB":	"off",
+					"eventC":	"off",
+					"eventD":	"off",
+					"eventE":	"off",
+					"pressure":	"off",
+					"usbl":	"off",
+					"airData":	"off",
+					"depth":	"off",
+					"GGA":	"off",
+					"RMC":	"200ms",
+					"VTG":	"off",
+					"ZDA":	"off",
+					"HDT":	"off",
+					"ROT":	"off",
+					"GST":	"off",
+					"VBW":	"off",
+					"DPT":	"off",
+					"GGK":	"off",
+					"PPS":	"off",
+					"TSS1":	"off",
+					"KVH":	"off",
+					"PD0":	"off",
+					"PRDID":	"off",
+					"SIMRAD1000":	"off",
+					"SIMRAD3000":	"off",
+					"SEAPATHB26":	"off",
+					"DOLOGHRP":	"off",
+					"AHRS500":	"off",
+					"ADA_01":	"off",
+					"AT_ITINS":	"off",
+					"KMB":	"off",
+					"PHINF":	"off",
+					"PHTRO":	"off",
+					"PHLIN":	"off",
+					"PHOCT":	"off",
+					"INDYN":	"off",
+					"PSBGB":	"off",
+					"PSBGI":	"off",
+					"PASHR":	"off",
+					"debug0":	"off",
+					"debug1":	"off",
+					"debug2":	"off",
+					"debug3":	"off",
+					"imuData":	"off",
+					"imuShort":	"off",
+					"eventOutA":	"off",
+					"eventOutB":	"off",
+					"diag":	"off",
+					"rtcmRaw":	"off"
+				}
+			},
+			"comD":	{
+				"nmea":	{
+					"talkerId":	"GP",
+					"mode":	"extended",
+					"alwaysOutputTime":	false
+				},
+				"leverArm":	"imu",
+				"startThreshold":	"powerOn",
+				"messages":	{
+					"status":	"off",
+					"ekfEuler":	"off",
+					"ekfQuat":	"off",
+					"ekfNav":	"off",
+					"shipMotion":	"off",
+					"shipMotionHp":	"off",
+					"utcTime":	"off",
+					"mag":	"off",
+					"magCalib":	"off",
+					"gps1Vel":	"off",
+					"gps1Pos":	"off",
+					"gps1Hdt":	"off",
+					"gps1Raw":	"off",
+					"gps2Vel":	"off",
+					"gps2Pos":	"off",
+					"gps2Hdt":	"off",
+					"gps2Raw":	"off",
+					"odoVel":	"off",
+					"dvlBottomTrack":	"off",
+					"dvlWaterTrack":	"off",
+					"eventA":	"off",
+					"eventB":	"off",
+					"eventC":	"off",
+					"eventD":	"off",
+					"eventE":	"off",
+					"pressure":	"off",
+					"usbl":	"off",
+					"airData":	"off",
+					"depth":	"off",
+					"GGA":	"off",
+					"RMC":	"off",
+					"VTG":	"off",
+					"ZDA":	"off",
+					"HDT":	"off",
+					"ROT":	"off",
+					"GST":	"off",
+					"VBW":	"off",
+					"DPT":	"off",
+					"GGK":	"off",
+					"PPS":	"off",
+					"TSS1":	"off",
+					"KVH":	"off",
+					"PD0":	"off",
+					"PRDID":	"off",
+					"SIMRAD1000":	"off",
+					"SIMRAD3000":	"off",
+					"SEAPATHB26":	"off",
+					"DOLOGHRP":	"off",
+					"AHRS500":	"off",
+					"ADA_01":	"off",
+					"AT_ITINS":	"off",
+					"KMB":	"off",
+					"PHINF":	"off",
+					"PHTRO":	"off",
+					"PHLIN":	"off",
+					"PHOCT":	"off",
+					"INDYN":	"off",
+					"PSBGB":	"off",
+					"PSBGI":	"off",
+					"PASHR":	"off",
+					"debug0":	"off",
+					"debug1":	"off",
+					"debug2":	"off",
+					"debug3":	"off",
+					"imuData":	"off",
+					"imuShort":	"off",
+					"eventOutA":	"off",
+					"eventOutB":	"off",
+					"diag":	"off",
+					"rtcmRaw":	"off"
+				}
+			},
+			"comE":	{
+				"nmea":	{
+					"talkerId":	"GP",
+					"mode":	"extended",
+					"alwaysOutputTime":	false
+				},
+				"leverArm":	"imu",
+				"startThreshold":	"powerOn",
+				"messages":	{
+					"status":	"off",
+					"ekfEuler":	"off",
+					"ekfQuat":	"off",
+					"ekfNav":	"off",
+					"shipMotion":	"off",
+					"shipMotionHp":	"off",
+					"utcTime":	"off",
+					"mag":	"off",
+					"magCalib":	"off",
+					"gps1Vel":	"off",
+					"gps1Pos":	"off",
+					"gps1Hdt":	"off",
+					"gps1Raw":	"off",
+					"gps2Vel":	"off",
+					"gps2Pos":	"off",
+					"gps2Hdt":	"off",
+					"gps2Raw":	"off",
+					"odoVel":	"off",
+					"dvlBottomTrack":	"onChange",
+					"dvlWaterTrack":	"off",
+					"eventA":	"off",
+					"eventB":	"off",
+					"eventC":	"off",
+					"eventD":	"off",
+					"eventE":	"off",
+					"pressure":	"off",
+					"usbl":	"off",
+					"airData":	"off",
+					"depth":	"off",
+					"GGA":	"200ms",
+					"RMC":	"off",
+					"VTG":	"off",
+					"ZDA":	"200ms",
+					"HDT":	"off",
+					"ROT":	"off",
+					"GST":	"off",
+					"VBW":	"off",
+					"DPT":	"off",
+					"GGK":	"off",
+					"PPS":	"off",
+					"TSS1":	"off",
+					"KVH":	"off",
+					"PD0":	"off",
+					"PRDID":	"off",
+					"SIMRAD1000":	"off",
+					"SIMRAD3000":	"off",
+					"SEAPATHB26":	"off",
+					"DOLOGHRP":	"off",
+					"AHRS500":	"off",
+					"ADA_01":	"off",
+					"AT_ITINS":	"off",
+					"KMB":	"off",
+					"PHINF":	"off",
+					"PHTRO":	"off",
+					"PHLIN":	"off",
+					"PHOCT":	"off",
+					"INDYN":	"off",
+					"PSBGB":	"off",
+					"PSBGI":	"off",
+					"PASHR":	"off",
+					"debug0":	"off",
+					"debug1":	"off",
+					"debug2":	"off",
+					"debug3":	"off",
+					"imuData":	"off",
+					"imuShort":	"off",
+					"eventOutA":	"off",
+					"eventOutB":	"off",
+					"diag":	"off",
+					"rtcmRaw":	"off"
+				}
+			},
+			"eth0":	{
+				"nmea":	{
+					"talkerId":	"GP",
+					"mode":	"extended",
+					"alwaysOutputTime":	false
+				},
+				"leverArm":	"imu",
+				"startThreshold":	"powerOn",
+				"messages":	{
+					"status":	"1000ms",
+					"ekfEuler":	"40ms",
+					"ekfQuat":	"40ms",
+					"ekfNav":	"40ms",
+					"shipMotion":	"40ms",
+					"shipMotionHp":	"40ms",
+					"utcTime":	"1000ms",
+					"mag":	"off",
+					"magCalib":	"off",
+					"gps1Vel":	"off",
+					"gps1Pos":	"onChange",
+					"gps1Hdt":	"off",
+					"gps1Raw":	"off",
+					"gps2Vel":	"off",
+					"gps2Pos":	"off",
+					"gps2Hdt":	"off",
+					"gps2Raw":	"off",
+					"odoVel":	"off",
+					"dvlBottomTrack":	"off",
+					"dvlWaterTrack":	"off",
+					"eventA":	"off",
+					"eventB":	"off",
+					"eventC":	"off",
+					"eventD":	"off",
+					"eventE":	"off",
+					"pressure":	"off",
+					"usbl":	"off",
+					"airData":	"off",
+					"depth":	"off",
+					"GGA":	"off",
+					"RMC":	"off",
+					"VTG":	"off",
+					"ZDA":	"off",
+					"HDT":	"off",
+					"ROT":	"off",
+					"GST":	"off",
+					"VBW":	"off",
+					"DPT":	"off",
+					"GGK":	"off",
+					"PPS":	"off",
+					"TSS1":	"off",
+					"KVH":	"off",
+					"PD0":	"off",
+					"PRDID":	"off",
+					"SIMRAD1000":	"off",
+					"SIMRAD3000":	"off",
+					"SEAPATHB26":	"off",
+					"DOLOGHRP":	"off",
+					"AHRS500":	"off",
+					"ADA_01":	"off",
+					"AT_ITINS":	"off",
+					"KMB":	"off",
+					"PHINF":	"off",
+					"PHTRO":	"off",
+					"PHLIN":	"off",
+					"PHOCT":	"off",
+					"INDYN":	"off",
+					"PSBGB":	"off",
+					"PSBGI":	"off",
+					"PASHR":	"off",
+					"debug0":	"off",
+					"debug1":	"off",
+					"debug2":	"off",
+					"debug3":	"off",
+					"imuData":	"40ms",
+					"imuShort":	"onChange",
+					"eventOutA":	"off",
+					"eventOutB":	"off",
+					"diag":	"off",
+					"rtcmRaw":	"off"
+				}
+			},
+			"eth1":	{
+				"nmea":	{
+					"talkerId":	"GP",
+					"mode":	"extended",
+					"alwaysOutputTime":	false
+				},
+				"leverArm":	"imu",
+				"startThreshold":	"powerOn",
+				"messages":	{
+					"status":	"off",
+					"ekfEuler":	"off",
+					"ekfQuat":	"off",
+					"ekfNav":	"off",
+					"shipMotion":	"off",
+					"shipMotionHp":	"off",
+					"utcTime":	"off",
+					"mag":	"off",
+					"magCalib":	"off",
+					"gps1Vel":	"off",
+					"gps1Pos":	"off",
+					"gps1Hdt":	"off",
+					"gps1Raw":	"off",
+					"gps2Vel":	"off",
+					"gps2Pos":	"off",
+					"gps2Hdt":	"off",
+					"gps2Raw":	"off",
+					"odoVel":	"off",
+					"dvlBottomTrack":	"off",
+					"dvlWaterTrack":	"off",
+					"eventA":	"off",
+					"eventB":	"off",
+					"eventC":	"off",
+					"eventD":	"off",
+					"eventE":	"off",
+					"pressure":	"off",
+					"usbl":	"off",
+					"airData":	"off",
+					"depth":	"off",
+					"GGA":	"20ms",
+					"RMC":	"off",
+					"VTG":	"off",
+					"ZDA":	"1000ms",
+					"HDT":	"off",
+					"ROT":	"off",
+					"GST":	"off",
+					"VBW":	"off",
+					"DPT":	"off",
+					"GGK":	"off",
+					"PPS":	"off",
+					"TSS1":	"off",
+					"KVH":	"off",
+					"PD0":	"off",
+					"PRDID":	"off",
+					"SIMRAD1000":	"off",
+					"SIMRAD3000":	"off",
+					"SEAPATHB26":	"25ms",
+					"DOLOGHRP":	"off",
+					"AHRS500":	"off",
+					"ADA_01":	"off",
+					"AT_ITINS":	"off",
+					"KMB":	"off",
+					"PHINF":	"off",
+					"PHTRO":	"off",
+					"PHLIN":	"off",
+					"PHOCT":	"off",
+					"INDYN":	"off",
+					"PSBGB":	"off",
+					"PSBGI":	"off",
+					"PASHR":	"off",
+					"debug0":	"off",
+					"debug1":	"off",
+					"debug2":	"off",
+					"debug3":	"off",
+					"imuData":	"off",
+					"imuShort":	"off",
+					"eventOutA":	"off",
+					"eventOutB":	"off",
+					"diag":	"off",
+					"rtcmRaw":	"off"
+				}
+			},
+			"eth2":	{
+				"nmea":	{
+					"talkerId":	"GP",
+					"mode":	"extended",
+					"alwaysOutputTime":	false
+				},
+				"leverArm":	"imu",
+				"startThreshold":	"powerOn",
+				"messages":	{
+					"status":	"off",
+					"ekfEuler":	"off",
+					"ekfQuat":	"off",
+					"ekfNav":	"off",
+					"shipMotion":	"off",
+					"shipMotionHp":	"off",
+					"utcTime":	"off",
+					"mag":	"off",
+					"magCalib":	"off",
+					"gps1Vel":	"off",
+					"gps1Pos":	"off",
+					"gps1Hdt":	"off",
+					"gps1Raw":	"off",
+					"gps2Vel":	"off",
+					"gps2Pos":	"off",
+					"gps2Hdt":	"off",
+					"gps2Raw":	"off",
+					"odoVel":	"off",
+					"dvlBottomTrack":	"off",
+					"dvlWaterTrack":	"off",
+					"eventA":	"off",
+					"eventB":	"off",
+					"eventC":	"off",
+					"eventD":	"off",
+					"eventE":	"off",
+					"pressure":	"off",
+					"usbl":	"off",
+					"airData":	"off",
+					"depth":	"off",
+					"GGA":	"25ms",
+					"RMC":	"off",
+					"VTG":	"25ms",
+					"ZDA":	"off",
+					"HDT":	"off",
+					"ROT":	"off",
+					"GST":	"off",
+					"VBW":	"off",
+					"DPT":	"off",
+					"GGK":	"off",
+					"PPS":	"off",
+					"TSS1":	"off",
+					"KVH":	"off",
+					"PD0":	"off",
+					"PRDID":	"off",
+					"SIMRAD1000":	"off",
+					"SIMRAD3000":	"off",
+					"SEAPATHB26":	"off",
+					"DOLOGHRP":	"off",
+					"AHRS500":	"off",
+					"ADA_01":	"off",
+					"AT_ITINS":	"off",
+					"KMB":	"off",
+					"PHINF":	"off",
+					"PHTRO":	"off",
+					"PHLIN":	"off",
+					"PHOCT":	"off",
+					"INDYN":	"off",
+					"PSBGB":	"off",
+					"PSBGI":	"off",
+					"PASHR":	"off",
+					"debug0":	"off",
+					"debug1":	"off",
+					"debug2":	"off",
+					"debug3":	"off",
+					"imuData":	"off",
+					"imuShort":	"off",
+					"eventOutA":	"off",
+					"eventOutB":	"off",
+					"diag":	"off",
+					"rtcmRaw":	"off"
+				}
+			},
+			"eth3":	{
+				"nmea":	{
+					"talkerId":	"GP",
+					"mode":	"extended",
+					"alwaysOutputTime":	false
+				},
+				"leverArm":	"arm2",
+				"startThreshold":	"powerOn",
+				"messages":	{
+					"status":	"off",
+					"ekfEuler":	"off",
+					"ekfQuat":	"off",
+					"ekfNav":	"off",
+					"shipMotion":	"off",
+					"shipMotionHp":	"off",
+					"utcTime":	"off",
+					"mag":	"off",
+					"magCalib":	"off",
+					"gps1Vel":	"off",
+					"gps1Pos":	"off",
+					"gps1Hdt":	"off",
+					"gps1Raw":	"off",
+					"gps2Vel":	"off",
+					"gps2Pos":	"off",
+					"gps2Hdt":	"off",
+					"gps2Raw":	"off",
+					"odoVel":	"off",
+					"dvlBottomTrack":	"off",
+					"dvlWaterTrack":	"off",
+					"eventA":	"off",
+					"eventB":	"off",
+					"eventC":	"off",
+					"eventD":	"off",
+					"eventE":	"off",
+					"pressure":	"off",
+					"usbl":	"off",
+					"airData":	"off",
+					"depth":	"off",
+					"GGA":	"100ms",
+					"RMC":	"off",
+					"VTG":	"100ms",
+					"ZDA":	"off",
+					"HDT":	"off",
+					"ROT":	"off",
+					"GST":	"off",
+					"VBW":	"off",
+					"DPT":	"off",
+					"GGK":	"off",
+					"PPS":	"off",
+					"TSS1":	"off",
+					"KVH":	"off",
+					"PD0":	"off",
+					"PRDID":	"100ms",
+					"SIMRAD1000":	"off",
+					"SIMRAD3000":	"off",
+					"SEAPATHB26":	"off",
+					"DOLOGHRP":	"off",
+					"AHRS500":	"off",
+					"ADA_01":	"off",
+					"AT_ITINS":	"off",
+					"KMB":	"off",
+					"PHINF":	"off",
+					"PHTRO":	"off",
+					"PHLIN":	"off",
+					"PHOCT":	"off",
+					"INDYN":	"off",
+					"PSBGB":	"off",
+					"PSBGI":	"off",
+					"PASHR":	"off",
+					"debug0":	"off",
+					"debug1":	"off",
+					"debug2":	"off",
+					"debug3":	"off",
+					"imuData":	"off",
+					"imuShort":	"off",
+					"eventOutA":	"off",
+					"eventOutB":	"off",
+					"diag":	"off",
+					"rtcmRaw":	"off"
+				}
+			},
+			"eth4":	{
+				"nmea":	{
+					"talkerId":	"GP",
+					"mode":	"extended",
+					"alwaysOutputTime":	false
+				},
+				"leverArm":	"imu",
+				"startThreshold":	"powerOn",
+				"messages":	{
+					"status":	"off",
+					"ekfEuler":	"off",
+					"ekfQuat":	"off",
+					"ekfNav":	"off",
+					"shipMotion":	"off",
+					"shipMotionHp":	"off",
+					"utcTime":	"off",
+					"mag":	"off",
+					"magCalib":	"off",
+					"gps1Vel":	"off",
+					"gps1Pos":	"off",
+					"gps1Hdt":	"off",
+					"gps1Raw":	"off",
+					"gps2Vel":	"off",
+					"gps2Pos":	"off",
+					"gps2Hdt":	"off",
+					"gps2Raw":	"off",
+					"odoVel":	"off",
+					"dvlBottomTrack":	"off",
+					"dvlWaterTrack":	"off",
+					"eventA":	"off",
+					"eventB":	"off",
+					"eventC":	"off",
+					"eventD":	"off",
+					"eventE":	"off",
+					"pressure":	"off",
+					"usbl":	"off",
+					"airData":	"off",
+					"depth":	"off",
+					"GGA":	"200ms",
+					"RMC":	"off",
+					"VTG":	"200ms",
+					"ZDA":	"200ms",
+					"HDT":	"off",
+					"ROT":	"off",
+					"GST":	"off",
+					"VBW":	"off",
+					"DPT":	"off",
+					"GGK":	"off",
+					"PPS":	"off",
+					"TSS1":	"off",
+					"KVH":	"off",
+					"PD0":	"off",
+					"PRDID":	"off",
+					"SIMRAD1000":	"off",
+					"SIMRAD3000":	"off",
+					"SEAPATHB26":	"10ms",
+					"DOLOGHRP":	"off",
+					"AHRS500":	"off",
+					"ADA_01":	"off",
+					"AT_ITINS":	"off",
+					"KMB":	"off",
+					"PHINF":	"off",
+					"PHTRO":	"off",
+					"PHLIN":	"off",
+					"PHOCT":	"off",
+					"INDYN":	"off",
+					"PSBGB":	"off",
+					"PSBGI":	"off",
+					"PASHR":	"off",
+					"debug0":	"off",
+					"debug1":	"off",
+					"debug2":	"off",
+					"debug3":	"off",
+					"imuData":	"off",
+					"imuShort":	"off",
+					"eventOutA":	"off",
+					"eventOutB":	"off",
+					"diag":	"off",
+					"rtcmRaw":	"off"
+				}
+			},
+			"dataLogger":	{
+				"nmea":	{
+					"talkerId":	"GP",
+					"mode":	"extended",
+					"alwaysOutputTime":	true
+				},
+				"leverArm":	"imu",
+				"startThreshold":	"powerOn",
+				"messages":	{
+					"status":	"5ms",
+					"ekfEuler":	"25ms",
+					"ekfQuat":	"25ms",
+					"ekfNav":	"25ms",
+					"shipMotion":	"25ms",
+					"shipMotionHp":	"off",
+					"utcTime":	"5ms",
+					"mag":	"off",
+					"magCalib":	"off",
+					"gps1Vel":	"onChange",
+					"gps1Pos":	"onChange",
+					"gps1Hdt":	"onChange",
+					"gps1Raw":	"onChange",
+					"gps2Vel":	"off",
+					"gps2Pos":	"off",
+					"gps2Hdt":	"off",
+					"gps2Raw":	"off",
+					"odoVel":	"onChange",
+					"dvlBottomTrack":	"onChange",
+					"dvlWaterTrack":	"onChange",
+					"eventA":	"off",
+					"eventB":	"off",
+					"eventC":	"onChange",
+					"eventD":	"off",
+					"eventE":	"onChange",
+					"pressure":	"off",
+					"usbl":	"onChange",
+					"airData":	"off",
+					"depth":	"onChange",
+					"GGA":	"100ms",
+					"RMC":	"off",
+					"VTG":	"off",
+					"ZDA":	"off",
+					"HDT":	"off",
+					"ROT":	"off",
+					"GST":	"off",
+					"VBW":	"off",
+					"DPT":	"off",
+					"GGK":	"off",
+					"PPS":	"off",
+					"TSS1":	"off",
+					"KVH":	"off",
+					"PD0":	"onChange",
+					"PRDID":	"off",
+					"SIMRAD1000":	"off",
+					"SIMRAD3000":	"off",
+					"SEAPATHB26":	"off",
+					"DOLOGHRP":	"off",
+					"AHRS500":	"off",
+					"ADA_01":	"off",
+					"AT_ITINS":	"off",
+					"KMB":	"off",
+					"PHINF":	"off",
+					"PHTRO":	"off",
+					"PHLIN":	"off",
+					"PHOCT":	"off",
+					"INDYN":	"off",
+					"PSBGB":	"off",
+					"PSBGI":	"off",
+					"PASHR":	"off",
+					"debug0":	"off",
+					"debug1":	"off",
+					"debug2":	"off",
+					"debug3":	"off",
+					"imuData":	"25ms",
+					"imuShort":	"onChange",
+					"eventOutA":	"off",
+					"eventOutB":	"off",
+					"diag":	"off",
+					"rtcmRaw":	"onChange"
+				}
+			},
+			"can":	{
+				"leverArm":	"imu",
+				"startThreshold":	"powerOn",
+				"messages":	{
+					"status01":	{
+						"trigger":	"off",
+						"id":	256,
+						"extended":	false
+					},
+					"status02":	{
+						"trigger":	"off",
+						"id":	257,
+						"extended":	false
+					},
+					"status03":	{
+						"trigger":	"off",
+						"id":	258,
+						"extended":	false
+					},
+					"utc0":	{
+						"trigger":	"off",
+						"id":	272,
+						"extended":	false
+					},
+					"utc1":	{
+						"trigger":	"off",
+						"id":	273,
+						"extended":	false
+					},
+					"imuInfo":	{
+						"trigger":	"off",
+						"id":	288,
+						"extended":	false
+					},
+					"imuAccel":	{
+						"trigger":	"off",
+						"id":	289,
+						"extended":	false
+					},
+					"imuGyro":	{
+						"trigger":	"off",
+						"id":	290,
+						"extended":	false
+					},
+					"imuDeltaVel":	{
+						"trigger":	"off",
+						"id":	291,
+						"extended":	false
+					},
+					"imuDeltaAngle":	{
+						"trigger":	"off",
+						"id":	292,
+						"extended":	false
+					},
+					"ekfInfo":	{
+						"trigger":	"off",
+						"id":	304,
+						"extended":	false
+					},
+					"ekfQuat":	{
+						"trigger":	"off",
+						"id":	305,
+						"extended":	false
+					},
+					"ekfEuler":	{
+						"trigger":	"off",
+						"id":	306,
+						"extended":	false
+					},
+					"ekfOrientationAcc":	{
+						"trigger":	"off",
+						"id":	307,
+						"extended":	false
+					},
+					"ekfPos":	{
+						"trigger":	"off",
+						"id":	308,
+						"extended":	false
+					},
+					"ekfAltitude":	{
+						"trigger":	"off",
+						"id":	309,
+						"extended":	false
+					},
+					"ekfPosAcc":	{
+						"trigger":	"off",
+						"id":	310,
+						"extended":	false
+					},
+					"ekfVelNed":	{
+						"trigger":	"off",
+						"id":	311,
+						"extended":	false
+					},
+					"ekfVelNedAcc":	{
+						"trigger":	"off",
+						"id":	312,
+						"extended":	false
+					},
+					"ekfVelBody":	{
+						"trigger":	"off",
+						"id":	313,
+						"extended":	false
+					},
+					"shipMotionInfo":	{
+						"trigger":	"off",
+						"id":	320,
+						"extended":	false
+					},
+					"shipMotion0":	{
+						"trigger":	"off",
+						"id":	321,
+						"extended":	false
+					},
+					"shipMotion1":	{
+						"trigger":	"off",
+						"id":	325,
+						"extended":	false
+					},
+					"shipMotion2":	{
+						"trigger":	"off",
+						"id":	329,
+						"extended":	false
+					},
+					"shipMotionHpInfo":	{
+						"trigger":	"off",
+						"id":	330,
+						"extended":	false
+					},
+					"shipMotionHp0":	{
+						"trigger":	"off",
+						"id":	331,
+						"extended":	false
+					},
+					"shipMotionHp1":	{
+						"trigger":	"off",
+						"id":	332,
+						"extended":	false
+					},
+					"shipMotionHp2":	{
+						"trigger":	"off",
+						"id":	333,
+						"extended":	false
+					},
+					"mag0":	{
+						"trigger":	"off",
+						"id":	336,
+						"extended":	false
+					},
+					"mag1":	{
+						"trigger":	"off",
+						"id":	337,
+						"extended":	false
+					},
+					"mag2":	{
+						"trigger":	"off",
+						"id":	338,
+						"extended":	false
+					},
+					"odoInfo":	{
+						"trigger":	"off",
+						"id":	352,
+						"extended":	false
+					},
+					"odoVel":	{
+						"trigger":	"off",
+						"id":	353,
+						"extended":	false
+					},
+					"depthInfo":	{
+						"trigger":	"off",
+						"id":	358,
+						"extended":	false
+					},
+					"depthAltitude":	{
+						"trigger":	"off",
+						"id":	359,
+						"extended":	false
+					},
+					"gps1VelInfo":	{
+						"trigger":	"off",
+						"id":	368,
+						"extended":	false
+					},
+					"gps1Vel":	{
+						"trigger":	"off",
+						"id":	369,
+						"extended":	false
+					},
+					"gps1VelAcc":	{
+						"trigger":	"off",
+						"id":	370,
+						"extended":	false
+					},
+					"gps1VelCourse":	{
+						"trigger":	"off",
+						"id":	371,
+						"extended":	false
+					},
+					"gps1PosInfo":	{
+						"trigger":	"off",
+						"id":	372,
+						"extended":	false
+					},
+					"gps1Pos":	{
+						"trigger":	"off",
+						"id":	373,
+						"extended":	false
+					},
+					"gps1PosAlt":	{
+						"trigger":	"off",
+						"id":	374,
+						"extended":	false
+					},
+					"gps1PosAcc":	{
+						"trigger":	"off",
+						"id":	375,
+						"extended":	false
+					},
+					"gps1HdtInfo":	{
+						"trigger":	"off",
+						"id":	376,
+						"extended":	false
+					},
+					"gps1Hdt":	{
+						"trigger":	"off",
+						"id":	377,
+						"extended":	false
+					},
+					"gps2VelInfo":	{
+						"trigger":	"off",
+						"id":	384,
+						"extended":	false
+					},
+					"gps2Vel":	{
+						"trigger":	"off",
+						"id":	385,
+						"extended":	false
+					},
+					"gps2VelAcc":	{
+						"trigger":	"off",
+						"id":	386,
+						"extended":	false
+					},
+					"gps2VelCourse":	{
+						"trigger":	"off",
+						"id":	387,
+						"extended":	false
+					},
+					"gps2PosInfo":	{
+						"trigger":	"off",
+						"id":	388,
+						"extended":	false
+					},
+					"gps2Pos":	{
+						"trigger":	"off",
+						"id":	389,
+						"extended":	false
+					},
+					"gps2PosAlt":	{
+						"trigger":	"off",
+						"id":	390,
+						"extended":	false
+					},
+					"gps2PosAcc":	{
+						"trigger":	"off",
+						"id":	391,
+						"extended":	false
+					},
+					"gps2HdtInfo":	{
+						"trigger":	"off",
+						"id":	392,
+						"extended":	false
+					},
+					"gps2Hdt":	{
+						"trigger":	"off",
+						"id":	393,
+						"extended":	false
+					},
+					"eventInfoA":	{
+						"trigger":	"off",
+						"id":	512,
+						"extended":	false
+					},
+					"eventTimeA":	{
+						"trigger":	"off",
+						"id":	513,
+						"extended":	false
+					},
+					"eventInfoB":	{
+						"trigger":	"off",
+						"id":	514,
+						"extended":	false
+					},
+					"eventTimeB":	{
+						"trigger":	"off",
+						"id":	515,
+						"extended":	false
+					},
+					"eventInfoC":	{
+						"trigger":	"off",
+						"id":	516,
+						"extended":	false
+					},
+					"eventTimeC":	{
+						"trigger":	"off",
+						"id":	517,
+						"extended":	false
+					},
+					"eventInfoD":	{
+						"trigger":	"off",
+						"id":	518,
+						"extended":	false
+					},
+					"eventTimeD":	{
+						"trigger":	"off",
+						"id":	519,
+						"extended":	false
+					},
+					"eventInfoE":	{
+						"trigger":	"off",
+						"id":	520,
+						"extended":	false
+					},
+					"eventTimeE":	{
+						"trigger":	"off",
+						"id":	521,
+						"extended":	false
+					},
+					"autoTrackSlipCurv":	{
+						"trigger":	"off",
+						"id":	544,
+						"extended":	false
+					}
+				}
+			}
+		},
+		"events":	{
+			"eventInA":	{
+				"trigger":	"off",
+				"delay":	0
+			},
+			"eventInB":	{
+				"trigger":	"off",
+				"delay":	0
+			},
+			"eventInC":	{
+				"trigger":	"falling",
+				"delay":	0
+			},
+			"eventInD":	{
+				"trigger":	"off",
+				"delay":	0
+			},
+			"eventInE":	{
+				"trigger":	"rising",
+				"delay":	0
+			},
+			"eventOutA":	{
+				"trigger":	"off",
+				"polarity":	"rising",
+				"duration":	1000,
+				"distance":	100
+			},
+			"eventOutB":	{
+				"trigger":	"1000ms",
+				"polarity":	"rising",
+				"duration":	1000,
+				"distance":	100
+			}
+		},
+		"clock":	{
+			"source":	"gnss",
+			"mode":	"scaled",
+			"leapSec":	18
+		}
+	},
+	"dataLogger":	{
+		"mode":	"normal",
+		"sessionName":	"recalage_0003"
+	},
+	"id":	"sbgDatalogger",
+	"version":	"1.0.0.0"
+}
