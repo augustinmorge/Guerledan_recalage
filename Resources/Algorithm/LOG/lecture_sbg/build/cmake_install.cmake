@@ -1,4 +1,4 @@
-# Install script for directory: /home/am/Documents/Cours/Semestre_5/Guerledan_recalage/Resources/Algorithm/LOG/lecture_sbg
+# Install script for directory: /home/laurent/Documents/Guerledan_recalage/Resources/Algorithm/LOG/lecture_sbg
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -50,5 +50,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/home/am/Documents/Cours/Semestre_5/Guerledan_recalage/Resources/Algorithm/LOG/lecture_sbg/build/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/home/laurent/Documents/Guerledan_recalage/Resources/Algorithm/LOG/lecture_sbg/build/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
