@@ -283,9 +283,9 @@ start_time = max(max(T[0], MBES_T[0]),dvl_T[0])
 end_time = min(min(T[-1], MBES_T[-1]),dvl_T[-1])
 global dt_br
 # dt_br = 0.1 #np.mean(np.diff(dvl_T))
-dt_br = np.mean(np.diff(dvl_T))
+# dt_br = np.mean(np.diff(dvl_T))
 # dt = 0.2 #np.mean(np.diff(MBES_T))
-# dt = 0.05 #ins
+dt_br = 0.05 #ins
 
 print(f"dt choosen = {dt_br}")
 T_glob = np.arange(start_time, end_time, dt_br)

@@ -169,7 +169,8 @@ def f_measurements_offset(i):
         global ct_mbes
         while MBES_T[ct_mbes,] <= T[i,]:
             ct_mbes += 1
-        return(MBES_Z[ct_mbes,] - 117.61544705067318, None)
+        measurements = MBES_Z[ct_mbes,] - 117.61544705067318
+        return measuremnts, None
 
 def test_diverge(ERR, err_max=1000):
     if ERR[-1] > err_max: #Si l'erreur est de plus de 500m il y a un probleme
@@ -198,8 +199,11 @@ if __name__ == '__main__':
 
     #For the update
     resampler = Resampler()
-    resampling_threshold = 2/3*n_particles
+    # resampling_threshold = 2/3*n_particles
+    resampling_threshold = 1/2*n_particles
     idx_ti = 0
+    if choice_range_sensor == "mnt":
+        idx_ti = int(1/4*dvl_T.shape[0])
     idx_tf =  dvl_T.shape[0]
 
     dt = dvl_T[steps,] - dvl_T[0,]
@@ -223,21 +227,33 @@ if __name__ == '__main__':
     fig, ax = plt.subplots()
     TIME = []; BAR = []; SPEED = []; ERR = []
     STD_X = []; STD_Y = []
-    # beta = 5/100
-    # beta = 1/10
-    beta = 10**(-1.37)
+    if choice_range_sensor == "mbes" or "dvl":
+        # beta = 1/10
+        beta = 10**(-1.37)
+    else:
+        # beta = 5/100
+        beta = 1/100
     filter_lpf_speed = Low_pass_filter(1., np.array([dvl_v_x[0,], dvl_v_y[0,]]))
 
     for i in r:
 
         """Set data"""
-        t = dvl_T[i,]
-        yaw = YAW[i,]
-        yaw_std = YAW_STD[i,]
-        v_x, v_y = filter_lpf_speed.low_pass_next(np.array([dvl_v_x[i,], dvl_v_y[i,]])).flatten()
-        # v_std = dvl_VSTD[i,]
+        #Use the DVL
+        # t = dvl_T[i,]
+        # yaw = YAW[i,]
+        # yaw_std = YAW_STD[i,]
+        # v_x, v_y = filter_lpf_speed.low_pass_next(np.array([dvl_v_x[i,], dvl_v_y[i,]])).flatten()
+        # # v_std = dvl_VSTD[i,]
+        # # v_std = 0.4*10*dt_br
         # v_std = 0.4*10*dt_br
-        v_std = 0.4*10*dt_br
+
+        #Use the INS
+        t = T[i,]
+        yaw = YAW[i,]
+        # yaw_std = YAW_STD[i,]
+        yaw_std = np.abs(np.arctan2(V_Y[i,], V_X[i,] + V_X_STD[i,]) - np.arctan2(V_Y[i,] + V_Y_STD[i,], V_X[i,]))
+        v_x, v_y = V_X[i,], V_Y[i,]
+        v_std = dt*np.sqrt(V_X_STD[i,]**2 + V_Y_STD[i,]**2)
 
         if using_offset : measurements, meas_model_distance_std = f_measurements_offset(i)
         else: measurements, previous_measurements, meas_model_distance_std = f_measurements(i, previous_measurements)
@@ -353,7 +369,7 @@ if __name__ == '__main__':
     ax3.set_xlabel("Time [min]")
     ax3.set_ylabel("Range [m]")
     ax3.plot(dvl_T, mean_dvlR - 115.57149562238688, label = "z_dvl")
-    ax3.plot(T, d_bottom_mnt, label = "z_mnt")
+    # ax3.plot(T, d_bottom_mnt, label = "z_mnt")
     ax3.plot(MBES_T, MBES_Z - 117.61544705067318, label = "z_mbes")
     ax3.legend()
 
