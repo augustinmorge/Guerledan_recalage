@@ -200,7 +200,7 @@ if __name__ == '__main__':
         particles = initialize_particles_uniform(n_particles)
         _, z_particules_mnt = distance_to_bottom(np.hstack((particles[1][0],particles[1][1])),MNT)
         print("n_particles = ",n_particles,"\n")
-        file = open(f"./test_beta/txt/steps_{steps}_npart_{n_particles}.txt","w")
+        file = open(f"./imgs/test_beta/txt/steps_{steps}_npart_{n_particles}.txt","w")
         ERROR = []
         for k in tqdm(range(len(BETA))):
             beta = BETA[k]

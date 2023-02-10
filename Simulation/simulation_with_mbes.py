@@ -160,10 +160,15 @@ def f_measurements_offset(i):
         x_gps, y_gps = coord2cart((LAT[i,],LON[i,])).flatten()
         d_mnt, measurements = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)
         return measurements, None #d_mnt
+    # elif choice_range_sensor == "dvl":
+    #     h1, h2, h3, h4 = dvl_BM1R[i,], dvl_BM2R[i,], dvl_BM3R[i,], dvl_BM4R[i,]
+    #     mean_range_dvl = (h1*h2)/(h1+h2) + (h3*h4)/(h3+h4)
+    #     measurements = mean_range_dvl - 115.57149562238688
+    #     return measurements, None
     elif choice_range_sensor == "dvl":
-        h1, h2, h3, h4 = dvl_BM1R[0,], dvl_BM2R[0,], dvl_BM3R[0,], dvl_BM4R[0,]
-        mean_range_dvl = (h1*h2)/(h1+h2) + (h3*h4)/(h3+h4)
-        measurements = mean_range_dvl - 115.57149562238688
+        h1, h2, h3, h4 = dvl_BM1R[i,], dvl_BM2R[i,], dvl_BM3R[i,], dvl_BM4R[i,]
+        # mean_range_dvl = (h1*h2)/(h1+h2) + (h3*h4)/(h3+h4)
+        measurements = np.array([h1,h2,h3,h4]) - 115.57149562238688
         return measurements, None
     else:
         global ct_mbes
