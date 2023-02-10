@@ -1,19 +1,8 @@
 #!/usr/bin/env python3
-import sys
-print("You can run your program adding mbes or dvl or mnt at the end of the arguments")
-if len(sys.argv[1:])>=1:
-    for arg in sys.argv[1:]:
-        if arg == "mnt" or arg == "dvl" or arg == "mbes":
-            choice_range_sensor = arg
-else:
-    choice_range_sensor = str(input("Choose your way to measure the bottom range [mnt/dvl/mbes]: "))
-    if choice_range_sensor not in ["mnt","dvl","mbes"]:
-        print("You have to select a sensor")
-        sys.exit()
 
 from storage.data_import import *
 n_particles = int(input("Number of particles: "))
-steps = int(input("number of steps between measures ? "))
+steps = int(input("Number of steps between measures ? "))
 bool_display = (str(input("Display the particles ? [Y/]"))=="Y")
 using_offset = True # str(input("Using offset ? [Y/]")) == "Y"
 
@@ -129,53 +118,21 @@ def get_std_state(particles):
     std_y = np.sqrt(np.sum(particles[0]*particles[1][1]**2)/n_particles - (np.sum(particles[0]*particles[1][1])/n_particles)**2) # / np.sum(particles[0])
 
     return std_x, std_y
+
 # Init range sensor
-if choice_range_sensor == "mnt":
-    x_gps, y_gps = coord2cart((LAT[0,],LON[0,])).flatten()
-    d_mnt, previous_measurements = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)
-elif choice_range_sensor == "dvl":
-    h1, h2, h3, h4 = dvl_BM1R[0,], dvl_BM2R[0,], dvl_BM3R[0,], dvl_BM4R[0,]
-    previous_measurements = (h1*h2)/(h1+h2) + (h3*h4)/(h3+h4) #range__Z[0,]
-else:
-    previous_measurements = MBES_Z[0,]
+previous_measurements = MBES_Z[0,]
 
 def f_measurements(i, previous_measurements):
-    if choice_range_sensor == "mnt":
-        x_gps, y_gps = coord2cart((LAT[i,],LON[i,])).flatten()
-        d_mnt, measurements = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)
-        return measurements-previous_measurements, measurements, None #d_mnt
-        # return measurements, measurements, d_mnt
-    elif choice_range_sensor == "dvl":
-        h1, h2, h3, h4 = dvl_BM1R[0,], dvl_BM2R[0,], dvl_BM3R[0,], dvl_BM4R[0,]
-        mean_range_dvl = (h1*h2)/(h1+h2) + (h3*h4)/(h3+h4)
-        measurements = mean_range_dvl - previous_measurements #117.61492204 #
-        return measurements, mean_range_dvl, None
-    else:
-        measurements = MBES_Z[i,] - previous_measurements #117.61492204 #
-        return measurements, MBES_Z[i,], None
+    measurements = MBES_Z[i,] - previous_measurements #117.61492204 #
+    return measurements, MBES_Z[i,], None
 
 ct_mbes = 0
 def f_measurements_offset(i):
-    if choice_range_sensor == "mnt":
-        x_gps, y_gps = coord2cart((LAT[i,],LON[i,])).flatten()
-        d_mnt, measurements = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)
-        return measurements, None #d_mnt
-    # elif choice_range_sensor == "dvl":
-    #     h1, h2, h3, h4 = dvl_BM1R[i,], dvl_BM2R[i,], dvl_BM3R[i,], dvl_BM4R[i,]
-    #     mean_range_dvl = (h1*h2)/(h1+h2) + (h3*h4)/(h3+h4)
-    #     measurements = mean_range_dvl - 115.57149562238688
-    #     return measurements, None
-    elif choice_range_sensor == "dvl":
-        h1, h2, h3, h4 = dvl_BM1R[i,], dvl_BM2R[i,], dvl_BM3R[i,], dvl_BM4R[i,]
-        # mean_range_dvl = (h1*h2)/(h1+h2) + (h3*h4)/(h3+h4)
-        measurements = np.array([h1,h2,h3,h4]) - 115.57149562238688
-        return measurements, None
-    else:
-        global ct_mbes
-        while MBES_T[ct_mbes,] <= T[i,]:
-            ct_mbes += 1
-        measurements = MBES_Z[ct_mbes,] - 117.61544705067318
-        return measuremnts, None
+    global ct_mbes
+    while MBES_T[ct_mbes,] <= T[i,]:
+        ct_mbes += 1
+    measurements = MBES_Z[ct_mbes,] - 117.61544705067318
+    return measurements, None
 
 def test_diverge(ERR, err_max=1000):
     if ERR[-1] > err_max: #Si l'erreur est de plus de 500m il y a un probleme
@@ -207,15 +164,13 @@ if __name__ == '__main__':
     # resampling_threshold = 2/3*n_particles
     resampling_threshold = 1/2*n_particles
     idx_ti = 0
-    if choice_range_sensor == "mnt":
-        idx_ti = int(1/4*dvl_T.shape[0])
     idx_tf =  dvl_T.shape[0]
 
     dt = dvl_T[steps,] - dvl_T[0,]
     tini = dvl_T[idx_ti,]
 
     if bool_display:
-        """ Création des isobates """
+        """ Création des isobath """
         plt.ion()
 
 
@@ -232,12 +187,7 @@ if __name__ == '__main__':
     fig, ax = plt.subplots()
     TIME = []; BAR = []; SPEED = []; ERR = []
     STD_X = []; STD_Y = []
-    if choice_range_sensor == "mbes" or "dvl":
-        # beta = 1/10
-        beta = 10**(-1.37)
-    else:
-        # beta = 5/100
-        beta = 1/100
+    beta = 1/100
     filter_lpf_speed = Low_pass_filter(1., np.array([dvl_v_x[0,], dvl_v_y[0,]]))
 
     for i in r:
@@ -340,7 +290,7 @@ if __name__ == '__main__':
     max_std = 3*np.mean(NORM_STD)
     masque = NORM_STD > max_std
 
-    plt.suptitle(f"Algorithm with {choice_range_sensor}\n{n_particles} particles; 1/{steps} data log used\nTotal time:{int(elapsed_time)}s")
+    plt.suptitle(f"Algorithm with MBES\n{n_particles} particles; 1/{steps} data log used\nTotal time:{int(elapsed_time)}s")
     ax1 = plt.subplot2grid((3, 2), (0, 0), rowspan=3)
     ax2 = plt.subplot2grid((3, 2), (0, 1))
     ax3 = plt.subplot2grid((3, 2), (1, 1))
