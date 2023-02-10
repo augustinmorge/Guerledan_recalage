@@ -1,15 +1,5 @@
 #!/usr/bin/env python3
 import sys
-print("You can run your program adding mbes or dvl or mnt at the end of the arguments")
-if len(sys.argv[1:])>=1:
-    for arg in sys.argv[1:]:
-        if arg == "mnt" or arg == "dvl" or arg == "mbes":
-            choice_range_sensor = arg
-else:
-    choice_range_sensor = str(input("Choose your way to measure the bottom range [mnt/dvl/mbes]: "))
-    if choice_range_sensor not in ["mnt","dvl","mbes"]:
-        print("You have to select a sensor")
-        sys.exit()
 
 from storage.data_import import *
 n_particles = int(input("Number of particles: "))
@@ -75,10 +65,7 @@ def compute_likelihood(propagated_states, measurements, measurements_noise, beta
     # Map difference true and expected distance measurement to probability
     distance = np.abs(d_mbes_particule-measurements)
 
-    if measurements_noise[0] == None:
-        p_z_given_x_distance = np.exp(-beta*distance**2)
-    else:
-        p_z_given_x_distance = np.exp(-beta*distance/(measurements_noise[0]**2))
+    p_z_given_x_distance = np.exp(-beta*distance/(measurements_noise[0]**2))
 
     # p_z_given_x_distance = 1
     # Return importance weight based on all landmarks
@@ -129,53 +116,16 @@ def get_std_state(particles):
     std_y = np.sqrt(np.sum(particles[0]*particles[1][1]**2)/n_particles - (np.sum(particles[0]*particles[1][1])/n_particles)**2) # / np.sum(particles[0])
 
     return std_x, std_y
-# Init range sensor
-if choice_range_sensor == "mnt":
-    x_gps, y_gps = coord2cart((LAT[0,],LON[0,])).flatten()
-    d_mnt, previous_measurements = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)
-elif choice_range_sensor == "dvl":
-    h1, h2, h3, h4 = dvl_BM1R[0,], dvl_BM2R[0,], dvl_BM3R[0,], dvl_BM4R[0,]
-    previous_measurements = (h1*h2)/(h1+h2) + (h3*h4)/(h3+h4) #range__Z[0,]
-else:
-    previous_measurements = MBES_Z[0,]
 
 def f_measurements(i, previous_measurements):
-    if choice_range_sensor == "mnt":
-        x_gps, y_gps = coord2cart((LAT[i,],LON[i,])).flatten()
-        d_mnt, measurements = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)
-        return measurements-previous_measurements, measurements, None #d_mnt
-        # return measurements, measurements, d_mnt
-    elif choice_range_sensor == "dvl":
-        h1, h2, h3, h4 = dvl_BM1R[0,], dvl_BM2R[0,], dvl_BM3R[0,], dvl_BM4R[0,]
-        mean_range_dvl = (h1*h2)/(h1+h2) + (h3*h4)/(h3+h4)
-        measurements = mean_range_dvl - previous_measurements #117.61492204 #
-        return measurements, mean_range_dvl, None
-    else:
-        measurements = MBES_Z[i,] - previous_measurements #117.61492204 #
-        return measurements, MBES_Z[i,], None
+    x_gps, y_gps = coord2cart((LAT[i,],LON[i,])).flatten()
+    d_mnt, measurements = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)
+    return measurements-previous_measurements, measurements, d_mnt
 
-ct_mbes = 0
 def f_measurements_offset(i):
-    if choice_range_sensor == "mnt":
-        x_gps, y_gps = coord2cart((LAT[i,],LON[i,])).flatten()
-        d_mnt, measurements = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)
-        return measurements, None #d_mnt
-    # elif choice_range_sensor == "dvl":
-    #     h1, h2, h3, h4 = dvl_BM1R[i,], dvl_BM2R[i,], dvl_BM3R[i,], dvl_BM4R[i,]
-    #     mean_range_dvl = (h1*h2)/(h1+h2) + (h3*h4)/(h3+h4)
-    #     measurements = mean_range_dvl - 115.57149562238688
-    #     return measurements, None
-    elif choice_range_sensor == "dvl":
-        h1, h2, h3, h4 = dvl_BM1R[i,], dvl_BM2R[i,], dvl_BM3R[i,], dvl_BM4R[i,]
-        # mean_range_dvl = (h1*h2)/(h1+h2) + (h3*h4)/(h3+h4)
-        measurements = np.array([h1,h2,h3,h4]) - 115.57149562238688
-        return measurements, None
-    else:
-        global ct_mbes
-        while MBES_T[ct_mbes,] <= T[i,]:
-            ct_mbes += 1
-        measurements = MBES_Z[ct_mbes,] - 117.61544705067318
-        return measuremnts, None
+    x_gps, y_gps = coord2cart((LAT[i,],LON[i,])).flatten()
+    d_mnt, measurements = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)
+    return measurements, d_mnt
 
 def test_diverge(ERR, err_max=1000):
     if ERR[-1] > err_max: #Si l'erreur est de plus de 500m il y a un probleme
@@ -197,18 +147,15 @@ if __name__ == '__main__':
 
     x_gps_min, y_gps_min = np.min(coord2cart((LAT, LON))[0,:]), np.min(coord2cart((LAT, LON))[1,:])
     x_gps_max, y_gps_max = np.max(coord2cart((LAT, LON))[0,:]), np.max(coord2cart((LAT, LON))[1,:])
-    # bounds = [[x_gps_min, x_gps_max], [y_gps_min, y_gps_max]]
     particles = initialize_particles_uniform(n_particles)
 
     _, z_particules_mnt = distance_to_bottom(np.hstack((particles[1][0],particles[1][1])),MNT)
 
     #For the update
     resampler = Resampler()
-    # resampling_threshold = 2/3*n_particles
-    resampling_threshold = 1/2*n_particles
+    resampling_threshold = 2/3*n_particles
+
     idx_ti = 0
-    if choice_range_sensor == "mnt":
-        idx_ti = int(1/4*dvl_T.shape[0])
     idx_tf =  dvl_T.shape[0]
 
     dt = dvl_T[steps,] - dvl_T[0,]
@@ -217,7 +164,6 @@ if __name__ == '__main__':
     if bool_display:
         """ Création des isobates """
         plt.ion()
-
 
         x = np.linspace(-np.min(LON), 120, 100)
         y = np.linspace(-120, 120, 100)
@@ -232,13 +178,9 @@ if __name__ == '__main__':
     fig, ax = plt.subplots()
     TIME = []; BAR = []; SPEED = []; ERR = []
     STD_X = []; STD_Y = []
-    if choice_range_sensor == "mbes" or "dvl":
-        # beta = 1/10
-        beta = 10**(-1.37)
-    else:
-        # beta = 5/100
-        beta = 1/100
-    filter_lpf_speed = Low_pass_filter(1., np.array([dvl_v_x[0,], dvl_v_y[0,]]))
+    # beta = 10**(-1.37)
+    beta = 5/100
+    # beta = 1/100
 
     for i in r:
 
@@ -315,13 +257,10 @@ if __name__ == '__main__':
         BAR.append([get_average_state(particles)[0],get_average_state(particles)[1]])
         SPEED.append(np.sqrt(v_x**2 + v_y**2))
 
-        # std = np.std(np.column_stack((particles[1][0],particles[1][1])),axis=0)
-        # STD_X.append(std[0])
-        # STD_Y.append(std[1])
-
         std_x, std_y = get_std_state(particles)
         STD_X.append(std_x)
         STD_Y.append(std_y)
+
         #Test if the algorithm diverge and why
         if test_diverge(ERR, 500) : break
 
@@ -340,7 +279,7 @@ if __name__ == '__main__':
     max_std = 3*np.mean(NORM_STD)
     masque = NORM_STD > max_std
 
-    plt.suptitle(f"Algorithm with {choice_range_sensor}\n{n_particles} particles; 1/{steps} data log used\nTotal time:{int(elapsed_time)}s")
+    plt.suptitle(f"Algorithm with DTM\n{n_particles} particles; 1/{steps} data log used\nTotal time:{int(elapsed_time)}s")
     ax1 = plt.subplot2grid((3, 2), (0, 0), rowspan=3)
     ax2 = plt.subplot2grid((3, 2), (0, 1))
     ax3 = plt.subplot2grid((3, 2), (1, 1))
@@ -373,9 +312,9 @@ if __name__ == '__main__':
     ax3.set_title("Different types of bottom measurements")
     ax3.set_xlabel("Time [min]")
     ax3.set_ylabel("Range [m]")
-    ax3.plot(dvl_T, mean_dvlR - 115.57149562238688, label = "z_dvl")
-    # ax3.plot(T, d_bottom_mnt, label = "z_mnt")
-    ax3.plot(MBES_T, MBES_Z - 117.61544705067318, label = "z_mbes")
+    # ax3.plot(dvl_T, mean_dvlR - 115.57149562238688, label = "z_dvl")
+    ax3.plot(T, d_bottom_mnt, label = "z_mnt")
+    # ax3.plot(MBES_T, MBES_Z - 117.61544705067318, label = "z_mbes")
     ax3.legend()
 
     ax4.set_title("Speed")
