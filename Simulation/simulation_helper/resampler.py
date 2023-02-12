@@ -10,14 +10,9 @@ from enum import Enum
 import copy
 
 # Helper functions
-from resampling_helpers import *
+import sys
+from simulation_helper.resampling_helpers import *
 import bisect
-
-class ResamplingAlgorithms(Enum):
-    MULTINOMIAL = 1
-    RESIDUAL = 2
-    STRATIFIED = 3
-    SYSTEMATIC = 4
 
 class Resampler:
     """

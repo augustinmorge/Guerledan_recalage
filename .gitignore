@@ -28,6 +28,10 @@ Simulation/storage_final/kd_tree.pkl
 Simulation/storage_final/kd_tree.joblib
 Simulation/storage_final/dvl_final.txt
 Simulation/storage_final/mbes_final.txt
+Simulation/storage_final/mbes_transit_aller.txt
 Simulation/storage_final/IMU_final.txt
+Simulation/storage_final/recal_20230209_trdi_0001
+Simulation/storage_final/recal_20230209_trdi_0002
+Simulation/storage_final/recal_20230209_trdi_0003
 
 Simulation/mnt/guerledan_cropped.txt

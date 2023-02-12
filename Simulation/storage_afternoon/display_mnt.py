@@ -33,7 +33,7 @@ def display_mnt(LON, LAT, mnt):
 
 
 if __name__ == '__main__':
-    from data_import_new import *
+    from data_import import *
     display_mnt(LON, LAT, MNT)
 
     from PIL import Image

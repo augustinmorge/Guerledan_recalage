@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 import sys
-
-from storage.data_import import *
+global dt_br
+dt_br = 0.05
+# from storage.data_import import *
+from storage_afternoon.data_import import *
 n_particles = int(input("Number of particles: "))
 steps = int(input("number of steps between measures ? "))
 bool_display = (str(input("Display the particles ? [Y/]"))=="Y")
@@ -13,7 +15,7 @@ import time
 start_time = time.perf_counter()
 import numpy as np
 import matplotlib.pyplot as plt
-from resampler import Resampler
+from simulation_helper import *
 from tqdm import tqdm
 file_path = os.path.dirname(os.path.abspath(__file__))
 from filter import *

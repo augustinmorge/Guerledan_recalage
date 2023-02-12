@@ -12,7 +12,7 @@ import time
 start_time = time.perf_counter()
 import numpy as np
 import matplotlib.pyplot as plt
-from resampler import Resampler
+from simulation_helper.resampler import Resampler
 from tqdm import tqdm
 file_path = os.path.dirname(os.path.abspath(__file__))
 from filter import *
