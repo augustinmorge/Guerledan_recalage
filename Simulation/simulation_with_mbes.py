@@ -58,11 +58,11 @@ def propagate_sample(samples, forward_motion, angular_motion, process_noise):
 
 def compute_likelihood(propagated_states, measurements, measurements_noise, beta, z_particules_mnt):
     d_mnt, new_z_particules_mnt = distance_to_bottom(np.hstack((propagated_states[1][0],propagated_states[1][1])),MNT)
-    if using_offset : d_mbes_particule = new_z_particules_mnt
-    else : d_mbes_particule = new_z_particules_mnt - z_particules_mnt
+    if using_offset : d_MBES_mid_particule = new_z_particules_mnt
+    else : d_MBES_mid_particule = new_z_particules_mnt - z_particules_mnt
 
     # Map difference true and expected distance measurement to probability
-    distance = np.abs(d_mbes_particule-measurements)
+    distance = np.abs(d_MBES_mid_particule-measurements)
 
     if measurements_noise[0] == None:
         p_z_given_x_distance = np.exp(-beta*distance**2)
@@ -120,18 +120,18 @@ def get_std_state(particles):
     return std_x, std_y
 
 # Init range sensor
-previous_measurements = MBES_Z[0,]
+previous_measurements = MBES_mid_Z[0,]
 
 def f_measurements(i, previous_measurements):
-    measurements = MBES_Z[i,] - previous_measurements #117.61492204 #
-    return measurements, MBES_Z[i,], None
+    measurements = MBES_mid_Z[i,] - previous_measurements #117.61492204 #
+    return measurements, MBES_mid_Z[i,], None
 
 ct_mbes = 0
 def f_measurements_offset(i):
     global ct_mbes
-    while MBES_T[ct_mbes,] <= T[i,]:
+    while MBES_mid_T[ct_mbes,] <= T[i,]:
         ct_mbes += 1
-    measurements = MBES_Z[ct_mbes,] - 117.61544705067318
+    measurements = MBES_mid_Z[ct_mbes,] - 117.61544705067318
     return measurements, None
 
 def test_diverge(ERR, err_max=1000):
@@ -325,7 +325,7 @@ if __name__ == '__main__':
     ax3.set_ylabel("Range [m]")
     ax3.plot(dvl_T, mean_dvlR - 115.57149562238688, label = "z_dvl")
     # ax3.plot(T, d_bottom_mnt, label = "z_mnt")
-    ax3.plot(MBES_T, MBES_Z - 117.61544705067318, label = "z_mbes")
+    ax3.plot(MBES_mid_T, MBES_mid_Z - 117.61544705067318, label = "z_mbes")
     ax3.legend()
 
     ax4.set_title("Speed")

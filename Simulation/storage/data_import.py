@@ -97,7 +97,7 @@ if bool_txt:
 
     """ Import MBES """
     print("Importing the MBES-TXT file..")
-    filepath = file_path+"/mbes_trdi.txt"
+    filepath = file_path+"/MBES_mid_trdi.txt"
     # Read data from file
     data_mbes = np.genfromtxt(filepath, delimiter=',', skip_header=1, dtype = "U")
 
@@ -111,12 +111,12 @@ if bool_txt:
     Time_MBES = np.array([dt.split(" ")[1].split(":") for dt in Date_Time], dtype=np.float64)
 
     # Create the TIME vector array
-    Time_MBES_seconds = (60*60*Time_MBES[:,0] + 60*Time_MBES[:,1] + Time_MBES[:,2])
+    Time_MBES_mid_seconds = (60*60*Time_MBES[:,0] + 60*Time_MBES[:,1] + Time_MBES[:,2])
     # print("Beam: ",Beam)
     # print("Footprint_X: ",Footprint_X)
     # print("Footprint_Y: ",Footprint_Y)
     # print("Footprint_Z: ",Footprint_Z)
-    # print("Time_MBES_seconds: ",Time_MBES_seconds)
+    # print("Time_MBES_mid_seconds: ",Time_MBES_mid_seconds)
 
 
     print("Importing the MNT-TXT file..")
@@ -159,10 +159,10 @@ if bool_txt:
     with open('kd_tree.joblib', 'wb') as f:
         joblib.dump(kd_tree, f)
     np.savez('mbes.npz', BEAMS = Beam,
-                        MBES_X = Footprint_X,
-                        MBES_Y = Footprint_Y,
-                        MBES_Z = Footprint_Z,
-                        MBES_T = Time_MBES_seconds, dtype = np.float64)
+                        MBES_mid_X = Footprint_X,
+                        MBES_mid_Y = Footprint_Y,
+                        MBES_mid_Z = Footprint_Z,
+                        MBES_mid_T = Time_MBES_mid_seconds, dtype = np.float64)
 
     np.savez('dvl.npz', dvl_T = dvl_T,
                         dvl_BM1R = dvl_BM1R,
@@ -230,17 +230,36 @@ indices = np.where(np.diff(BEAMS) < 0)[0]
 # Append the last index to indices
 indices = np.append(indices, BEAMS.shape[0]-1)
 
-# Use only the middle of the beams
-MBES_T = np.array(MBES_T[(indices[:-1]+indices[1:])//2])
-MBES_X = np.array(MBES_X[(indices[:-1]+indices[1:])//2])
-MBES_Y = np.array(MBES_Y[(indices[:-1]+indices[1:])//2])
-MBES_Z = np.array(MBES_Z[(indices[:-1]+indices[1:])//2])
+gcs = pyproj.CRS('epsg:4326')
+proj = pyproj.CRS('epsg:2154')
+lat_mbes, lon_mbes = pyproj.transform(proj, gcs, MBES_X, MBES_Y) # Convert x and y values to latitude and longitude values
+MBES_X, MBES_Y = coord2cart((lat_mbes,lon_mbes))
 
-# Use the average on all the beams
-# MBES_T = np.array([np.mean(MBES_T[indices[i]:indices[i+1]]) for i in range(len(indices)-1)])
-# MBES_X = np.array([np.mean(MBES_X[indices[i]:indices[i+1]]) for i in range(len(indices)-1)])
-# MBES_Y = np.array([np.mean(MBES_Y[indices[i]:indices[i+1]]) for i in range(len(indices)-1)])
-# MBES_Z = np.array([np.mean(MBES_Z[indices[i]:indices[i+1]]) for i in range(len(indices)-1)])
+# Use only the middle of the beams
+MBES_mid_T = np.array(MBES_T[(indices[:-1]+indices[1:])//2])
+MBES_mid_X = np.array(MBES_X[(indices[:-1]+indices[1:])//2])
+MBES_mid_Y = np.array(MBES_Y[(indices[:-1]+indices[1:])//2])
+MBES_mid_Z = np.array(MBES_Z[(indices[:-1]+indices[1:])//2])
+MBES_mid_idx = np.array((indices[:-1]+indices[1:])//2)
+
+MBES_max_T = np.array(MBES_T[indices[:-1]])
+MBES_max_X = np.array(MBES_X[indices[:-1]])
+MBES_max_Y = np.array(MBES_Y[indices[:-1]])
+MBES_max_Z = np.array(MBES_Z[indices[:-1]])
+MBES_max_idx = np.array(indices[:-1])
+
+MBES_min_T = np.array(MBES_T[indices[1:-1]+1])
+MBES_min_X = np.array(MBES_X[indices[1:-1]+1])
+MBES_min_Y = np.array(MBES_Y[indices[1:-1]+1])
+MBES_min_Z = np.array(MBES_Z[indices[1:-1]+1])
+MBES_min_idx = np.array(indices[1:-1]+1)
+
+#Insert the first beam
+MBES_min_T = np.concatenate([np.array([MBES_T[0]]), MBES_min_T])
+MBES_min_X = np.concatenate([np.array([MBES_X[0]]), MBES_min_X])
+MBES_min_Y = np.concatenate([np.array([MBES_Y[0]]), MBES_min_Y])
+MBES_min_Z = np.concatenate([np.array([MBES_Z[0]]), MBES_min_Z])
+MBES_min_idx = np.concatenate([np.array([1]), MBES_min_idx])
 
 """ Load the DVL """
 dvl = np.load(file_path + "/dvl.npz")
@@ -278,13 +297,13 @@ if apply_modif:
     dvl_BM3R = dvl_BM3R[~mask]
     dvl_BM4R = dvl_BM4R[~mask]
 
-# Déterminez les temps de début et de fin communs entre T et MBES_T
-start_time = max(max(T[0], MBES_T[0]),dvl_T[0])
-end_time = min(min(T[-1], MBES_T[-1]),dvl_T[-1])
+# Déterminez les temps de début et de fin communs entre T et MBES_mid_T
+start_time = max(max(T[0], MBES_mid_T[0]),dvl_T[0])
+end_time = min(min(T[-1], MBES_mid_T[-1]),dvl_T[-1])
 global dt_br
 # dt_br = 0.1 #np.mean(np.diff(dvl_T))
 # dt_br = np.mean(np.diff(dvl_T))
-# dt = 0.2 #np.mean(np.diff(MBES_T))
+# dt = 0.2 #np.mean(np.diff(MBES_mid_T))
 dt_br = 0.05 #ins
 
 print(f"dt choosen = {dt_br}")
@@ -406,63 +425,51 @@ dvl_v_x = (dvl_VE*np.cos(angle) + dvl_VN*np.sin(angle))*np.cos(YAW)
 dvl_v_y = (dvl_VN*np.sin(angle) + dvl_VE*np.cos(angle))*np.sin(YAW)
 dvl_v_z = dvl_VZ
 
-dp_x_B1 = -dvl_BM1R/np.tan(60*np.pi/180)*np.sin(YAW-np.pi/4)
-dp_y_B1 = dvl_BM1R/np.tan(60*np.pi/180)*np.cos(YAW-np.pi/4)
-
-dp_x_B2 = dvl_BM2R/np.tan(60*np.pi/180)*np.sin(YAW-np.pi/4)
-dp_y_B2 = -dvl_BM2R/np.tan(60*np.pi/180)*np.cos(YAW-np.pi/4)
-
-dp_x_B3 = dvl_BM3R/np.tan(60*np.pi/180)*np.cos(YAW-np.pi/4)
-dp_y_B3 = dvl_BM3R/np.tan(60*np.pi/180)*np.sin(YAW-np.pi/4)
-
-dp_x_B4 = -dvl_BM4R/np.tan(60*np.pi/180)*np.cos(YAW-np.pi/4)
-dp_y_B4 = -dvl_BM4R/np.tan(60*np.pi/180)*np.sin(YAW-np.pi/4)
 
 if __name__ == '__main__':
+    #Convert the beam of the DVL
+    dp_x_B1 = -dvl_BM1R/np.tan(60*np.pi/180)*np.sin(YAW-np.pi/4)
+    dp_y_B1 = dvl_BM1R/np.tan(60*np.pi/180)*np.cos(YAW-np.pi/4)
+
+    dp_x_B2 = dvl_BM2R/np.tan(60*np.pi/180)*np.sin(YAW-np.pi/4)
+    dp_y_B2 = -dvl_BM2R/np.tan(60*np.pi/180)*np.cos(YAW-np.pi/4)
+
+    dp_x_B3 = dvl_BM3R/np.tan(60*np.pi/180)*np.cos(YAW-np.pi/4)
+    dp_y_B3 = dvl_BM3R/np.tan(60*np.pi/180)*np.sin(YAW-np.pi/4)
+
+    dp_x_B4 = -dvl_BM4R/np.tan(60*np.pi/180)*np.cos(YAW-np.pi/4)
+    dp_y_B4 = -dvl_BM4R/np.tan(60*np.pi/180)*np.sin(YAW-np.pi/4)
+
     def distance_to_bottom(xy,mnt):
         d_mnt, indices = kd_tree.query(xy)  #Utilise KDTree pour calculer les distances
         Z = mnt[indices,2] # Récupère les altitudes des points les plus proches
         return d_mnt, Z
     x_gps, y_gps = coord2cart((LAT, LON))
 
-    # Interpolate the MBES
-    f_MBES_T = interp1d(MBES_T, MBES_T)
-    f_MBES_X = interp1d(MBES_T, MBES_X)
-    f_MBES_Y = interp1d(MBES_T, MBES_Y)
-    f_MBES_Z = interp1d(MBES_T, MBES_Z)
-
-    MBES_T_interp = f_MBES_T(T_glob)
-    MBES_X_interp = f_MBES_X(T_glob)
-    MBES_Y_interp = f_MBES_Y(T_glob)
-    MBES_Z_interp = f_MBES_Z(T_glob)
-
-    #MBES
-    MBES_T = MBES_T_interp
-    MBES_X = MBES_X_interp
-    MBES_Y = MBES_Y_interp
-    MBES_Z = MBES_Z_interp
 
     import matplotlib.pyplot as plt
     T = (T - T[0])/60
     dvl_T = (dvl_T - dvl_T[0])/60
-    MBES_T = (MBES_T - MBES_T[0])/60
+    MBES_mid_T = (MBES_mid_T - MBES_mid_T[0])/60
+    MBES_min_T = (MBES_min_T - MBES_min_T[0])/60
+    MBES_max_T = (MBES_max_T - MBES_max_T[0])/60
     mean_dvlR = (dvl_BM1R + dvl_BM2R + dvl_BM3R + dvl_BM4R)/4
     print(f"the offset with dt = {dt_br} for the DVL/MNT is : {np.mean(mean_dvlR) - np.mean(distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze())}")
-    print(f"the offset with dt = {dt_br} for the MBES/MNT is : {np.mean(MBES_Z) - np.mean(distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze())}")
+    print(f"the offset with dt = {dt_br} for the MBES/MNT is : {np.mean(MBES_mid_Z) - np.mean(distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze())}")
     def display_range():
         #######################################
         plt.figure()
         ax1 = plt.subplot2grid((2, 2), (0, 0), rowspan=2)
         ax5 = plt.subplot2grid((2, 2), (0, 1), rowspan=2)
 
-        mask1 = np.abs(np.diff(MBES_Z)) > 0.001*np.std(MBES_Z)
+        mask1 = np.abs(np.diff(MBES_mid_Z)) > 0.001*np.std(MBES_mid_Z)
 
         d_bottom_mnt = distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze()
 
         mean_dvlR = (dvl_BM1R + dvl_BM2R + dvl_BM3R + dvl_BM4R)/4
 
         ax1.plot(dvl_T, dvl_BM1R - 115.57108493670452, label = "dvl_BM1R", color = 'red')
-        ax1.plot((MBES_T[1:,])[~mask1], (MBES_Z[1:,])[~mask1] - 117.6152233539319, label="MBES_Z")
+        ax1.plot((MBES_mid_T[1:,])[~mask1], (MBES_mid_Z[1:,])[~mask1] - 117.6152233539319, label="MBES_mid_Z")
         ax1.plot(T, d_bottom_mnt, label = "d_mnt")
         ax1.legend()
         ax1.grid()
@@ -473,7 +480,7 @@ if __name__ == '__main__':
         ax5.scatter(T[:-1,], np.diff(distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze()), label = "d_mnt", s = 1)
         mean_dvlR = (dvl_BM1R + dvl_BM2R + dvl_BM3R + dvl_BM4R)/4
         ax5.scatter(dvl_T[:-1,], np.diff(mean_dvlR), label = "mean dvl_BMR", color = 'orange', s = 1)
-        ax5.scatter(MBES_T[:-1,], np.diff(MBES_Z), label="MBES_Z", color = 'gray', s = 0.5)
+        ax5.scatter(MBES_mid_T[:-1,], np.diff(MBES_mid_Z), label="MBES_mid_Z", color = 'gray', s = 0.5)
         ax5.legend()
         ax5.grid()
         ax5.set_xlabel("Time [min]")
@@ -483,10 +490,10 @@ if __name__ == '__main__':
         # Calculate the error between the DVL and the MNT
         dvl_error = np.diff(mean_dvlR) - np.diff(distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze())
         # Calculate the error between the MBES and the MNT
-        mbes_error = np.diff(MBES_Z) - np.diff(distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze())
+        MBES_mid_error = np.diff(MBES_mid_Z) - np.diff(distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze())
 
         plt.figure()
-        plt.scatter(MBES_T[:-1], mbes_error, label = "mbes_error", color = 'green', s = 1)
+        plt.scatter(MBES_mid_T[:-1], MBES_mid_error, label = "MBES_mid_error", color = 'green', s = 1)
         plt.scatter(T[:-1], dvl_error, label = "dvl_error", color = 'red', s = 1)
         plt.legend()
         plt.grid()
@@ -576,8 +583,7 @@ if __name__ == '__main__':
         plt.ylabel("acc [m/s2]")
         plt.legend()
     # display_acc()
-    print(dvl_BM1R)
-    def display_beams():
+    def display_beams_dvl():
         plt.figure()
         ax1 = plt.subplot2grid((2, 3), (0, 0))
         ax2 = plt.subplot2grid((2, 3), (0, 1))
@@ -651,21 +657,81 @@ if __name__ == '__main__':
         ax5.set_xlabel("Time [min]")
         ax5.set_ylabel("Range [m]")
         ax5.set_title("mean_range_dvl")
+    # display_beams_dvl()
 
+    # # Interpolate the MBES
+    # f_MBES_mid_T = interp1d(MBES_mid_T, MBES_mid_T)
+    # f_MBES_mid_X = interp1d(MBES_mid_T, MBES_mid_X)
+    # f_MBES_mid_Y = interp1d(MBES_mid_T, MBES_mid_Y)
+    # f_MBES_mid_Z = interp1d(MBES_mid_T, MBES_mid_Z)
+    #
+    # MBES_mid_T_interp = f_MBES_mid_T(T_glob)
+    # MBES_mid_X_interp = f_MBES_mid_X(T_glob)
+    # MBES_mid_Y_interp = f_MBES_mid_Y(T_glob)
+    # MBES_mid_Z_interp = f_MBES_mid_Z(T_glob)
+    #
+    # #MBES
+    # MBES_mid_T = MBES_mid_T_interp
+    # MBES_mid_X = MBES_mid_X_interp
+    # MBES_mid_Y = MBES_mid_Y_interp
+    # MBES_mid_Z = MBES_mid_Z_interp
 
-    display_beams()
+    #Convert the beam of the MBES
+    #On a 65° entre le milieu et le max/mix pour 256/2 beams
+    angle_max = (180 - (65 - (255 - BEAMS[MBES_max_idx])*65/127))
+    angle_min = (180 - (65 - (BEAMS[MBES_min_idx] - 1)*65/127))
+    angle_mid = np.abs(127 - BEAMS[MBES_mid_idx])*65/127
+    MBES_mid_Z = MBES_mid_Z*np.cos(angle_mid*np.pi/180)
+    MBES_min_Z = MBES_min_Z*np.sin(angle_min*np.pi/180)
+    MBES_max_Z = MBES_max_Z*np.sin(angle_max*np.pi/180)
+
+    def display_beams_mbes():
+        plt.figure()
+        ax1 = plt.subplot2grid((1, 3), (0, 0))
+        ax2 = plt.subplot2grid((1, 3), (0, 1))
+        ax3 = plt.subplot2grid((1, 3), (0, 2))
+        # ax4 = plt.subplot2grid((2, 3), (1, 1))
+        # ax5 = plt.subplot2grid((2, 3), (0, 2), rowspan=2)
+        # print(BEAMS[MBES_mid_idx], BEAMS[MBES_min_idx], BEAMS[MBES_max_idx])
+
+        d_bottom_mbes = distance_to_bottom(np.column_stack((MBES_mid_X,MBES_mid_Y)),MNT)[1].squeeze()
+        ax1.plot(MBES_mid_T, d_bottom_mbes, label = "d_mbes_mid_mbes", color = 'red')
+        d_bottom_mbes = distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze()
+        ax1.plot(T, d_bottom_mbes, label = "d_mbes_mid_gps", color = 'green')
+        ax1.plot(MBES_mid_T, MBES_mid_Z - 116.23546874555643, label = "MBES_mid_Z")
+        ax1.set_xlabel("Time [min]")
+        ax1.set_ylabel("Distance [m]")
+        ax1.set_title("Range of MBES")
+        ax1.legend()
+
+        d_bottom_mbes = distance_to_bottom(np.column_stack((MBES_min_X,MBES_min_Y)),MNT)[1].squeeze()
+        ax2.plot(MBES_min_T, d_bottom_mbes, label = "d_mbes_min_mbes", color = 'red')
+        ax2.plot(MBES_min_T, MBES_min_Z - 116.23546874555643, label = "MBES_min_Z")
+        ax2.set_xlabel("Time [min]")
+        ax2.set_ylabel("Distance [m]")
+        ax2.set_title("Range of MBES")
+        ax2.legend()
+
+        d_bottom_mbes = distance_to_bottom(np.column_stack((MBES_max_X,MBES_max_Y)),MNT)[1].squeeze()
+        ax3.plot(MBES_max_T, d_bottom_mbes, label = "d_mbes_max_mbes", color = 'red')
+        ax3.plot(MBES_max_T, MBES_max_Z - 116.23546874555643, label = "MBES_max_Z")
+        ax3.set_xlabel("Time [min]")
+        ax3.set_ylabel("Distance [m]")
+        ax3.set_title("Range of MBES")
+        ax3.legend()
+    display_beams_mbes()
     plt.show()
 
     plt.figure()
-    d_bottom_mnt = distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze()
-    # plt.plot(T, d_bottom_mnt, label = "d_mnt", color = "black")
-    h1, h2, h3, h4 = dvl_BM1R - 115.5714023521081, dvl_BM2R - 115.5714023521081, dvl_BM3R - 115.5714023521081, dvl_BM4R - 115.5714023521081
-    z_dvl = (h1*h2)/(h1+h2) + (h3*h4)/(h3+h4)
-    plt.plot(dvl_T, z_dvl, label = "z_dvl", color = "green")
-    mean_dvl = (h1+h2+h3+h4)/4
-    plt.plot(dvl_T, mean_dvl, label = "mean_dvl", color = "yellow")
-    # plt.plot(MBES_T, MBES_Z-117.6155899936386, label = "MBES", color = "blue")
-    plt.legend()
+    # d_bottom_mnt = distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze()
+    # # plt.plot(T, d_bottom_mnt, label = "d_mnt", color = "black")
+    # h1, h2, h3, h4 = dvl_BM1R - 115.5714023521081, dvl_BM2R - 115.5714023521081, dvl_BM3R - 115.5714023521081, dvl_BM4R - 115.5714023521081
+    # z_dvl = (h1*h2)/(h1+h2) + (h3*h4)/(h3+h4)
+    # plt.plot(dvl_T, z_dvl, label = "z_dvl", color = "green")
+    # mean_dvl = (h1+h2+h3+h4)/4
+    # plt.plot(dvl_T, mean_dvl, label = "mean_dvl", color = "yellow")
+    # # plt.plot(MBES_mid_T, MBES_mid_Z-117.6155899936386, label = "MBES", color = "blue")
+    # plt.legend()
 
     # plt.figure()
     # # V = np.sqrt(V_X**2 + V_Y**2)
