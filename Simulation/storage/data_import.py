@@ -678,12 +678,15 @@ if __name__ == '__main__':
 
     #Convert the beam of the MBES
     #On a 65° entre le milieu et le max/mix pour 256/2 beams
-    angle_max = (180 - (65 - (255 - BEAMS[MBES_max_idx])*65/127))
-    angle_min = (180 - (65 - (BEAMS[MBES_min_idx] - 1)*65/127))
+    angle_max = (90 - (65 - (255 - BEAMS[MBES_max_idx])*65/127))
+    angle_min = (90 - (65 - (BEAMS[MBES_min_idx] - 1)*65/127))
     angle_mid = np.abs(127 - BEAMS[MBES_mid_idx])*65/127
     MBES_mid_Z = MBES_mid_Z*np.cos(angle_mid*np.pi/180)
-    MBES_min_Z = MBES_min_Z*np.sin(angle_min*np.pi/180)
-    MBES_max_Z = MBES_max_Z*np.sin(angle_max*np.pi/180)
+    MBES_min_Z = MBES_min_Z*np.cos(angle_min*np.pi/180)
+    MBES_max_Z = MBES_max_Z*np.cos(angle_max*np.pi/180)
+
+    # phi = 90 - 65
+    # dp_x_max =
 
     def display_beams_mbes():
         plt.figure()
