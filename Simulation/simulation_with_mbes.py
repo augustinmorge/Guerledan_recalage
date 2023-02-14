@@ -61,11 +61,26 @@ def compute_likelihood(propagated_states, measurements, measurements_noise, beta
     if using_offset : d_MBES_mid_particule = new_z_particules_mnt
     else : d_MBES_mid_particule = new_z_particules_mnt - z_particules_mnt
 
+    mbes_min_Z, mbes_mid_Z, mbes_max_Z, \
+        dp_x_mid, dp_y_mid, dp_x_min, dp_y_min, dp_x_max, dp_y_max = \
+            measurements.flatten()
+
+    _, d_mbes_particule_min = distance_to_bottom(np.hstack((propagated_states[1][0]+dp_x_min,propagated_states[1][1]+dp_y_min)),MNT)
+    _, d_mbes_particule_mid = distance_to_bottom(np.hstack((propagated_states[1][0]+dp_x_mid,propagated_states[1][1]+dp_y_mid)),MNT)
+    # _, d_mbes_particule_mid = distance_to_bottom(np.hstack((propagated_states[1][0],propagated_states[1][1])),MNT)
+    _, d_mbes_particule_max = distance_to_bottom(np.hstack((propagated_states[1][0]+dp_x_max,propagated_states[1][1]+dp_y_max)),MNT)
+
     # Map difference true and expected distance measurement to probability
-    distance = np.abs(d_MBES_mid_particule-measurements)
+    # distance = np.abs(d_MBES_mid_particule-measurements)
+    distance_min = np.abs(mbes_min_Z - d_mbes_particule_min)
+    distance_mid = np.abs(mbes_mid_Z - d_mbes_particule_mid)
+    distance_max = np.abs(mbes_max_Z - d_mbes_particule_max)
 
     if measurements_noise[0] == None:
-        p_z_given_x_distance = np.exp(-beta*distance**2)
+        p_z_given_x_distance = np.exp(-beta*distance_min)*np.exp(-beta*distance_mid**2)*np.exp(-beta*distance_max)
+        # p_z_given_x_distance = np.exp(-beta*distance_min)*np.exp(-beta*distance_mid**2)*np.exp(-beta*distance_max)
+        # p_z_given_x_distance = np.exp(-beta*distance_mid**2)
+
     else:
         p_z_given_x_distance = np.exp(-beta*distance/(measurements_noise[0]**2))
 
@@ -131,7 +146,25 @@ def f_measurements_offset(i):
     global ct_mbes
     while MBES_mid_T[ct_mbes,] <= T[i,]:
         ct_mbes += 1
-    measurements = MBES_mid_Z[ct_mbes,] - 117.61544705067318
+    # measurements = MBES_mid_Z[ct_mbes,] - 117.61544705067318
+
+    angle_mbes = 62.5
+    angle_max = (90 - (angle_mbes - (256 - MBES_max_idx[ct_mbes,])*angle_mbes/128))
+    angle_min = -(90 - (angle_mbes - (MBES_min_idx[ct_mbes,] - 1)*angle_mbes/128))
+    angle_mid = 90 - (128 - MBES_mid_idx[ct_mbes,])*angle_mbes/128
+
+    dp_x_mid = MBES_mid_Z[ct_mbes,]/np.tan(angle_mid*np.pi/180)*np.cos(YAW[i,])
+    dp_y_mid = MBES_mid_Z[ct_mbes,]/np.tan(angle_mid*np.pi/180)*np.sin(YAW[i,])
+
+    dp_x_min = -MBES_min_Z[ct_mbes,]/np.tan(angle_min*np.pi/180)*np.cos(YAW[i,]-3*np.pi/2)
+    dp_y_min = -MBES_min_Z[ct_mbes,]/np.tan(angle_min*np.pi/180)*np.sin(YAW[i,]-3*np.pi/2)
+
+    dp_x_max = MBES_max_Z[ct_mbes,]/np.tan(angle_max*np.pi/180)*np.cos(YAW[i,]-np.pi/2)
+    dp_y_max = MBES_max_Z[ct_mbes,]/np.tan(angle_max*np.pi/180)*np.sin(YAW[i,]-np.pi/2)
+
+    measurements = np.array([MBES_min_Z[ct_mbes,] - 117.61544705067318, MBES_mid_Z[ct_mbes,] - 117.61544705067318, MBES_max_Z[ct_mbes,] - 117.61544705067318, \
+                            dp_x_mid, dp_y_mid, dp_x_min, dp_y_min, dp_x_max, dp_y_max])
+
     return measurements, None
 
 def test_diverge(ERR, err_max=1000):
@@ -161,8 +194,8 @@ if __name__ == '__main__':
 
     #For the update
     resampler = Resampler()
-    # resampling_threshold = 2/3*n_particles
-    resampling_threshold = 1/2*n_particles
+    resampling_threshold = 2/3*n_particles
+    # resampling_threshold = 1/2*n_particles
     idx_ti = 0
     idx_tf =  dvl_T.shape[0]
 
@@ -187,28 +220,29 @@ if __name__ == '__main__':
     fig, ax = plt.subplots()
     TIME = []; BAR = []; SPEED = []; ERR = []
     STD_X = []; STD_Y = []
-    beta = 1/100
+    # beta = 1/100
+    beta = 10**(-1.37)
     filter_lpf_speed = Low_pass_filter(1., np.array([dvl_v_x[0,], dvl_v_y[0,]]))
 
     for i in r:
 
         """Set data"""
         #Use the DVL
-        # t = dvl_T[i,]
-        # yaw = YAW[i,]
-        # yaw_std = YAW_STD[i,]
-        # v_x, v_y = filter_lpf_speed.low_pass_next(np.array([dvl_v_x[i,], dvl_v_y[i,]])).flatten()
-        # # v_std = dvl_VSTD[i,]
-        # # v_std = 0.4*10*dt_br
+        t = dvl_T[i,]
+        yaw = YAW[i,]
+        yaw_std = YAW_STD[i,]
+        v_x, v_y = filter_lpf_speed.low_pass_next(np.array([dvl_v_x[i,], dvl_v_y[i,]])).flatten()
+        # v_std = dvl_VSTD[i,]
         # v_std = 0.4*10*dt_br
+        v_std = 0.4*10*dt_br
 
         #Use the INS
-        t = T[i,]
-        yaw = YAW[i,]
-        # yaw_std = YAW_STD[i,]
-        yaw_std = np.abs(np.arctan2(V_Y[i,], V_X[i,] + V_X_STD[i,]) - np.arctan2(V_Y[i,] + V_Y_STD[i,], V_X[i,]))
-        v_x, v_y = V_X[i,], V_Y[i,]
-        v_std = dt*np.sqrt(V_X_STD[i,]**2 + V_Y_STD[i,]**2)
+        # t = T[i,]
+        # yaw = YAW[i,]
+        # # yaw_std = YAW_STD[i,]
+        # yaw_std = np.abs(np.arctan2(V_Y[i,], V_X[i,] + V_X_STD[i,]) - np.arctan2(V_Y[i,] + V_Y_STD[i,], V_X[i,]))
+        # v_x, v_y = V_X[i,], V_Y[i,]
+        # v_std = dt*np.sqrt(V_X_STD[i,]**2 + V_Y_STD[i,]**2)
 
         if using_offset : measurements, meas_model_distance_std = f_measurements_offset(i)
         else: measurements, previous_measurements, meas_model_distance_std = f_measurements(i, previous_measurements)

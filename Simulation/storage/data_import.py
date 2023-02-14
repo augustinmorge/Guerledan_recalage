@@ -302,9 +302,9 @@ start_time = max(max(T[0], MBES_mid_T[0]),dvl_T[0])
 end_time = min(min(T[-1], MBES_mid_T[-1]),dvl_T[-1])
 global dt_br
 # dt_br = 0.1 #np.mean(np.diff(dvl_T))
-# dt_br = np.mean(np.diff(dvl_T))
+dt_br = np.mean(np.diff(dvl_T))
 # dt = 0.2 #np.mean(np.diff(MBES_mid_T))
-dt_br = 0.05 #ins
+# dt_br = 0.05 #ins
 
 print(f"dt choosen = {dt_br}")
 T_glob = np.arange(start_time, end_time, dt_br)
@@ -716,23 +716,19 @@ if __name__ == '__main__':
     #Convert the beam of the MBES
     #On a 65° entre le milieu et le max/mix pour 256/2 beams
 
-    angle_mbes = 65
+    angle_mbes = 63
     angle_max = (90 - (angle_mbes - (256 - MBES_max_idx)*angle_mbes/128))
     angle_min = -(90 - (angle_mbes - (MBES_min_idx - 1)*angle_mbes/128))
-    angle_mid = (128 - MBES_mid_idx)*angle_mbes/128
+    angle_mid = 90 - (128 - MBES_mid_idx)*angle_mbes/128
 
     print("mean angle_max = {}".format(np.mean(angle_max)))
     print("mean angle_mid = {}".format(np.mean(angle_mid)))
     print("mean angle_min = {}".format(np.mean(angle_min)))
 
-    MBES_mid_Z = MBES_mid_Z*np.cos(angle_mid*np.pi/180)
-    MBES_min_Z = MBES_min_Z*np.cos(angle_min*np.pi/180)
-    MBES_max_Z = MBES_max_Z*np.cos(angle_max*np.pi/180)
-
     if interpolate_mbes:
         # With the dp
-        dp_x_mid = 0 #MBES_mid_Z/np.tan(angle_mid*np.pi/180)*np.sin(YAW)
-        dp_y_mid = 0 #MBES_mid_Z/np.tan(angle_mid*np.pi/180)*np.cos(YAW)
+        dp_x_mid = MBES_mid_Z/np.tan(angle_mid*np.pi/180)*np.cos(YAW)
+        dp_y_mid = MBES_mid_Z/np.tan(angle_mid*np.pi/180)*np.sin(YAW)
 
         dp_x_min = -MBES_min_Z/np.tan(angle_min*np.pi/180)*np.cos(YAW-3*np.pi/2)
         dp_y_min = -MBES_min_Z/np.tan(angle_min*np.pi/180)*np.sin(YAW-3*np.pi/2)
@@ -743,6 +739,7 @@ if __name__ == '__main__':
 
     def display_beams_mbes():
         plt.figure()
+        plt.suptitle("Without intepolation and GNSS")
         ax1 = plt.subplot2grid((1, 3), (0, 0))
         ax2 = plt.subplot2grid((1, 3), (0, 1))
         ax3 = plt.subplot2grid((1, 3), (0, 2))
@@ -751,26 +748,24 @@ if __name__ == '__main__':
         # print(BEAMS[MBES_mid_idx], BEAMS[MBES_min_idx], BEAMS[MBES_max_idx])
 
         d_bottom_mbes = distance_to_bottom(np.column_stack((MBES_mid_X,MBES_mid_Y)),MNT)[1].squeeze()
-        ax1.plot(MBES_mid_T, d_bottom_mbes, label = "d_mbes_mid_mbes", color = 'red')
-        d_bottom_mbes = distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze()
-        ax1.plot(T, d_bottom_mbes, label = "d_mbes_mid_gps", color = 'green')
-        ax1.plot(MBES_mid_T, MBES_mid_Z - 116.23546874555643, label = "MBES_mid_Z")
+        ax1.scatter(MBES_mid_T, d_bottom_mbes, label = "d_mbes_mid_mbes", color = 'red', s = 0.5)
+        ax1.scatter(MBES_mid_T, MBES_mid_Z - 117.6152233539319, label = "MBES_mid_Z", s = 0.5)
         ax1.set_xlabel("Time [min]")
         ax1.set_ylabel("Distance [m]")
         ax1.set_title("Range of MBES")
         ax1.legend()
 
         d_bottom_mbes = distance_to_bottom(np.column_stack((MBES_min_X,MBES_min_Y)),MNT)[1].squeeze()
-        ax2.plot(MBES_min_T, d_bottom_mbes, label = "d_mbes_min_mbes", color = 'red')
-        ax2.plot(MBES_min_T, MBES_min_Z - 116.23546874555643, label = "MBES_min_Z")
+        ax2.scatter(MBES_min_T, d_bottom_mbes, label = "d_mbes_min_mbes", color = 'red', s = 0.5)
+        ax2.scatter(MBES_min_T, MBES_min_Z - 117.6152233539319, label = "MBES_min_Z", s = 0.5)
         ax2.set_xlabel("Time [min]")
         ax2.set_ylabel("Distance [m]")
         ax2.set_title("Range of MBES")
         ax2.legend()
 
         d_bottom_mbes = distance_to_bottom(np.column_stack((MBES_max_X,MBES_max_Y)),MNT)[1].squeeze()
-        ax3.plot(MBES_max_T, d_bottom_mbes, label = "d_mbes_max_mbes", color = 'red')
-        ax3.plot(MBES_max_T, MBES_max_Z - 116.23546874555643, label = "MBES_max_Z")
+        ax3.scatter(MBES_max_T, d_bottom_mbes, label = "d_mbes_max_mbes", color = 'red', s = 0.5)
+        ax3.scatter(MBES_max_T, MBES_max_Z - 117.6152233539319, label = "MBES_max_Z", s = 0.5)
         ax3.set_xlabel("Time [min]")
         ax3.set_ylabel("Distance [m]")
         ax3.set_title("Range of MBES")
@@ -783,31 +778,26 @@ if __name__ == '__main__':
             ax1 = plt.subplot2grid((1, 3), (0, 0))
             ax2 = plt.subplot2grid((1, 3), (0, 1))
             ax3 = plt.subplot2grid((1, 3), (0, 2))
-            # ax4 = plt.subplot2grid((2, 3), (1, 1))
-            # ax5 = plt.subplot2grid((2, 3), (0, 2), rowspan=2)
-            # print(BEAMS[MBES_mid_idx], BEAMS[MBES_min_idx], BEAMS[MBES_max_idx])
 
             d_bottom_mbes = distance_to_bottom(np.column_stack((x_gps + dp_x_mid,y_gps + dp_y_mid)),MNT)[1].squeeze()
-            ax1.plot(MBES_mid_T, d_bottom_mbes, label = "d_mbes_mid_mbes", color = 'red')
-            # d_bottom_mbes = distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze()
-            # ax1.plot(T, d_bottom_mbes, label = "d_mbes_mid_gps", color = 'green')
-            ax1.plot(MBES_mid_T, MBES_mid_Z - 116.23546874555643, label = "MBES_mid_Z")
+            ax1.scatter(MBES_mid_T, d_bottom_mbes, label = "d_mbes_mid_gps", color = 'red', s = 0.5)
+            ax1.scatter(MBES_mid_T, MBES_mid_Z - 117.6152233539319, label = "MBES_mid_Z", s = 0.5)
             ax1.set_xlabel("Time [min]")
             ax1.set_ylabel("Distance [m]")
             ax1.set_title("Range of MBES")
             ax1.legend()
 
             d_bottom_mbes = distance_to_bottom(np.column_stack((x_gps + dp_x_min,y_gps + dp_y_min)),MNT)[1].squeeze()
-            ax2.plot(MBES_min_T, d_bottom_mbes, label = "d_mbes_min_mbes", color = 'red')
-            ax2.plot(MBES_min_T, MBES_min_Z - 116.23546874555643, label = "MBES_min_Z")
+            ax2.scatter(MBES_min_T, d_bottom_mbes, label = "d_mbes_min_gps", color = 'red', s = 0.5)
+            ax2.scatter(MBES_min_T, MBES_min_Z - 117.6152233539319, label = "MBES_min_Z", s = 0.5)
             ax2.set_xlabel("Time [min]")
             ax2.set_ylabel("Distance [m]")
             ax2.set_title("Range of MBES")
             ax2.legend()
 
             d_bottom_mbes = distance_to_bottom(np.column_stack((x_gps + dp_x_max,y_gps + dp_y_max)),MNT)[1].squeeze()
-            ax3.plot(MBES_max_T, d_bottom_mbes, label = "d_mbes_max_mbes", color = 'red')
-            ax3.plot(MBES_max_T, MBES_max_Z - 116.23546874555643, label = "MBES_max_Z")
+            ax3.scatter(MBES_max_T, d_bottom_mbes, label = "d_mbes_max_gps", color = 'red', s = 0.5)
+            ax3.scatter(MBES_max_T, MBES_max_Z - 117.6152233539319, label = "MBES_max_Z", s = 0.5)
             ax3.set_xlabel("Time [min]")
             ax3.set_ylabel("Distance [m]")
             ax3.set_title("Range of MBES")
@@ -816,29 +806,3 @@ if __name__ == '__main__':
 
     display_beams_mbes()
     plt.show()
-
-    plt.figure()
-    # d_bottom_mnt = distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze()
-    # # plt.plot(T, d_bottom_mnt, label = "d_mnt", color = "black")
-    # h1, h2, h3, h4 = dvl_BM1R - 115.5714023521081, dvl_BM2R - 115.5714023521081, dvl_BM3R - 115.5714023521081, dvl_BM4R - 115.5714023521081
-    # z_dvl = (h1*h2)/(h1+h2) + (h3*h4)/(h3+h4)
-    # plt.plot(dvl_T, z_dvl, label = "z_dvl", color = "green")
-    # mean_dvl = (h1+h2+h3+h4)/4
-    # plt.plot(dvl_T, mean_dvl, label = "mean_dvl", color = "yellow")
-    # # plt.plot(MBES_mid_T, MBES_mid_Z-117.6155899936386, label = "MBES", color = "blue")
-    # plt.legend()
-
-    # plt.figure()
-    # # V = np.sqrt(V_X**2 + V_Y**2)
-    # plt.plot(T, V_X, label = "ins", color = 'green')
-    # plt.plot(T, dvl_v_x, label = "dvl", color = 'red')
-    # ERR = (V_X - dvl_v_x)
-    # kp = 10
-    # ki = 0
-    # kd = 1
-    # plt.scatter(T[:-1,], kp*ERR[:-1,] + ki*np.cumsum(ERR)[:-1,]*dt + kd*np.diff(ERR)/dt, label = "pid", s = 0.5, color = 'bl')
-    # plt.title("speed")
-    # plt.xlabel("t [min]")
-    # plt.ylabel("speed [m/s]")
-    # plt.legend()
-    # plt.show()
