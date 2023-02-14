@@ -7,8 +7,8 @@ import joblib, pickle
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 
-bool_txt = 0
-data_cropped = 1
+bool_txt = 1
+data_cropped = 0
 
 # Définit les coordonnées de référence
 wpt_ponton = (48.1989495, -3.0148023)
