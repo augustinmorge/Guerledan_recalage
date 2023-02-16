@@ -251,13 +251,13 @@ MBES_X, MBES_Y = coord2cart((lat_mbes,lon_mbes))
 MBES_mid_T = np.array(MBES_T[(indices[:-1]+indices[1:])//2])
 MBES_mid_X = np.array(MBES_X[(indices[:-1]+indices[1:])//2])
 MBES_mid_Y = np.array(MBES_Y[(indices[:-1]+indices[1:])//2])
-MBES_mid_Z = -np.array(MBES_Z[(indices[:-1]+indices[1:])//2])
+MBES_mid_Z = np.array(MBES_Z[(indices[:-1]+indices[1:])//2])
 MBES_mid_idx = np.array(BEAMS[(indices[:-1]+indices[1:])//2])
 
 MBES_max_T = np.array(MBES_T[indices[:-1]])
 MBES_max_X = np.array(MBES_X[indices[:-1]])
 MBES_max_Y = np.array(MBES_Y[indices[:-1]])
-MBES_max_Z = -np.array(MBES_Z[indices[:-1]])
+MBES_max_Z = np.array(MBES_Z[indices[:-1]])
 MBES_max_idx = np.array(BEAMS[indices[:-1]])
 
 print('Il ne faut pas de moins pour MBES_min_Z et je ne sais pas pourquoi /!\ ')
@@ -271,13 +271,12 @@ MBES_min_idx = np.array(BEAMS[indices[1:-1]+1])
 MBES_min_T = np.concatenate([np.array([MBES_T[0]]), MBES_min_T])
 MBES_min_X = np.concatenate([np.array([MBES_X[0]]), MBES_min_X])
 MBES_min_Y = np.concatenate([np.array([MBES_Y[0]]), MBES_min_Y])
-MBES_min_Z = -np.concatenate([np.array([MBES_Z[0]]), MBES_min_Z])
+MBES_min_Z = np.concatenate([np.array([MBES_Z[0]]), MBES_min_Z])
 MBES_min_idx = np.concatenate([np.array([1]), MBES_min_idx])
 
-#Add the offset
-MBES_min_Z += 2.2981554769660306
-MBES_mid_Z += 2.2981554769660306
-MBES_max_Z += 2.2981554769660306
+MBES_min_Z = -MBES_min_Z
+MBES_mid_Z = -MBES_mid_Z
+MBES_max_Z = -MBES_max_Z
 
 """ Load the DVL """
 dvl = np.load(file_path + "/dvl.npz")
@@ -652,7 +651,7 @@ if __name__ == '__main__':
         ax6.set_xlabel("Time [min]")
         ax6.set_ylabel("Error on angle [rad]")
         ax6.set_title("angle of speed")
-    display_speed()
+    # display_speed()
     def display_acc():
         plt.figure()
         plt.plot(T, ACC_X, label = "acc_x")
@@ -757,14 +756,22 @@ if __name__ == '__main__':
         dp_x_mid = MBES_mid_Z/np.tan(angle_mid*np.pi/180)*np.cos(YAW)
         dp_y_mid = MBES_mid_Z/np.tan(angle_mid*np.pi/180)*np.sin(YAW)
 
-        dp_x_min = MBES_min_Z/np.tan(angle_min*np.pi/180)*np.cos(YAW + np.pi/2)
-        dp_y_min = MBES_min_Z/np.tan(angle_min*np.pi/180)*np.sin(YAW + np.pi/2)
+        dp_x_min = -MBES_min_Z/np.tan(angle_min*np.pi/180)*np.cos(YAW-3*np.pi/2)
+        dp_y_min = -MBES_min_Z/np.tan(angle_min*np.pi/180)*np.sin(YAW-3*np.pi/2)
 
-        dp_x_max = MBES_max_Z/np.tan(angle_max*np.pi/180)*np.cos(YAW)
-        dp_y_max = MBES_max_Z/np.tan(angle_max*np.pi/180)*np.sin(YAW)
-
+        dp_x_max = MBES_max_Z/np.tan(angle_max*np.pi/180)*np.cos(YAW-np.pi/2)
+        dp_y_max = MBES_max_Z/np.tan(angle_max*np.pi/180)*np.sin(YAW-np.pi/2)
 
     def display_beams_mbes():
+        global MBES_min_Z
+        global MBES_mid_Z
+        global MBES_max_Z
+
+        #Add the offset
+        MBES_min_Z += 2.2981554769660306
+        MBES_mid_Z += 2.2981554769660306
+        MBES_max_Z += 2.2981554769660306
+
         plt.figure()
         plt.suptitle("Without intepolation and GNSS")
         ax1 = plt.subplot2grid((1, 3), (0, 0))
@@ -799,7 +806,7 @@ if __name__ == '__main__':
         ax3.legend()
 
         if interpolate_mbes:
-            #With dpx and dpy
+
             plt.figure()
             plt.suptitle("With intepolation and GNSS")
             ax1 = plt.subplot2grid((1, 3), (0, 0))
@@ -830,5 +837,5 @@ if __name__ == '__main__':
             ax3.set_title("Range of MBES")
             ax3.legend()
 
-    # display_beams_mbes()
+    display_beams_mbes()
     plt.show()

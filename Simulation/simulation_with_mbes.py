@@ -143,6 +143,7 @@ def f_measurements(i, previous_measurements):
     return measurements, MBES_mid_Z[i,], None
 
 ct_mbes = 0; dtmbes = 0.15
+color_mbes = []
 def f_measurements_offset(i):
     global ct_mbes
     previous_ct_mbes = ct_mbes
@@ -150,9 +151,13 @@ def f_measurements_offset(i):
         ct_mbes += 1
     # measurements = MBES_mid_Z[ct_mbes,]
 
-    global dtmbes
+    global dtmbes, color_mbes
     dtmbes = MBES_mid_T[ct_mbes,] - MBES_mid_T[previous_ct_mbes,]
-    print(dtmbes)
+    if dtmbes == 0:
+        color_mbes.append('red')
+    else:
+        color_mbes.append('blue')
+
     angle_mbes = 62.5
     angle_max = (90 - (angle_mbes - (256 - MBES_max_idx[ct_mbes,])*angle_mbes/128))
     angle_min = -(90 - (angle_mbes - (MBES_min_idx[ct_mbes,] - 1)*angle_mbes/128))
@@ -289,14 +294,12 @@ if __name__ == '__main__':
             scatter2 = ax.scatter(particles[1][0], particles[1][1], color = 'red', s = 0.8, label = "particles",alpha=particles[0][:,0]/pow(np.max(particles[0][:,0]),2/3))
             scatter3 = ax.scatter(bx, by , color = 'green', label = 'Estimation of particles')
 
-            handles, labels = ax.get_legend_handles_labels()
-
             if dtmbes == 0:
-                handles.append(plt.Line2D([0], [0], marker='o', color='red', label='off', markerfacecolor='red', markersize=10))
+                plt.plot([], [], marker='o', color='red', label='MBES: off', markerfacecolor='red', markersize=10)
             else:
-                handles.append(plt.Line2D([0], [0], marker='o', color='green', label='on', markerfacecolor='green', markersize=10))
+                plt.plot([], [], marker='o', color='green', label='MBES: on', markerfacecolor='green', markersize=10)
 
-            ax.legend(handles=handles, labels=labels)
+            plt.legend()
 
 
             plt.pause(0.00001)
@@ -356,7 +359,8 @@ if __name__ == '__main__':
     ax2.set_title("Error function.")
     ax2.set_xlabel("time [min]")
     ax2.set_ylabel("error (m)")
-    ax2.plot(TIME, ERR, color = 'b', label = 'erreur')
+    # ax2.plot(TIME, ERR, color = 'b', label = 'erreur')
+    ax2.scatter(TIME, ERR, color = np.array(color_mbes), label = 'erreur', s = 1)
     ERR = np.array(ERR)
     idx_start = int(1/8*TIME.shape[0])
     ax2.plot(TIME, np.mean(ERR)*np.ones(TIME.shape), label = f"mean error from beggining = {np.mean(ERR)}")
@@ -371,7 +375,7 @@ if __name__ == '__main__':
     ax3.set_xlabel("Time [min]")
     ax3.set_ylabel("Range [m]")
     ax3.plot(dvl_T, mean_dvlR - 115.57149562238688, label = "z_dvl")
-    # ax3.plot(T, d_bottom_mnt, label = "z_mnt")
+    ax3.plot(T, d_bottom_mnt, label = "z_mnt")
     ax3.plot(MBES_mid_T, MBES_mid_Z, label = "z_mbes")
     ax3.legend()
 

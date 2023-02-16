@@ -262,11 +262,6 @@ MBES_min_Y = np.concatenate([np.array([MBES_Y[0]]), MBES_min_Y])
 MBES_min_Z = np.concatenate([np.array([MBES_Z[0]]), MBES_min_Z])
 MBES_min_idx = np.concatenate([np.array([1]), MBES_min_idx])
 
-#Add the offset
-MBES_min_Z += -117.6152233539319
-MBES_mid_Z += -117.6152233539319
-MBES_min_Z += -117.6152233539319
-
 """ Load the DVL """
 dvl = np.load(file_path + "/dvl.npz")
 dvl_T = dvl["dvl_T"]
@@ -304,8 +299,10 @@ if apply_modif:
     dvl_BM4R = dvl_BM4R[~mask]
 
 # Déterminez les temps de début et de fin communs entre T et MBES_mid_T
-start_time = max(max(T[0], MBES_min_T[0]),dvl_T[0])
-end_time = min(min(T[-1], MBES_max_T[-1]),dvl_T[-1])
+start_time = max(max(T[0], MBES_mid_T[0]),dvl_T[0])
+end_time = min(min(T[-1], MBES_mid_T[-1]),dvl_T[-1])
+# start_time = max(max(T[0], MBES_T[0]),dvl_T[0])
+# end_time = min(min(T[-1], MBES_T[-1]),dvl_T[-1])
 
 import sys
 choice_sensor = sys.argv[0].split("_")[-1][:-3]
@@ -746,6 +743,15 @@ if __name__ == '__main__':
 
 
     def display_beams_mbes():
+        global MBES_min_Z
+        global MBES_mid_Z
+        global MBES_max_Z
+        #Add the offset
+
+        MBES_min_Z += -117.6152233539319
+        MBES_mid_Z += -117.6152233539319
+        MBES_max_Z += -117.6152233539319
+
         plt.figure()
         plt.suptitle("Without intepolation and GNSS")
         ax1 = plt.subplot2grid((1, 3), (0, 0))
