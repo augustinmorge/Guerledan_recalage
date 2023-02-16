@@ -159,10 +159,10 @@ if bool_txt:
     with open('kd_tree.joblib', 'wb') as f:
         joblib.dump(kd_tree, f)
     np.savez('mbes.npz', BEAMS = Beam,
-                        MBES_mid_X = Footprint_X,
-                        MBES_mid_Y = Footprint_Y,
-                        MBES_mid_Z = Footprint_Z,
-                        MBES_mid_T = Time_MBES_mid_seconds, dtype = np.float64)
+                        MBES_X = Footprint_X,
+                        MBES_Y = Footprint_Y,
+                        MBES_Z = Footprint_Z,
+                        MBES_T = Time_MBES_mid_seconds, dtype = np.float64)
 
     np.savez('dvl.npz', dvl_T = dvl_T,
                         dvl_BM1R = dvl_BM1R,
@@ -194,6 +194,7 @@ V_Y_STD = ins['V_Y_STD']
 V_Z_STD = ins['V_Z_STD']
 
 YAW = ins['YAW']/180*np.pi
+YAW = -YAW+np.pi/2
 YAW_STD = ins['YAW_STD']/180*np.pi
 ROLL = ins['ROLL']/180*np.pi
 ROLL_STD = ins['ROLL_STD']/180*np.pi
@@ -207,7 +208,7 @@ GYR_X = ins['GYR_X']
 GYR_Y = ins['GYR_Y']
 GYR_Z = ins['GYR_Z']
 
-""" Load INS """
+""" Load MNT """
 mnt = np.load(file_path + "/mnt.npz")
 MNT = mnt['MNT']
 
@@ -298,132 +299,134 @@ if apply_modif:
     dvl_BM4R = dvl_BM4R[~mask]
 
 # Déterminez les temps de début et de fin communs entre T et MBES_mid_T
-start_time = max(max(T[0], MBES_mid_T[0]),dvl_T[0])
-end_time = min(min(T[-1], MBES_mid_T[-1]),dvl_T[-1])
+start_time = max(max(T[0], MBES_min_T[0]),dvl_T[0])
+end_time = min(min(T[-1], MBES_max_T[-1]),dvl_T[-1])
+
+import sys
+choice_sensor = sys.argv[0].split("_")[-1][:-3]
+print(f"Use sensor {choice_sensor} for bottom range")
 global dt_br
-# dt_br = 0.1 #np.mean(np.diff(dvl_T))
-dt_br = np.mean(np.diff(dvl_T))
-# dt = 0.2 #np.mean(np.diff(MBES_mid_T))
-# dt_br = 0.05 #ins
+if choice_sensor == "mnt":
+    dt_br = 0.05 #ins
+    print(f"dt choosen = {dt_br}")
+else:
+    dt_br = np.mean(np.diff(dvl_T)) #0.1
+    print(f"dt choosen = {dt_br}")
+    T_glob = np.arange(start_time, end_time, dt_br)
 
-print(f"dt choosen = {dt_br}")
-T_glob = np.arange(start_time, end_time, dt_br)
+    # Interpolez les données de T sur le nouveau vecteur de temps T_glob
+    # Interpolate the INS
+    f_T = interp1d(T, T)
+    f_LAT = interp1d(T, LAT)
+    f_LON = interp1d(T, LON)
+    f_V_X = interp1d(T, V_X)
+    f_V_Y = interp1d(T, V_Y)
+    f_V_Z = interp1d(T, V_Z)
+    f_LAT_STD = interp1d(T, LAT_STD)
+    f_LON_STD = interp1d(T, LON_STD)
+    f_V_X_STD = interp1d(T, V_X_STD)
+    f_V_Y_STD = interp1d(T, V_Y_STD)
+    f_V_Z_STD = interp1d(T, V_Z_STD)
+    f_YAW = interp1d(T,YAW)
+    f_YAW_STD = interp1d(T,YAW_STD)
+    f_ROLL = interp1d(T,ROLL)
+    f_ROLL_STD = interp1d(T,ROLL_STD)
+    f_PITCH = interp1d(T,PITCH)
+    f_PITCH_STD = interp1d(T,PITCH_STD)
+    f_ACC_X = interp1d(T,ACC_X)
+    f_ACC_Y = interp1d(T,ACC_Y)
+    f_ACC_Z = interp1d(T,ACC_Z)
+    f_GYR_X = interp1d(T,GYR_X)
+    f_GYR_Y = interp1d(T,GYR_Y)
+    f_GYR_Z = interp1d(T,GYR_Z)
 
-# Interpolez les données de T sur le nouveau vecteur de temps T_glob
+    T_interp = f_T(T_glob)
+    LAT_interp = f_LAT(T_glob)
+    LON_interp = f_LON(T_glob)
+    V_X_interp = f_V_X(T_glob)
+    V_Y_interp = f_V_Y(T_glob)
+    V_Z_interp = f_V_Z(T_glob)
+    LAT_STD_interp = f_LAT_STD(T_glob)
+    LON_STD_interp = f_LON_STD(T_glob)
+    V_X_STD_interp = f_V_X_STD(T_glob)
+    V_Y_STD_interp = f_V_Y_STD(T_glob)
+    V_Z_STD_interp = f_V_Z_STD(T_glob)
+    YAW_interp = f_YAW(T_glob)
+    YAW_STD_interp = f_YAW_STD(T_glob)
+    ROLL_interp = f_ROLL(T_glob)
+    ROLL_STD_interp = f_ROLL_STD(T_glob)
+    PITCH_interp = f_PITCH(T_glob)
+    PITCH_STD_interp = f_PITCH_STD(T_glob)
+    ACC_X_interp = f_ACC_X(T_glob)
+    ACC_Y_interp = f_ACC_Y(T_glob)
+    ACC_Z_interp = f_ACC_Z(T_glob)
+    GYR_X_interp = f_GYR_X(T_glob)
+    GYR_Y_interp = f_GYR_Y(T_glob)
+    GYR_Z_interp = f_GYR_Z(T_glob)
 
-# Interpolate the INS
-f_T = interp1d(T, T)
-f_LAT = interp1d(T, LAT)
-f_LON = interp1d(T, LON)
-f_V_X = interp1d(T, V_X)
-f_V_Y = interp1d(T, V_Y)
-f_V_Z = interp1d(T, V_Z)
-f_LAT_STD = interp1d(T, LAT_STD)
-f_LON_STD = interp1d(T, LON_STD)
-f_V_X_STD = interp1d(T, V_X_STD)
-f_V_Y_STD = interp1d(T, V_Y_STD)
-f_V_Z_STD = interp1d(T, V_Z_STD)
-f_YAW = interp1d(T,YAW)
-f_YAW_STD = interp1d(T,YAW_STD)
-f_ROLL = interp1d(T,ROLL)
-f_ROLL_STD = interp1d(T,ROLL_STD)
-f_PITCH = interp1d(T,PITCH)
-f_PITCH_STD = interp1d(T,PITCH_STD)
-f_ACC_X = interp1d(T,ACC_X)
-f_ACC_Y = interp1d(T,ACC_Y)
-f_ACC_Z = interp1d(T,ACC_Z)
-f_GYR_X = interp1d(T,GYR_X)
-f_GYR_Y = interp1d(T,GYR_Y)
-f_GYR_Z = interp1d(T,GYR_Z)
+    # Interpolate the DVL
+    f_dvl_T = interp1d(dvl_T,dvl_T)
+    f_dvl_BM1R = interp1d(dvl_T,dvl_BM1R)
+    f_dvl_BM2R = interp1d(dvl_T,dvl_BM2R)
+    f_dvl_BM3R = interp1d(dvl_T,dvl_BM3R)
+    f_dvl_BM4R = interp1d(dvl_T,dvl_BM4R)
+    f_dvl_VE = interp1d(dvl_T,dvl_VE)
+    f_dvl_VN = interp1d(dvl_T,dvl_VN)
+    f_dvl_VZ = interp1d(dvl_T,dvl_VZ)
+    f_dvl_VSTD = interp1d(dvl_T,dvl_VSTD)
 
-T_interp = f_T(T_glob)
-LAT_interp = f_LAT(T_glob)
-LON_interp = f_LON(T_glob)
-V_X_interp = f_V_X(T_glob)
-V_Y_interp = f_V_Y(T_glob)
-V_Z_interp = f_V_Z(T_glob)
-LAT_STD_interp = f_LAT_STD(T_glob)
-LON_STD_interp = f_LON_STD(T_glob)
-V_X_STD_interp = f_V_X_STD(T_glob)
-V_Y_STD_interp = f_V_Y_STD(T_glob)
-V_Z_STD_interp = f_V_Z_STD(T_glob)
-YAW_interp = f_YAW(T_glob)
-YAW_STD_interp = f_YAW_STD(T_glob)
-ROLL_interp = f_ROLL(T_glob)
-ROLL_STD_interp = f_ROLL_STD(T_glob)
-PITCH_interp = f_PITCH(T_glob)
-PITCH_STD_interp = f_PITCH_STD(T_glob)
-ACC_X_interp = f_ACC_X(T_glob)
-ACC_Y_interp = f_ACC_Y(T_glob)
-ACC_Z_interp = f_ACC_Z(T_glob)
-GYR_X_interp = f_GYR_X(T_glob)
-GYR_Y_interp = f_GYR_Y(T_glob)
-GYR_Z_interp = f_GYR_Z(T_glob)
+    dvl_T_interp = f_dvl_T(T_glob)
+    dvl_BM1R_interp = f_dvl_BM1R(T_glob)
+    dvl_BM2R_interp = f_dvl_BM2R(T_glob)
+    dvl_BM3R_interp = f_dvl_BM3R(T_glob)
+    dvl_BM4R_interp = f_dvl_BM4R(T_glob)
+    dvl_VE_interp = f_dvl_VE(T_glob)
+    dvl_VN_interp = f_dvl_VN(T_glob)
+    dvl_VZ_interp = f_dvl_VZ(T_glob)
+    dvl_VSTD_interp = f_dvl_VSTD(T_glob)
 
-# Interpolate the DVL
-f_dvl_T = interp1d(dvl_T,dvl_T)
-f_dvl_BM1R = interp1d(dvl_T,dvl_BM1R)
-f_dvl_BM2R = interp1d(dvl_T,dvl_BM2R)
-f_dvl_BM3R = interp1d(dvl_T,dvl_BM3R)
-f_dvl_BM4R = interp1d(dvl_T,dvl_BM4R)
-f_dvl_VE = interp1d(dvl_T,dvl_VE)
-f_dvl_VN = interp1d(dvl_T,dvl_VN)
-f_dvl_VZ = interp1d(dvl_T,dvl_VZ)
-f_dvl_VSTD = interp1d(dvl_T,dvl_VSTD)
+    # Update the previous vector
+    #INS
+    T = T_interp
+    LAT = LAT_interp
+    LON = LON_interp
+    V_X = V_X_interp
+    V_Y = V_Y_interp
+    V_Z = V_Z_interp
+    LAT_STD = LAT_STD_interp
+    LON_STD = LON_STD_interp
+    V_X_STD = V_X_STD_interp
+    V_Y_STD = V_Y_STD_interp
+    V_Z_STD = V_Z_STD_interp
+    YAW = YAW_interp
+    YAW_STD = YAW_STD_interp
+    ROLL = ROLL_interp
+    ROLL_STD = ROLL_STD_interp
+    PITCH = PITCH_interp
+    PITCH_STD = PITCH_STD_interp
+    ACC_X = ACC_X_interp
+    ACC_Y = ACC_Y_interp
+    ACC_Z = ACC_Z_interp
+    GYR_X = GYR_X_interp
+    GYR_Y = GYR_Y_interp
+    GYR_Z = GYR_Z_interp
 
-dvl_T_interp = f_dvl_T(T_glob)
-dvl_BM1R_interp = f_dvl_BM1R(T_glob)
-dvl_BM2R_interp = f_dvl_BM2R(T_glob)
-dvl_BM3R_interp = f_dvl_BM3R(T_glob)
-dvl_BM4R_interp = f_dvl_BM4R(T_glob)
-dvl_VE_interp = f_dvl_VE(T_glob)
-dvl_VN_interp = f_dvl_VN(T_glob)
-dvl_VZ_interp = f_dvl_VZ(T_glob)
-dvl_VSTD_interp = f_dvl_VSTD(T_glob)
+    #DVL
+    dvl_T = dvl_T_interp
+    dvl_BM1R = dvl_BM1R_interp
+    dvl_BM2R = dvl_BM2R_interp
+    dvl_BM3R = dvl_BM3R_interp
+    dvl_BM4R = dvl_BM4R_interp
+    dvl_VE = dvl_VE_interp
+    dvl_VN = dvl_VN_interp
+    dvl_VZ = dvl_VZ_interp
+    dvl_VSTD = dvl_VSTD_interp
 
-# Update the previous vector
-#INS
-T = T_interp
-LAT = LAT_interp
-LON = LON_interp
-V_X = V_X_interp
-V_Y = V_Y_interp
-V_Z = V_Z_interp
-LAT_STD = LAT_STD_interp
-LON_STD = LON_STD_interp
-V_X_STD = V_X_STD_interp
-V_Y_STD = V_Y_STD_interp
-V_Z_STD = V_Z_STD_interp
-YAW = YAW_interp
-YAW_STD = YAW_STD_interp
-ROLL = ROLL_interp
-ROLL_STD = ROLL_STD_interp
-PITCH = PITCH_interp
-PITCH_STD = PITCH_STD_interp
-ACC_X = ACC_X_interp
-ACC_Y = ACC_Y_interp
-ACC_Z = ACC_Z_interp
-GYR_X = GYR_X_interp
-GYR_Y = GYR_Y_interp
-GYR_Z = GYR_Z_interp
-
-#DVL
-dvl_T = dvl_T_interp
-dvl_BM1R = dvl_BM1R_interp
-dvl_BM2R = dvl_BM2R_interp
-dvl_BM3R = dvl_BM3R_interp
-dvl_BM4R = dvl_BM4R_interp
-dvl_VE = dvl_VE_interp
-dvl_VN = dvl_VN_interp
-dvl_VZ = dvl_VZ_interp
-dvl_VSTD = dvl_VSTD_interp
-
-YAW = -YAW+np.pi/2
-#Rotate the dvl
-angle = np.pi/4
-dvl_v_x = (dvl_VE*np.cos(angle) + dvl_VN*np.sin(angle))*np.cos(YAW)
-dvl_v_y = (dvl_VN*np.sin(angle) + dvl_VE*np.cos(angle))*np.sin(YAW)
-dvl_v_z = dvl_VZ
+    #Rotate the dvl
+    angle = np.pi/4
+    dvl_v_x = (dvl_VE*np.cos(angle) + dvl_VN*np.sin(angle))*np.cos(YAW)
+    dvl_v_y = (dvl_VN*np.sin(angle) + dvl_VE*np.cos(angle))*np.sin(YAW)
+    dvl_v_z = dvl_VZ
 
 
 if __name__ == '__main__':

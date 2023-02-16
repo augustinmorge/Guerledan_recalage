@@ -6,31 +6,17 @@ Simulation/storage/ins.npz
 Simulation/storage/mnt.npz
 Simulation/storage/kd_tree.pkl
 Simulation/storage/kd_tree.joblib
-Simulation/storage/dvl_trdi.txt
-Simulation/storage/mbes_trdi.txt
-Simulation/storage/sbgCenterExport.txt
-Simulation/storage/IMU_trdi.txt
+Simulation/storage/*.txt
 
 Simulation/storage_afternoon/ins.npz
 Simulation/storage_afternoon/dvl.npz
 Simulation/storage_afternoon/mnt.npz
 Simulation/storage_afternoon/kd_tree.pkl
 Simulation/storage_afternoon/kd_tree.joblib
-Simulation/storage_afternoon/dvl_navsight.txt
-Simulation/storage_afternoon/mbes_navsight.txt
-Simulation/storage_afternoon/sbgCenterExport.txt
-Simulation/storage_afternoon/IMU_navsight.txt
+Simulation/storage_afternoon/*.txt
 
-Simulation/storage_final/ins.npz
-Simulation/storage_final/dvl.npz
-Simulation/storage_final/mnt.npz
-Simulation/storage_final/kd_tree.pkl
-Simulation/storage_final/kd_tree.joblib
-Simulation/storage_final/dvl_final.txt
-Simulation/storage_final/mbes_final.txt
-Simulation/storage_final/mbes_transit_aller.txt
-Simulation/storage_final/dvl_transit_aller.txt
-Simulation/storage_final/IMU_final.txt
+Simulation/storage_final/*.txt
+Simulation/storage_final/*.joblib
 Simulation/storage_final/recal_20230209_trdi_0001
 Simulation/storage_final/recal_20230209_trdi_0002
 Simulation/storage_final/recal_20230209_trdi_0003
