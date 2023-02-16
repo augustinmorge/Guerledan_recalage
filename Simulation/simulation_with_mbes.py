@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
-from storage.data_import import *
+# from storage.data_import import *
+from storage_final.data_import import *
 n_particles = int(input("Number of particles: "))
 steps = int(input("Number of steps between measures ? "))
 bool_display = (str(input("Display the particles ? [Y/]"))=="Y")
@@ -77,9 +78,9 @@ def compute_likelihood(propagated_states, measurements, measurements_noise, beta
     distance_max = np.abs(mbes_max_Z - d_mbes_particule_max)
 
     if measurements_noise[0] == None:
-        p_z_given_x_distance = np.exp(-beta*distance_min)*np.exp(-beta*distance_mid**2)*np.exp(-beta*distance_max)
         # p_z_given_x_distance = np.exp(-beta*distance_min)*np.exp(-beta*distance_mid**2)*np.exp(-beta*distance_max)
-        # p_z_given_x_distance = np.exp(-beta*distance_mid**2)
+        # p_z_given_x_distance = np.exp(-beta*distance_min)*np.exp(-beta*distance_mid**2)*np.exp(-beta*distance_max)
+        p_z_given_x_distance = np.exp(-beta*distance_mid**2)
 
     else:
         p_z_given_x_distance = np.exp(-beta*distance/(measurements_noise[0]**2))
@@ -141,13 +142,17 @@ def f_measurements(i, previous_measurements):
     measurements = MBES_mid_Z[i,] - previous_measurements #117.61492204 #
     return measurements, MBES_mid_Z[i,], None
 
-ct_mbes = 0
+ct_mbes = 0; dtmbes = 0.15
 def f_measurements_offset(i):
     global ct_mbes
+    previous_ct_mbes = ct_mbes
     while MBES_mid_T[ct_mbes,] <= T[i,]:
         ct_mbes += 1
-    # measurements = MBES_mid_Z[ct_mbes,] - 117.61544705067318
+    # measurements = MBES_mid_Z[ct_mbes,]
 
+    global dtmbes
+    dtmbes = MBES_mid_T[ct_mbes,] - MBES_mid_T[previous_ct_mbes,]
+    print(dtmbes)
     angle_mbes = 62.5
     angle_max = (90 - (angle_mbes - (256 - MBES_max_idx[ct_mbes,])*angle_mbes/128))
     angle_min = -(90 - (angle_mbes - (MBES_min_idx[ct_mbes,] - 1)*angle_mbes/128))
@@ -162,7 +167,7 @@ def f_measurements_offset(i):
     dp_x_max = MBES_max_Z[ct_mbes,]/np.tan(angle_max*np.pi/180)*np.cos(YAW[i,]-np.pi/2)
     dp_y_max = MBES_max_Z[ct_mbes,]/np.tan(angle_max*np.pi/180)*np.sin(YAW[i,]-np.pi/2)
 
-    measurements = np.array([MBES_min_Z[ct_mbes,] - 117.61544705067318, MBES_mid_Z[ct_mbes,] - 117.61544705067318, MBES_max_Z[ct_mbes,] - 117.61544705067318, \
+    measurements = np.array([MBES_min_Z[ct_mbes,], MBES_mid_Z[ct_mbes,], MBES_max_Z[ct_mbes,], \
                             dp_x_mid, dp_y_mid, dp_x_min, dp_y_min, dp_x_max, dp_y_max])
 
     return measurements, None
@@ -279,12 +284,20 @@ if __name__ == '__main__':
             ax.set_title("Particle filter with {} particles with z = {}m".format(n_particles, measurements))
             ax.set_xlim([x_gps_min - 100,x_gps_max + 100])
             ax.set_ylim([y_gps_min - 100,y_gps_max + 100])
-            ax.scatter(x_gps, y_gps ,color='blue', label = 'True position panopée', s = 100)
-            ax.scatter(particles[1][0], particles[1][1], color = 'red', s = 0.8, label = "particles",alpha=particles[0][:,0]/pow(np.max(particles[0][:,0]),2/3)) # Affiche toutes les particules
             bx, by = get_average_state(particles)[0], get_average_state(particles)[1] #barycentre des particules
-            ax.scatter(bx, by , color = 'green', label = 'Estimation of particles')
+            scatter1 = ax.scatter(x_gps, y_gps ,color='blue', label = 'True position panopée', s = 100)
+            scatter2 = ax.scatter(particles[1][0], particles[1][1], color = 'red', s = 0.8, label = "particles",alpha=particles[0][:,0]/pow(np.max(particles[0][:,0]),2/3))
+            scatter3 = ax.scatter(bx, by , color = 'green', label = 'Estimation of particles')
 
-            ax.legend()
+            handles, labels = ax.get_legend_handles_labels()
+
+            if dtmbes == 0:
+                handles.append(plt.Line2D([0], [0], marker='o', color='red', label='off', markerfacecolor='red', markersize=10))
+            else:
+                handles.append(plt.Line2D([0], [0], marker='o', color='green', label='on', markerfacecolor='green', markersize=10))
+
+            ax.legend(handles=handles, labels=labels)
+
 
             plt.pause(0.00001)
             print("Temps d'affichage: ",time.time()-t1,"\n")
@@ -359,7 +372,7 @@ if __name__ == '__main__':
     ax3.set_ylabel("Range [m]")
     ax3.plot(dvl_T, mean_dvlR - 115.57149562238688, label = "z_dvl")
     # ax3.plot(T, d_bottom_mnt, label = "z_mnt")
-    ax3.plot(MBES_mid_T, MBES_mid_Z - 117.61544705067318, label = "z_mbes")
+    ax3.plot(MBES_mid_T, MBES_mid_Z, label = "z_mbes")
     ax3.legend()
 
     ax4.set_title("Speed")

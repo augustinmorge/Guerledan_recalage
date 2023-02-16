@@ -9,7 +9,7 @@ import time
 file_path = os.path.dirname(os.path.abspath(__file__))
 
 bool_txt = 0
-data_cropped = 0
+data_cropped = 1
 
 # Définit les coordonnées de référence
 wpt_ponton = (48.1989495, -3.0148023)
@@ -134,7 +134,7 @@ if bool_txt:
 
     MNT = []
     if data_cropped: #Choose the txt file
-        MNT_txt = np.loadtxt(file_path+"/../mnt/guerledan_cropped.txt", dtype = str)
+        MNT_txt = np.loadtxt(file_path+"/../mnt/guerledan_cropped_G2.txt", dtype = str)
     else: #Choose the compressed file
         MNT_txt = np.loadtxt(file_path+"/../mnt/guerledan_EDF_2013-06_MNT1m.tiff.txt", dtype = str)
 
@@ -222,6 +222,7 @@ GYR_Z = ins['GYR_Z']
 mnt = np.load(file_path + "/mnt.npz")
 MNT = mnt['MNT']
 
+
 """ Load the KD-Tree """
 # Load the KD tree object from the file
 # with open(file_path+'/kd_tree.pkl', 'rb') as f:
@@ -272,6 +273,11 @@ MBES_min_X = np.concatenate([np.array([MBES_X[0]]), MBES_min_X])
 MBES_min_Y = np.concatenate([np.array([MBES_Y[0]]), MBES_min_Y])
 MBES_min_Z = -np.concatenate([np.array([MBES_Z[0]]), MBES_min_Z])
 MBES_min_idx = np.concatenate([np.array([1]), MBES_min_idx])
+
+#Add the offset
+MBES_min_Z += 2.2981554769660306
+MBES_mid_Z += 2.2981554769660306
+MBES_max_Z += 2.2981554769660306
 
 """ Load the DVL """
 dvl = np.load(file_path + "/dvl.npz")
@@ -438,12 +444,16 @@ else:
 
     #Rotate the dvl
     angle = np.pi/4
-    dvl_v_x = (dvl_VE*np.cos(angle) + dvl_VN*np.sin(angle))*np.cos(YAW)
-    dvl_v_y = (dvl_VN*np.sin(angle) + dvl_VE*np.cos(angle))*np.sin(YAW)
+    dvl_v_x = (dvl_VE*np.cos(angle) + dvl_VN*np.sin(angle))*np.cos(YAW)*2.1299016196466094
+    dvl_v_y = (dvl_VN*np.sin(angle) + dvl_VE*np.cos(angle))*np.sin(YAW)*2.059492375346636
     dvl_v_z = dvl_VZ
 
-
 if __name__ == '__main__':
+
+    print("todelete")
+    print(np.abs(np.max(V_X) - np.min(V_X))/np.abs(np.max(dvl_v_x) - np.min(dvl_v_x)))
+    print(np.abs(np.max(V_Y) - np.min(V_Y))/np.abs(np.max(dvl_v_y) - np.min(dvl_v_y)))
+
     # Interpolate the MBES
     interpolate_mbes = True
     if interpolate_mbes:
@@ -539,7 +549,7 @@ if __name__ == '__main__':
         mean_dvlR = (dvl_BM1R + dvl_BM2R + dvl_BM3R + dvl_BM4R)/4
 
         ax1.plot(dvl_T, dvl_BM1R - 115.57108493670452, label = "dvl_BM1R", color = 'red')
-        ax1.plot((MBES_mid_T[1:,])[~mask1], (MBES_mid_Z[1:,])[~mask1] - 117.6152233539319, label="MBES_mid_Z")
+        ax1.plot((MBES_mid_T[1:,])[~mask1], (MBES_mid_Z[1:,])[~mask1], label="MBES_mid_Z")
         ax1.plot(T, d_bottom_mnt, label = "d_mnt")
         ax1.legend()
         ax1.grid()
@@ -617,7 +627,7 @@ if __name__ == '__main__':
 
         ax4.plot(dvl_T, np.sqrt(dvl_v_x**2 + dvl_v_y**2), label="dvl")
         ax4.plot(T, np.sqrt(V_X**2 + V_Y**2), label = "ins")
-        ax4.plot(T, 0.05**2*np.sqrt(ACC_X**2 + ACC_Y**2), label = "ins")
+        # ax4.plot(T, 0.05**2*np.sqrt(ACC_X**2 + ACC_Y**2), label = "ins")
         ax4.set_title("||V_xy||")
         ax4.legend()
         ax4.grid()
@@ -642,7 +652,7 @@ if __name__ == '__main__':
         ax6.set_xlabel("Time [min]")
         ax6.set_ylabel("Error on angle [rad]")
         ax6.set_title("angle of speed")
-    # display_speed()
+    display_speed()
     def display_acc():
         plt.figure()
         plt.plot(T, ACC_X, label = "acc_x")
@@ -766,7 +776,7 @@ if __name__ == '__main__':
 
         d_bottom_mbes = distance_to_bottom(np.column_stack((MBES_mid_X,MBES_mid_Y)),MNT)[1].squeeze()
         ax1.scatter(MBES_mid_T, d_bottom_mbes, label = "d_mbes_mid_mbes", color = 'red', s = 0.5)
-        ax1.scatter(MBES_mid_T, MBES_mid_Z - 117.6152233539319, label = "MBES_mid_Z", s = 0.5)
+        ax1.scatter(MBES_mid_T, MBES_mid_Z, label = "MBES_mid_Z", s = 0.5)
         ax1.set_xlabel("Time [min]")
         ax1.set_ylabel("Distance [m]")
         ax1.set_title("Range of MBES")
@@ -774,7 +784,7 @@ if __name__ == '__main__':
 
         d_bottom_mbes = distance_to_bottom(np.column_stack((MBES_min_X,MBES_min_Y)),MNT)[1].squeeze()
         ax2.scatter(MBES_min_T, d_bottom_mbes, label = "d_mbes_min_mbes", color = 'red', s = 0.5)
-        ax2.scatter(MBES_min_T, MBES_min_Z - 117.6152233539319, label = "MBES_min_Z", s = 0.5)
+        ax2.scatter(MBES_min_T, MBES_min_Z, label = "MBES_min_Z", s = 0.5)
         ax2.set_xlabel("Time [min]")
         ax2.set_ylabel("Distance [m]")
         ax2.set_title("Range of MBES")
@@ -782,7 +792,7 @@ if __name__ == '__main__':
 
         d_bottom_mbes = distance_to_bottom(np.column_stack((MBES_max_X,MBES_max_Y)),MNT)[1].squeeze()
         ax3.scatter(MBES_max_T, d_bottom_mbes, label = "d_mbes_max_mbes", color = 'red', s = 0.5)
-        ax3.scatter(MBES_max_T, MBES_max_Z - 117.6152233539319, label = "MBES_max_Z", s = 0.5)
+        ax3.scatter(MBES_max_T, MBES_max_Z, label = "MBES_max_Z", s = 0.5)
         ax3.set_xlabel("Time [min]")
         ax3.set_ylabel("Distance [m]")
         ax3.set_title("Range of MBES")
@@ -798,7 +808,7 @@ if __name__ == '__main__':
 
             d_bottom_mbes = distance_to_bottom(np.column_stack((x_gps + dp_x_mid,y_gps + dp_y_mid)),MNT)[1].squeeze()
             ax1.scatter(MBES_mid_T, d_bottom_mbes, label = "d_mbes_mid_gps", color = 'red', s = 0.5)
-            ax1.scatter(MBES_mid_T, MBES_mid_Z - 117.6152233539319, label = "MBES_mid_Z", s = 0.5)
+            ax1.scatter(MBES_mid_T, MBES_mid_Z, label = "MBES_mid_Z", s = 0.5)
             ax1.set_xlabel("Time [min]")
             ax1.set_ylabel("Distance [m]")
             ax1.set_title("Range of MBES")
@@ -806,7 +816,7 @@ if __name__ == '__main__':
 
             d_bottom_mbes = distance_to_bottom(np.column_stack((x_gps + dp_x_min,y_gps + dp_y_min)),MNT)[1].squeeze()
             ax2.scatter(MBES_min_T, d_bottom_mbes, label = "d_mbes_min_gps", color = 'red', s = 0.5)
-            ax2.scatter(MBES_min_T, MBES_min_Z - 117.6152233539319, label = "MBES_min_Z", s = 0.5)
+            ax2.scatter(MBES_min_T, MBES_min_Z, label = "MBES_min_Z", s = 0.5)
             ax2.set_xlabel("Time [min]")
             ax2.set_ylabel("Distance [m]")
             ax2.set_title("Range of MBES")
@@ -814,12 +824,11 @@ if __name__ == '__main__':
 
             d_bottom_mbes = distance_to_bottom(np.column_stack((x_gps + dp_x_max,y_gps + dp_y_max)),MNT)[1].squeeze()
             ax3.scatter(MBES_max_T, d_bottom_mbes, label = "d_mbes_max_gps", color = 'red', s = 0.5)
-            ax3.scatter(MBES_max_T, MBES_max_Z - 117.6152233539319, label = "MBES_max_Z", s = 0.5)
+            ax3.scatter(MBES_max_T, MBES_max_Z, label = "MBES_max_Z", s = 0.5)
             ax3.set_xlabel("Time [min]")
             ax3.set_ylabel("Distance [m]")
             ax3.set_title("Range of MBES")
             ax3.legend()
 
-
-    display_beams_mbes()
+    # display_beams_mbes()
     plt.show()

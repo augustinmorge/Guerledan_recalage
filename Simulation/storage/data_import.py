@@ -262,6 +262,11 @@ MBES_min_Y = np.concatenate([np.array([MBES_Y[0]]), MBES_min_Y])
 MBES_min_Z = np.concatenate([np.array([MBES_Z[0]]), MBES_min_Z])
 MBES_min_idx = np.concatenate([np.array([1]), MBES_min_idx])
 
+#Add the offset
+MBES_min_Z += -117.6152233539319
+MBES_mid_Z += -117.6152233539319
+MBES_min_Z += -117.6152233539319
+
 """ Load the DVL """
 dvl = np.load(file_path + "/dvl.npz")
 dvl_T = dvl["dvl_T"]
@@ -525,7 +530,7 @@ if __name__ == '__main__':
         mean_dvlR = (dvl_BM1R + dvl_BM2R + dvl_BM3R + dvl_BM4R)/4
 
         ax1.plot(dvl_T, dvl_BM1R - 115.57108493670452, label = "dvl_BM1R", color = 'red')
-        ax1.plot((MBES_mid_T[1:,])[~mask1], (MBES_mid_Z[1:,])[~mask1] - 117.6152233539319, label="MBES_mid_Z")
+        ax1.plot((MBES_mid_T[1:,])[~mask1], (MBES_mid_Z[1:,])[~mask1], label="MBES_mid_Z")
         ax1.plot(T, d_bottom_mnt, label = "d_mnt")
         ax1.legend()
         ax1.grid()
@@ -752,7 +757,7 @@ if __name__ == '__main__':
 
         d_bottom_mbes = distance_to_bottom(np.column_stack((MBES_mid_X,MBES_mid_Y)),MNT)[1].squeeze()
         ax1.scatter(MBES_mid_T, d_bottom_mbes, label = "d_mbes_mid_mbes", color = 'red', s = 0.5)
-        ax1.scatter(MBES_mid_T, MBES_mid_Z - 117.6152233539319, label = "MBES_mid_Z", s = 0.5)
+        ax1.scatter(MBES_mid_T, MBES_mid_Z, label = "MBES_mid_Z", s = 0.5)
         ax1.set_xlabel("Time [min]")
         ax1.set_ylabel("Distance [m]")
         ax1.set_title("Range of MBES")
@@ -760,7 +765,7 @@ if __name__ == '__main__':
 
         d_bottom_mbes = distance_to_bottom(np.column_stack((MBES_min_X,MBES_min_Y)),MNT)[1].squeeze()
         ax2.scatter(MBES_min_T, d_bottom_mbes, label = "d_mbes_min_mbes", color = 'red', s = 0.5)
-        ax2.scatter(MBES_min_T, MBES_min_Z - 117.6152233539319, label = "MBES_min_Z", s = 0.5)
+        ax2.scatter(MBES_min_T, MBES_min_Z, label = "MBES_min_Z", s = 0.5)
         ax2.set_xlabel("Time [min]")
         ax2.set_ylabel("Distance [m]")
         ax2.set_title("Range of MBES")
@@ -768,7 +773,7 @@ if __name__ == '__main__':
 
         d_bottom_mbes = distance_to_bottom(np.column_stack((MBES_max_X,MBES_max_Y)),MNT)[1].squeeze()
         ax3.scatter(MBES_max_T, d_bottom_mbes, label = "d_mbes_max_mbes", color = 'red', s = 0.5)
-        ax3.scatter(MBES_max_T, MBES_max_Z - 117.6152233539319, label = "MBES_max_Z", s = 0.5)
+        ax3.scatter(MBES_max_T, MBES_max_Z, label = "MBES_max_Z", s = 0.5)
         ax3.set_xlabel("Time [min]")
         ax3.set_ylabel("Distance [m]")
         ax3.set_title("Range of MBES")
@@ -784,7 +789,7 @@ if __name__ == '__main__':
 
             d_bottom_mbes = distance_to_bottom(np.column_stack((x_gps + dp_x_mid,y_gps + dp_y_mid)),MNT)[1].squeeze()
             ax1.scatter(MBES_mid_T, d_bottom_mbes, label = "d_mbes_mid_gps", color = 'red', s = 0.5)
-            ax1.scatter(MBES_mid_T, MBES_mid_Z - 117.6152233539319, label = "MBES_mid_Z", s = 0.5)
+            ax1.scatter(MBES_mid_T, MBES_mid_Z, label = "MBES_mid_Z", s = 0.5)
             ax1.set_xlabel("Time [min]")
             ax1.set_ylabel("Distance [m]")
             ax1.set_title("Range of MBES")
@@ -792,7 +797,7 @@ if __name__ == '__main__':
 
             d_bottom_mbes = distance_to_bottom(np.column_stack((x_gps + dp_x_min,y_gps + dp_y_min)),MNT)[1].squeeze()
             ax2.scatter(MBES_min_T, d_bottom_mbes, label = "d_mbes_min_gps", color = 'red', s = 0.5)
-            ax2.scatter(MBES_min_T, MBES_min_Z - 117.6152233539319, label = "MBES_min_Z", s = 0.5)
+            ax2.scatter(MBES_min_T, MBES_min_Z, label = "MBES_min_Z", s = 0.5)
             ax2.set_xlabel("Time [min]")
             ax2.set_ylabel("Distance [m]")
             ax2.set_title("Range of MBES")
@@ -800,7 +805,7 @@ if __name__ == '__main__':
 
             d_bottom_mbes = distance_to_bottom(np.column_stack((x_gps + dp_x_max,y_gps + dp_y_max)),MNT)[1].squeeze()
             ax3.scatter(MBES_max_T, d_bottom_mbes, label = "d_mbes_max_gps", color = 'red', s = 0.5)
-            ax3.scatter(MBES_max_T, MBES_max_Z - 117.6152233539319, label = "MBES_max_Z", s = 0.5)
+            ax3.scatter(MBES_max_T, MBES_max_Z, label = "MBES_max_Z", s = 0.5)
             ax3.set_xlabel("Time [min]")
             ax3.set_ylabel("Distance [m]")
             ax3.set_title("Range of MBES")
