@@ -93,7 +93,7 @@ def compute_likelihood(propagated_states, measurements, measurements_noise, beta
         p_z_given_x_distance = np.exp(-beta*distance/(measurements_noise[0]**2))
 
     # p_z_given_x_distance = 1
-    # Return importance weight based on all landmarks
+    # Return importance weight based on all landmarkss
 
     if dtmbes == 0: #si il n'y a pas de nouvelle données MBES
         dvl_bm1r, dvl_bm2r, dvl_bm3r, dvl_bm4r = [measurements_dvl[i] for i in range(4)]
