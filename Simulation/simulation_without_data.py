@@ -5,18 +5,16 @@ from numpy import sin, cos
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import copy
-from resampler import Resampler
+from simulation_helper.resampler import Resampler
 
 def distance_to_bottom(x,y):
     z = np.sqrt((x/2)**2 + (y/2)**2) + np.sin(x/2) + np.cos((x + y)/2)*np.cos(x/2)
     return(z)
 
-def GPS_point(t):
-    alpha = 0.0001
+def GPS_point(t, alpha = 0.25):
     return(120.*cos(0.25*alpha*t),
            120.*sin(0.5*alpha*t))
-    # return(0.,
-    #        0.)
+
 
 def initialize_particles_uniform(n_particles):
     weight = 1/n_particles
@@ -189,6 +187,7 @@ if __name__ == '__main__':
         # for i in range(n_particles):
         #     ax.scatter(particles[1][0][i], particles[1][1][i], color = 'red')
         ax.scatter(get_average_state(particles)[0],get_average_state(particles)[1], color = 'red', label = 'Approximation of particles')
+        ax.scatter(particles[1][0], particles[1][1], color = 'red', s = 0.8, label = "particles",alpha=particles[0][:,0]/pow(np.max(particles[0][:,0]),2/3)) # Affiche toutes les particules
 
         # Tracé des isobates
         # plt.contour(X, Y, Z, levels)
