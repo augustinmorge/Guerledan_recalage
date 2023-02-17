@@ -816,7 +816,6 @@ if __name__ == '__main__':
             ax3.set_ylabel("Distance [m]")
             ax3.set_title("Range of MBES")
             ax3.legend()
+    # display_beams_mbes()
 
-
-    display_beams_mbes()
     plt.show()

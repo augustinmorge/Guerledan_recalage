@@ -172,7 +172,7 @@ def f_measurements_offset(i):
     dp_x_max = MBES_max_Z[ct_mbes,]/np.tan(angle_max*np.pi/180)*np.cos(YAW[i,]-np.pi/2)
     dp_y_max = MBES_max_Z[ct_mbes,]/np.tan(angle_max*np.pi/180)*np.sin(YAW[i,]-np.pi/2)
 
-    measurements = np.array([MBES_min_Z[ct_mbes,], MBES_mid_Z[ct_mbes,], MBES_max_Z[ct_mbes,], \
+    measurements = np.array([MBES_min_Z[ct_mbes,] + 2.2981554769660306, MBES_mid_Z[ct_mbes,] + 2.2981554769660306, MBES_max_Z[ct_mbes,] + 2.2981554769660306, \
                             dp_x_mid, dp_y_mid, dp_x_min, dp_y_min, dp_x_max, dp_y_max])
 
     return measurements, None

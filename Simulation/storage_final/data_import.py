@@ -680,22 +680,30 @@ if __name__ == '__main__':
             for i in range(1, N):
                 y[i] = alpha * x[i] + (1 - alpha) * y[i-1]
             return y
+        global dvl_BM1R
+        global dvl_BM2R
+        global dvl_BM3R
+        global dvl_BM4R
+        dvl_BM1R += -119.91869636276917
+        dvl_BM2R += -119.91869636276917
+        dvl_BM3R += -119.91869636276917
+        dvl_BM4R += -119.91869636276917
 
-        dvl_BM1R_new = dvl_BM1R - 115.5714023521081
-        ax1.plot(dvl_T, dvl_BM1R_new, label = "dvl_BM1R_new_raw", color = 'red')
-        alpha = 0.9
+        # dvl_BM1R_new = dvl_BM1R
+        ax1.plot(dvl_T, dvl_BM1R, label = "dvl_BM1R_raw", color = 'red')
+        # alpha = 0.9
         # ax1.legend(dvl_T[1:,],alpha*dvl_BM1R_new[1:,]-(1-alpha)*dvl_BM1R_new[:-1,], color = 'purple', label = "gléfiltrélol")
-        ax1.plot(dvl_T,passe_bas(dvl_BM1R_new, 0.01), color = 'purple', label = "gléfiltrélol")
+        # ax1.plot(dvl_T,passe_bas(dvl_BM1R_new, 0.01), color = 'purple', label = "gléfiltrélol")
         d_bottom_mnt = distance_to_bottom(np.column_stack((x_gps+dp_x_B1,y_gps+dp_y_B1)),MNT)[1].squeeze()
         ax1.plot(T, d_bottom_mnt, label = "d_mnt_beam1", color = 'green')
         ax1.grid()
         ax1.set_xlabel("Time [min]")
         ax1.set_ylabel("Range [m]")
-        ax1.set_title("dvl_BM1R_new")
+        # ax1.set_title("dvl_BM1R_new")
 
         # d_bottom_mnt = distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze()
         # ax2.plot(T, d_bottom_mnt, label = "d_mnt")
-        ax2.plot(dvl_T, dvl_BM2R - 115.5714023521081, label = "dvl_BM2R_raw", color = 'red')
+        ax2.plot(dvl_T, dvl_BM2R, label = "dvl_BM2R_raw", color = 'red')
         d_bottom_mnt = distance_to_bottom(np.column_stack((x_gps+dp_x_B2,y_gps+dp_y_B2)),MNT)[1].squeeze()
         ax2.plot(T, d_bottom_mnt, label = "d_mnt_beam2", color = 'green')
         ax2.legend()
@@ -706,7 +714,7 @@ if __name__ == '__main__':
 
         # d_bottom_mnt = distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze()
         # ax3.plot(T, d_bottom_mnt, label = "d_mnt")
-        ax3.plot(dvl_T, dvl_BM3R - 115.5714023521081, label = "dvl_BM3R_raw", color = 'red')
+        ax3.plot(dvl_T, dvl_BM3R, label = "dvl_BM3R_raw", color = 'red')
         d_bottom_mnt = distance_to_bottom(np.column_stack((x_gps+dp_x_B3,y_gps+dp_y_B3)),MNT)[1].squeeze()
         ax3.plot(T, d_bottom_mnt, label = "d_mnt_beam3", color = 'green')
         ax3.legend()
@@ -717,7 +725,7 @@ if __name__ == '__main__':
 
         # d_bottom_mnt = distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze()
         # ax4.plot(T, d_bottom_mnt, label = "d_mnt")
-        ax4.plot(dvl_T, dvl_BM4R - 115.5714023521081, label = "dvl_BM4R_raw", color = 'red')
+        ax4.plot(dvl_T, dvl_BM4R, label = "dvl_BM4R_raw", color = 'red')
         d_bottom_mnt = distance_to_bottom(np.column_stack((x_gps+dp_x_B4,y_gps+dp_y_B4)),MNT)[1].squeeze()
         ax4.plot(T, d_bottom_mnt, label = "d_mnt_beam4", color = 'green')
         ax4.legend()
@@ -727,7 +735,7 @@ if __name__ == '__main__':
         ax4.set_title("dvl_BM4R")
 
         h1, h2, h3, h4 = dvl_BM1R, dvl_BM2R, dvl_BM3R, dvl_BM4R
-        mean_range_dvl = (h1*h2)/(h1+h2) + (h3*h4)/(h3+h4) - 115.57149562238688
+        mean_range_dvl = (h1*h2)/(h1+h2) + (h3*h4)/(h3+h4)
         d_bottom_mnt = distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze()
         ax5.plot(dvl_T, mean_range_dvl, label = "mean_range_dvl", color = 'red')
         ax5.plot(T, d_bottom_mnt, label = "d_bottom_mnt", color = 'green')
@@ -736,7 +744,7 @@ if __name__ == '__main__':
         ax5.set_xlabel("Time [min]")
         ax5.set_ylabel("Range [m]")
         ax5.set_title("mean_range_dvl")
-    # display_beams_dvl()
+    display_beams_dvl()
 
     #Change the range to z
     #Convert the beam of the MBES
@@ -836,6 +844,6 @@ if __name__ == '__main__':
             ax3.set_ylabel("Distance [m]")
             ax3.set_title("Range of MBES")
             ax3.legend()
+    # display_beams_mbes()
 
-    display_beams_mbes()
     plt.show()

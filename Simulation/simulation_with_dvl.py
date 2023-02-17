@@ -165,7 +165,7 @@ def f_measurements_offset(i):
     dvl_BM1R[i,], dvl_BM2R[i,], dvl_BM3R[i,], dvl_BM4R[i,] = \
         filter_lpf_dvlr.low_pass_next(np.array([dvl_BM1R[i,], dvl_BM2R[i,], dvl_BM3R[i,], dvl_BM4R[i,]])).flatten()
     range_dvl = np.array([dvl_BM1R[i,], dvl_BM2R[i,], dvl_BM3R[i,], dvl_BM4R[i,]])
-    measurements = range_dvl - 115.57149562238688
+    measurements = range_dvl - 119.91869636276917
     return measurements, None
 
 def test_diverge(ERR, err_max=1000):
