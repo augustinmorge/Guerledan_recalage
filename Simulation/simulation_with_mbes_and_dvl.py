@@ -97,7 +97,7 @@ def compute_likelihood(propagated_states, measurements, measurements_noise, beta
 
     if dtmbes == 0: #si il n'y a pas de nouvelle données MBES
         dvl_BM1R, dvl_BM2R, dvl_BM3R, dvl_BM4R = [measurements_dvl[i] for i in range(4)]
-        use_4_beams = True
+        use_4_beams = False
         if use_4_beams:
             th = np.pi/4
             pi2_janus = 60*np.pi/180
@@ -139,7 +139,7 @@ def compute_likelihood(propagated_states, measurements, measurements_noise, beta
                 # p1, p2, p3, p4 = np.exp(-beta*distance_B1**2), np.exp(-beta*distance_B2**2), np.exp(-beta*distance_B3**2), np.exp(-beta*distance_B4**2)
             else:
                 p_z_given_x_distance = np.exp(-beta*distance_B1/(measurements_noise[0]**2))*np.exp(-beta*distance_B2/(measurements_noise[0]**2))*np.exp(-beta*distance_B3/(measurements_noise[0]**2))*np.exp(-beta*distance_B4/(measurements_noise[0]**2))
-           
+
             d_mnt = np.array([d_mnt_B1, d_mnt_B2, d_mnt_B3, d_mnt_B4])
             new_z_particules_mnt = np.array([d_mbes_particule_B1, d_mbes_particule_B2, d_mbes_particule_B3, d_mbes_particule_B4])
 
@@ -327,7 +327,7 @@ if __name__ == '__main__':
         # v_x, v_y = V_X[i,], V_Y[i,]
         # v_std = dt*np.sqrt(V_X_STD[i,]**2 + V_Y_STD[i,]**2)
 
-        if using_offset : 
+        if using_offset :
             measurements, meas_model_distance_std = f_measurements_offset(i)
             measurements_dvl, meas_model_distance_std_dvl = f_measurements_offset_dvl(i)
         else: measurements, previous_measurements, meas_model_distance_std = f_measurements(i, previous_measurements)
@@ -398,7 +398,7 @@ if __name__ == '__main__':
         STD_X.append(std_x)
         STD_Y.append(std_y)
         #Test if the algorithm diverge and why
-        if test_diverge(ERR, 500) : break
+        # if test_diverge(ERR, 500) : break
 
 
     print(f"Resampling used: {ct_resampling} ({ct_resampling/((idx_tf - idx_ti)/steps)*100}%)")

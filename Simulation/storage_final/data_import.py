@@ -9,7 +9,7 @@ import time
 file_path = os.path.dirname(os.path.abspath(__file__))
 
 bool_txt = 0
-data_cropped = 1
+data_cropped = 0
 
 # Définit les coordonnées de référence
 wpt_ponton = (48.1989495, -3.0148023)
@@ -134,14 +134,15 @@ if bool_txt:
 
     MNT = []
     if data_cropped: #Choose the txt file
-        MNT_txt = np.loadtxt(file_path+"/../mnt/guerledan_cropped_G2.txt", dtype = str)
+        MNT_txt = np.loadtxt(file_path+"/../mnt/guerledan_cropped_G22.txt", dtype = str)
     else: #Choose the compressed file
-        MNT_txt = np.loadtxt(file_path+"/../mnt/guerledan_EDF_2013-06_MNT1m.tiff.txt", dtype = str)
+        MNT_txt = np.loadtxt(file_path+"/../mnt/guerledan_2019-02_MNT50cm.xyz", dtype = str)
 
     #Flip the MNT
     for i in MNT_txt:
         MNT.append(i.split(','))
-        MNT[-1] = [np.float64(MNT[-1][0]), np.float64(MNT[-1][1]), np.float64(MNT[-1][2]+'.'+MNT[-1][3])]
+        # MNT[-1] = [np.float64(MNT[-1][0]), np.float64(MNT[-1][1]), np.float64(MNT[-1][2]+'.'+MNT[-1][3])]
+        MNT[-1] = [np.float64(MNT[-1][0]), np.float64(MNT[-1][1]), np.float64(MNT[-1][2])]
     MNT = np.array(MNT)
 
     #Transform the proj
@@ -221,6 +222,7 @@ GYR_Z = ins['GYR_Z']
 """ Load MNT """
 mnt = np.load(file_path + "/mnt.npz")
 MNT = mnt['MNT']
+MNT[:,2] = -MNT[:,2]
 
 
 """ Load the KD-Tree """
@@ -684,10 +686,10 @@ if __name__ == '__main__':
         global dvl_BM2R
         global dvl_BM3R
         global dvl_BM4R
-        dvl_BM1R += -119.91869636276917
-        dvl_BM2R += -119.91869636276917
-        dvl_BM3R += -119.91869636276917
-        dvl_BM4R += -119.91869636276917
+        dvl_BM1R += -119.76367580513286
+        dvl_BM2R += -119.76367580513286
+        dvl_BM3R += -119.76367580513286
+        dvl_BM4R += -119.76367580513286
 
         # dvl_BM1R_new = dvl_BM1R
         ax1.plot(dvl_T, dvl_BM1R, label = "dvl_BM1R_raw", color = 'red')
@@ -699,7 +701,7 @@ if __name__ == '__main__':
         ax1.grid()
         ax1.set_xlabel("Time [min]")
         ax1.set_ylabel("Range [m]")
-        # ax1.set_title("dvl_BM1R_new")
+        ax1.set_title("dvl_BM1R")
 
         # d_bottom_mnt = distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze()
         # ax2.plot(T, d_bottom_mnt, label = "d_mnt")
@@ -735,7 +737,8 @@ if __name__ == '__main__':
         ax4.set_title("dvl_BM4R")
 
         h1, h2, h3, h4 = dvl_BM1R, dvl_BM2R, dvl_BM3R, dvl_BM4R
-        mean_range_dvl = (h1*h2)/(h1+h2) + (h3*h4)/(h3+h4)
+        # mean_range_dvl = (h1*h2)/(h1+h2) + (h3*h4)/(h3+h4)
+        mean_range_dvl = (h1+h2+h3+h4)/4
         d_bottom_mnt = distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze()
         ax5.plot(dvl_T, mean_range_dvl, label = "mean_range_dvl", color = 'red')
         ax5.plot(T, d_bottom_mnt, label = "d_bottom_mnt", color = 'green')
@@ -750,7 +753,7 @@ if __name__ == '__main__':
     #Convert the beam of the MBES
     #On a 65° entre le milieu et le max/mix pour 256/2 beams
 
-    angle_mbes = 63
+    angle_mbes = 50 #63
     angle_max = (90 - (angle_mbes - (256 - MBES_max_idx)*angle_mbes/128))
     angle_min = -(90 - (angle_mbes - (MBES_min_idx - 1)*angle_mbes/128))
     angle_mid = 90 - (128 - MBES_mid_idx)*angle_mbes/128
@@ -775,10 +778,10 @@ if __name__ == '__main__':
         global MBES_mid_Z
         global MBES_max_Z
 
-        #Add the offset
-        MBES_min_Z += 2.2981554769660306
-        MBES_mid_Z += 2.2981554769660306
-        MBES_max_Z += 2.2981554769660306
+        # #Add the offset
+        MBES_min_Z += 2.453176034602336 #2.2981554769660306
+        MBES_mid_Z += 2.453176034602336 #2.2981554769660306
+        MBES_max_Z += 2.453176034602336 #2.2981554769660306
 
         plt.figure()
         plt.suptitle("Without intepolation and GNSS")
@@ -844,6 +847,6 @@ if __name__ == '__main__':
             ax3.set_ylabel("Distance [m]")
             ax3.set_title("Range of MBES")
             ax3.legend()
-    # display_beams_mbes()
+    display_beams_mbes()
 
     plt.show()

@@ -17,8 +17,9 @@ Simulation/storage_afternoon/*.txt
 
 Simulation/storage_final/*.txt
 Simulation/storage_final/*.joblib
-Simulation/storage_final/recal_20230209_trdi_0001
-Simulation/storage_final/recal_20230209_trdi_0002
-Simulation/storage_final/recal_20230209_trdi_0003
+
+Simulation/storage_semi_final/*.txt
+Simulation/storage_semi_final/*.joblib
 
 Simulation/mnt/*.txt
+Simulation/mnt/*.xyz

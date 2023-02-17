@@ -4,11 +4,12 @@ import os
 import pyproj
 from sklearn.neighbors import KDTree
 import joblib, pickle
+import time
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 
 bool_txt = 0
-data_cropped = 1
+data_cropped = 0
 
 # Définit les coordonnées de référence
 wpt_ponton = (48.1989495, -3.0148023)
@@ -38,9 +39,11 @@ if bool_txt:
                 # Down Velocity Std.	Yaw	Yaw Std.	Roll	Roll Std.	Pitch
                     # Pitch Std.
 
-    filepath = file_path+"/IMU_trdi.txt"
+    filepath = file_path+"/IMU_11h.txt"
     data_ins = np.genfromtxt(filepath, delimiter='\t', skip_header=2, dtype = "U")
     T = data_ins[:,0]
+    print(T[0])
+    print(T[-1])
     T = np.array([dt.split(":") for dt in T], dtype=np.float64)
     T = 60*60*T[:,0] + 60*T[:,1] + T[:,2]
 
@@ -74,30 +77,36 @@ if bool_txt:
 
     """ Import DVL """
     print("Importing the DVL-TXT file..")
-    filepath = file_path + "/dvl_trdi.txt"
+    print("WARNING: ONE HOUR LESS FOR DVL")
+    filepath = file_path + "/dvl_transit_aller.txt"
     data_dvl = np.genfromtxt(filepath, delimiter=',', skip_header=1)
     dvl_ensemble = data_dvl[:,0]
-    dvl_Y = data_dvl[:,0]
-    dvl_M = data_dvl[:,1]
-    dvl_D = data_dvl[:,2]
-    dvl_H = data_dvl[:,3]
-    dvl_MN = data_dvl[:,4]
-    dvl_S = data_dvl[:,5]
-    dvl_CS = data_dvl[:,6]
-    dvl_T = 60*60*dvl_H + 60*dvl_MN + dvl_S + 1/100.*dvl_CS
+    start_time_idx_dvl = 1
+    dvl_Y = data_dvl[:,start_time_idx_dvl + 0]
+    dvl_M = data_dvl[:,start_time_idx_dvl + 1]
+    dvl_D = data_dvl[:,start_time_idx_dvl + 2]
+    dvl_H = data_dvl[:,start_time_idx_dvl + 3]
+    dvl_MN = data_dvl[:,start_time_idx_dvl + 4]
+    dvl_S = data_dvl[:,start_time_idx_dvl + 5]
+    dvl_CS = data_dvl[:,start_time_idx_dvl + 6]
+    # print(f"{dvl_H[0]}:{dvl_MN[0]}:{dvl_S[0]}")
+    # print(f"{dvl_H[-1]}:{dvl_MN[-1]}:{dvl_S[-1]}")
+    dvl_T = 60*60*(dvl_H-1) + 60*dvl_MN + dvl_S + 1/100.*dvl_CS
+    print(time.strftime("%H:%M:%S", time.gmtime(dvl_T[0])))
+    print(time.strftime("%H:%M:%S", time.gmtime(dvl_T[-1])))
 
-    dvl_BM1R = data_dvl[:,7]
-    dvl_BM2R = data_dvl[:,8]
-    dvl_BM3R = data_dvl[:,9]
-    dvl_BM4R = data_dvl[:,10]
-    dvl_VE = data_dvl[:,11]
-    dvl_VN = data_dvl[:,12]
-    dvl_VZ = data_dvl[:,13]
-    dvl_VSTD = data_dvl[:,14]
+    dvl_BM1R = data_dvl[:,start_time_idx_dvl + 7]
+    dvl_BM2R = data_dvl[:,start_time_idx_dvl + 8]
+    dvl_BM3R = data_dvl[:,start_time_idx_dvl + 9]
+    dvl_BM4R = data_dvl[:,start_time_idx_dvl + 10]
+    dvl_VE = data_dvl[:,start_time_idx_dvl + 11]
+    dvl_VN = data_dvl[:,start_time_idx_dvl + 12]
+    dvl_VZ = data_dvl[:,start_time_idx_dvl + 13]
+    dvl_VSTD = data_dvl[:,start_time_idx_dvl + 14]
 
     """ Import MBES """
     print("Importing the MBES-TXT file..")
-    filepath = file_path+"/MBES_mid_trdi.txt"
+    filepath = file_path+"/mbes_transit_aller.txt"
     # Read data from file
     data_mbes = np.genfromtxt(filepath, delimiter=',', skip_header=1, dtype = "U")
 
@@ -109,7 +118,8 @@ if bool_txt:
 
     # Create Time_MBES array
     Time_MBES = np.array([dt.split(" ")[1].split(":") for dt in Date_Time], dtype=np.float64)
-
+    print(Time_MBES[0])
+    print(Time_MBES[-1])
     # Create the TIME vector array
     Time_MBES_mid_seconds = (60*60*Time_MBES[:,0] + 60*Time_MBES[:,1] + Time_MBES[:,2])
     # print("Beam: ",Beam)
@@ -124,14 +134,15 @@ if bool_txt:
 
     MNT = []
     if data_cropped: #Choose the txt file
-        MNT_txt = np.loadtxt(file_path+"/../mnt/guerledan_cropped.txt", dtype = str)
+        MNT_txt = np.loadtxt(file_path+"/../mnt/guerledan_cropped_G22.txt", dtype = str)
     else: #Choose the compressed file
-        MNT_txt = np.loadtxt(file_path+"/../mnt/guerledan_EDF_2013-06_MNT1m.tiff.txt", dtype = str)
+        MNT_txt = np.loadtxt(file_path+"/../mnt/guerledan_2019-02_MNT50cm.xyz", dtype = str)
 
     #Flip the MNT
     for i in MNT_txt:
         MNT.append(i.split(','))
-        MNT[-1] = [np.float64(MNT[-1][0]), np.float64(MNT[-1][1]), np.float64(MNT[-1][2]+'.'+MNT[-1][3])]
+        # MNT[-1] = [np.float64(MNT[-1][0]), np.float64(MNT[-1][1]), np.float64(MNT[-1][2]+'.'+MNT[-1][3])]
+        MNT[-1] = [np.float64(MNT[-1][0]), np.float64(MNT[-1][1]), np.float64(MNT[-1][2])]
     MNT = np.array(MNT)
 
     #Transform the proj
@@ -211,6 +222,8 @@ GYR_Z = ins['GYR_Z']
 """ Load MNT """
 mnt = np.load(file_path + "/mnt.npz")
 MNT = mnt['MNT']
+MNT[:,2] = -MNT[:,2]
+
 
 """ Load the KD-Tree """
 # Load the KD tree object from the file
@@ -249,6 +262,7 @@ MBES_max_Y = np.array(MBES_Y[indices[:-1]])
 MBES_max_Z = np.array(MBES_Z[indices[:-1]])
 MBES_max_idx = np.array(BEAMS[indices[:-1]])
 
+print('Il ne faut pas de moins pour MBES_min_Z et je ne sais pas pourquoi /!\ ')
 MBES_min_T = np.array(MBES_T[indices[1:-1]+1])
 MBES_min_X = np.array(MBES_X[indices[1:-1]+1])
 MBES_min_Y = np.array(MBES_Y[indices[1:-1]+1])
@@ -261,6 +275,10 @@ MBES_min_X = np.concatenate([np.array([MBES_X[0]]), MBES_min_X])
 MBES_min_Y = np.concatenate([np.array([MBES_Y[0]]), MBES_min_Y])
 MBES_min_Z = np.concatenate([np.array([MBES_Z[0]]), MBES_min_Z])
 MBES_min_idx = np.concatenate([np.array([1]), MBES_min_idx])
+
+MBES_min_Z = -MBES_min_Z
+MBES_mid_Z = -MBES_mid_Z
+MBES_max_Z = -MBES_max_Z
 
 """ Load the DVL """
 dvl = np.load(file_path + "/dvl.npz")
@@ -301,8 +319,9 @@ if apply_modif:
 # Déterminez les temps de début et de fin communs entre T et MBES_mid_T
 start_time = max(max(T[0], MBES_mid_T[0]),dvl_T[0])
 end_time = min(min(T[-1], MBES_mid_T[-1]),dvl_T[-1])
-# start_time = max(max(T[0], MBES_T[0]),dvl_T[0])
-# end_time = min(min(T[-1], MBES_T[-1]),dvl_T[-1])
+
+print("Tmin: ",T[0], MBES_mid_T[0], dvl_T[0])
+print("Tmax: ",T[-1], MBES_mid_T[-1],dvl_T[-1],"\n")
 
 import sys
 choice_sensor = sys.argv[0].split("_")[-1][:-3]
@@ -315,7 +334,7 @@ else:
     dt_br = np.mean(np.diff(dvl_T)) #0.1
     print(f"dt choosen = {dt_br}")
     T_glob = np.arange(start_time, end_time, dt_br)
-
+    print(f"Tglob = {T_glob}")
     # Interpolez les données de T sur le nouveau vecteur de temps T_glob
     # Interpolate the INS
     f_T = interp1d(T, T)
@@ -426,12 +445,16 @@ else:
 
     #Rotate the dvl
     angle = np.pi/4
-    dvl_v_x = (dvl_VE*np.cos(angle) + dvl_VN*np.sin(angle))*np.cos(YAW)
-    dvl_v_y = (dvl_VN*np.sin(angle) + dvl_VE*np.cos(angle))*np.sin(YAW)
+    dvl_v_x = (dvl_VE*np.cos(angle) + dvl_VN*np.sin(angle))*np.cos(YAW)*2.296356504486271
+    dvl_v_y = (dvl_VN*np.sin(angle) + dvl_VE*np.cos(angle))*np.sin(YAW)*2.515192334464708
     dvl_v_z = dvl_VZ
 
-
 if __name__ == '__main__':
+
+    print("todelete")
+    print(np.abs(np.max(V_X) - np.min(V_X))/np.abs(np.max(dvl_v_x) - np.min(dvl_v_x)))
+    print(np.abs(np.max(V_Y) - np.min(V_Y))/np.abs(np.max(dvl_v_y) - np.min(dvl_v_y)))
+
     # Interpolate the MBES
     interpolate_mbes = True
     if interpolate_mbes:
@@ -605,7 +628,7 @@ if __name__ == '__main__':
 
         ax4.plot(dvl_T, np.sqrt(dvl_v_x**2 + dvl_v_y**2), label="dvl")
         ax4.plot(T, np.sqrt(V_X**2 + V_Y**2), label = "ins")
-        ax4.plot(T, 0.05**2*np.sqrt(ACC_X**2 + ACC_Y**2), label = "ins")
+        # ax4.plot(T, 0.05**2*np.sqrt(ACC_X**2 + ACC_Y**2), label = "ins")
         ax4.set_title("||V_xy||")
         ax4.legend()
         ax4.grid()
@@ -630,7 +653,7 @@ if __name__ == '__main__':
         ax6.set_xlabel("Time [min]")
         ax6.set_ylabel("Error on angle [rad]")
         ax6.set_title("angle of speed")
-    # display_speed()
+    display_speed()
     def display_acc():
         plt.figure()
         plt.plot(T, ACC_X, label = "acc_x")
@@ -659,22 +682,30 @@ if __name__ == '__main__':
             for i in range(1, N):
                 y[i] = alpha * x[i] + (1 - alpha) * y[i-1]
             return y
+        global dvl_BM1R
+        global dvl_BM2R
+        global dvl_BM3R
+        global dvl_BM4R
+        dvl_BM1R += -119.76367580513286
+        dvl_BM2R += -119.76367580513286
+        dvl_BM3R += -119.76367580513286
+        dvl_BM4R += -119.76367580513286
 
-        dvl_BM1R_new = dvl_BM1R - 115.5714023521081
-        ax1.plot(dvl_T, dvl_BM1R_new, label = "dvl_BM1R_new_raw", color = 'red')
-        alpha = 0.9
+        # dvl_BM1R_new = dvl_BM1R
+        ax1.plot(dvl_T, dvl_BM1R, label = "dvl_BM1R_raw", color = 'red')
+        # alpha = 0.9
         # ax1.legend(dvl_T[1:,],alpha*dvl_BM1R_new[1:,]-(1-alpha)*dvl_BM1R_new[:-1,], color = 'purple', label = "gléfiltrélol")
-        ax1.plot(dvl_T,passe_bas(dvl_BM1R_new, 0.01), color = 'purple', label = "gléfiltrélol")
+        # ax1.plot(dvl_T,passe_bas(dvl_BM1R_new, 0.01), color = 'purple', label = "gléfiltrélol")
         d_bottom_mnt = distance_to_bottom(np.column_stack((x_gps+dp_x_B1,y_gps+dp_y_B1)),MNT)[1].squeeze()
         ax1.plot(T, d_bottom_mnt, label = "d_mnt_beam1", color = 'green')
         ax1.grid()
         ax1.set_xlabel("Time [min]")
         ax1.set_ylabel("Range [m]")
-        ax1.set_title("dvl_BM1R_new")
+        # ax1.set_title("dvl_BM1R_new")
 
         # d_bottom_mnt = distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze()
         # ax2.plot(T, d_bottom_mnt, label = "d_mnt")
-        ax2.plot(dvl_T, dvl_BM2R - 115.5714023521081, label = "dvl_BM2R_raw", color = 'red')
+        ax2.plot(dvl_T, dvl_BM2R, label = "dvl_BM2R_raw", color = 'red')
         d_bottom_mnt = distance_to_bottom(np.column_stack((x_gps+dp_x_B2,y_gps+dp_y_B2)),MNT)[1].squeeze()
         ax2.plot(T, d_bottom_mnt, label = "d_mnt_beam2", color = 'green')
         ax2.legend()
@@ -685,7 +716,7 @@ if __name__ == '__main__':
 
         # d_bottom_mnt = distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze()
         # ax3.plot(T, d_bottom_mnt, label = "d_mnt")
-        ax3.plot(dvl_T, dvl_BM3R - 115.5714023521081, label = "dvl_BM3R_raw", color = 'red')
+        ax3.plot(dvl_T, dvl_BM3R, label = "dvl_BM3R_raw", color = 'red')
         d_bottom_mnt = distance_to_bottom(np.column_stack((x_gps+dp_x_B3,y_gps+dp_y_B3)),MNT)[1].squeeze()
         ax3.plot(T, d_bottom_mnt, label = "d_mnt_beam3", color = 'green')
         ax3.legend()
@@ -696,7 +727,7 @@ if __name__ == '__main__':
 
         # d_bottom_mnt = distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze()
         # ax4.plot(T, d_bottom_mnt, label = "d_mnt")
-        ax4.plot(dvl_T, dvl_BM4R - 115.5714023521081, label = "dvl_BM4R_raw", color = 'red')
+        ax4.plot(dvl_T, dvl_BM4R, label = "dvl_BM4R_raw", color = 'red')
         d_bottom_mnt = distance_to_bottom(np.column_stack((x_gps+dp_x_B4,y_gps+dp_y_B4)),MNT)[1].squeeze()
         ax4.plot(T, d_bottom_mnt, label = "d_mnt_beam4", color = 'green')
         ax4.legend()
@@ -706,7 +737,7 @@ if __name__ == '__main__':
         ax4.set_title("dvl_BM4R")
 
         h1, h2, h3, h4 = dvl_BM1R, dvl_BM2R, dvl_BM3R, dvl_BM4R
-        mean_range_dvl = (h1*h2)/(h1+h2) + (h3*h4)/(h3+h4) - 115.57149562238688
+        mean_range_dvl = (h1*h2)/(h1+h2) + (h3*h4)/(h3+h4)
         d_bottom_mnt = distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze()
         ax5.plot(dvl_T, mean_range_dvl, label = "mean_range_dvl", color = 'red')
         ax5.plot(T, d_bottom_mnt, label = "d_bottom_mnt", color = 'green')
@@ -741,16 +772,15 @@ if __name__ == '__main__':
         dp_x_max = MBES_max_Z/np.tan(angle_max*np.pi/180)*np.cos(YAW-np.pi/2)
         dp_y_max = MBES_max_Z/np.tan(angle_max*np.pi/180)*np.sin(YAW-np.pi/2)
 
-
     def display_beams_mbes():
         global MBES_min_Z
         global MBES_mid_Z
         global MBES_max_Z
-        #Add the offset
 
-        MBES_min_Z += -117.6152233539319
-        MBES_mid_Z += -117.6152233539319
-        MBES_max_Z += -117.6152233539319
+        # #Add the offset
+        MBES_min_Z += 2.453176034602336 #2.2981554769660306
+        MBES_mid_Z += 2.453176034602336 #2.2981554769660306
+        MBES_max_Z += 2.453176034602336 #2.2981554769660306
 
         plt.figure()
         plt.suptitle("Without intepolation and GNSS")
@@ -786,7 +816,7 @@ if __name__ == '__main__':
         ax3.legend()
 
         if interpolate_mbes:
-            #With dpx and dpy
+
             plt.figure()
             plt.suptitle("With intepolation and GNSS")
             ax1 = plt.subplot2grid((1, 3), (0, 0))

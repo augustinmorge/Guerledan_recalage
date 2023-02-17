@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
 
-from storage.data_import import *
-offset_dvl = -115.5714023521081
-offset_mbes = -117.6155899936386
+# from storage.data_import import *
+# offset_dvl = -115.5714023521081
+# offset_mbes = -117.6155899936386
 # from storage_afternoon.data_import import *
 # offset_dvl = -116.48084912914656
 # offset_mbes = -117.67756491403492
 # from storage_final.data_import import *
-# offset_dvl = -119.91869636276917
-# offset_mbes = 2.2981554769660306
+# offset_dvl = -119.76367580513286
+# offset_mbes = 2.453176034602336
+from storage_semi_final.data_import import *
+offset_dvl = -120.01865559771537
+offset_mbes = 2.358696133137073
 n_particles = int(input("Number of particles: "))
 steps = int(input("Number of steps between measures ? "))
 bool_display = (str(input("Display the particles ? [Y/]"))=="Y")
@@ -297,7 +300,8 @@ if __name__ == '__main__':
             ax.set_ylim([y_gps_min - 100,y_gps_max + 100])
             bx, by = get_average_state(particles)[0], get_average_state(particles)[1] #barycentre des particules
             scatter1 = ax.scatter(x_gps, y_gps ,color='blue', label = 'True position panopée', s = 100)
-            scatter2 = ax.scatter(particles[1][0], particles[1][1], color = 'red', s = 0.8, label = "particles",alpha=particles[0][:,0]/pow(np.max(particles[0][:,0]),2/3))
+            # scatter2 = ax.scatter(particles[1][0], particles[1][1], color = 'red', s = 0.8, label = "particles",alpha=particles[0][:,0]/pow(np.max(particles[0][:,0]),2/3))
+            scatter2 = ax.scatter(particles[1][0], particles[1][1], color = 'red', s = 0.8, label = "particles") #,alpha=particles[0][:,0]/pow(np.max(particles[0][:,0]),2/3))
             scatter3 = ax.scatter(bx, by , color = 'green', label = 'Estimation of particles')
 
             if dtmbes == 0:
@@ -329,7 +333,7 @@ if __name__ == '__main__':
         STD_X.append(std_x)
         STD_Y.append(std_y)
         #Test if the algorithm diverge and why
-        if test_diverge(ERR, 500) : break
+        # if test_diverge(ERR, 500) : break
 
 
     print(f"Resampling used: {ct_resampling} ({ct_resampling/((idx_tf - idx_ti)/steps)*100}%)")
