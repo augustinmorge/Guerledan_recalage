@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 
-from storage.data_import import *
-offset_dvl = -115.5714023521081
-offset_mbes = -117.6155899936386
+# from storage.data_import import *
+# offset_dvl = -115.5714023521081
+# offset_mbes = -117.6155899936386
 # from storage_afternoon.data_import import *
 # offset_dvl = -116.48084912914656
 # offset_mbes = -117.67756491403492
-# from storage_final.data_import import *
-# offset_dvl = -119.91869636276917
-# offset_mbes = 2.2981554769660306
+from storage_final.data_import import *
+offset_dvl = -119.91869636276917
+offset_mbes = 2.2981554769660306
 n_particles = int(input("Number of particles: "))
 steps = int(input("Number of steps between measures ? "))
 bool_display = (str(input("Display the particles ? [Y/]"))=="Y")
@@ -94,6 +94,10 @@ def compute_likelihood(propagated_states, measurements, measurements_noise, beta
 
     # p_z_given_x_distance = 1
     # Return importance weight based on all landmarks
+
+    if dtmbes == 0: #si il n'y a pas de nouvelle données MBES
+        
+
     return d_mnt, p_z_given_x_distance, new_z_particules_mnt
 
 def needs_resampling(resampling_threshold):
