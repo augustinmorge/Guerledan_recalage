@@ -97,7 +97,7 @@ BK0
 #PD0
 
 CE1
-#PE10000
+#PE11111
 ;-------------------------------------------------------------------------
 ; Save this setup to non-volatile memory in the Pathfinder
 CK
