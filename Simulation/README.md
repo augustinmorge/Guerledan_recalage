@@ -15,7 +15,7 @@ You have to download the .txt file from :
   * [G2: 1pm](https://mega.nz/folder/HMVAVaib#aon7IKUUBNBkaCgNgTzOxg) in storage_final
 
 
-Then go into the right storage folder and run /data_import.py with **1** in bool_txt and **0** in bool_compress. Then relaunch ./data_import.py with the opposite.
+Then go into the right storage folder and run /data_import.py with **1** in bool_txt when you run it for the first time and **0** new time.
 
 Once it's done you can look at your map : `./display_mnt.py` or run the simulation.
 
