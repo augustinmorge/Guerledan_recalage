@@ -9,7 +9,6 @@ using_offset = True # str(input("Using offset ? [Y/]")) == "Y"
 ct_resampling = 0
 
 import time
-start_time = time.perf_counter()
 import numpy as np
 import matplotlib.pyplot as plt
 from simulation_helper.resampler import Resampler
@@ -23,12 +22,13 @@ from filter import *
 # from storage_afternoon.data_import import *
 # offset_dvl = -116.48084912914656
 # offset_mbes = -117.67756491403492
-# from storage_final.data_import import *
-# offset_dvl = -119.76367580513286
-# offset_mbes = 2.453176034602336
-from storage_semi_final.data_import import *
-offset_dvl = -120.01865559771537
-offset_mbes = 2.358696133137073
+from storage_final.data_import import *
+offset_dvl = -119.76367580513286
+offset_mbes = 2.453176034602336
+# from storage_semi_final.data_import import *
+# offset_dvl = -120.01865559771537
+# offset_mbes = 2.358696133137073
+start_time = time.perf_counter()
 
 
 def sawtooth(x):
@@ -356,6 +356,8 @@ if __name__ == '__main__':
 
     print(f"Resampling used: {ct_resampling} ({ct_resampling/((idx_tf - idx_ti)/steps)*100}%)")
     elapsed_time = time.perf_counter() - start_time
+    print(time.perf_counter())
+    print(start_time)
     print("Elapsed time: {:.2f} seconds".format(elapsed_time))
 
     """ Affichage final """
@@ -368,7 +370,7 @@ if __name__ == '__main__':
     max_std = 3*np.mean(NORM_STD)
     masque = NORM_STD > max_std
 
-    plt.suptitle(f"Algorithm with dvl \n{n_particles} particles; 1/{steps} data log used\nTotal time:{int(elapsed_time)}s")
+    plt.suptitle(f"Algorithm with DVL \n{n_particles} particles; 1/{steps} data log used\nTotal time:{int(elapsed_time)}s")
     ax1 = plt.subplot2grid((3, 2), (0, 0), rowspan=3)
     ax2 = plt.subplot2grid((3, 2), (0, 1))
     ax3 = plt.subplot2grid((3, 2), (1, 1))
@@ -404,7 +406,7 @@ if __name__ == '__main__':
     mean_range_dvl = (dvl_BM1R*dvl_BM2R)/(dvl_BM1R+dvl_BM2R) + (dvl_BM3R*dvl_BM4R)/(dvl_BM3R+dvl_BM4R)
     ax3.plot((dvl_T - dvl_T[0,])/60, mean_range_dvl + offset_dvl, label = "z_dvl")
     ax3.plot((T-T[0,])/60, d_bottom_mnt, label = "z_mnt")
-    ax3.plot((MBES_T-MBES_T[0,])/60, MBES_Z + offset_mbes, label = "z_mbes")
+    ax3.plot((MBES_mid_T-MBES_mid_T[0,])/60, MBES_mid_Z + offset_mbes, label = "z_mbes")
     ax3.legend()
 
 

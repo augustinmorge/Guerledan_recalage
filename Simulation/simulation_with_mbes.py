@@ -338,6 +338,8 @@ if __name__ == '__main__':
 
     print(f"Resampling used: {ct_resampling} ({ct_resampling/((idx_tf - idx_ti)/steps)*100}%)")
     elapsed_time = time.perf_counter() - start_time
+    print(time.perf_counter())
+    print(start_time)
     print("Elapsed time: {:.2f} seconds".format(elapsed_time))
 
     """ Affichage final """

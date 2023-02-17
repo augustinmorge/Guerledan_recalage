@@ -93,7 +93,7 @@ def compute_likelihood(propagated_states, measurements, measurements_noise, beta
         p_z_given_x_distance = np.exp(-beta*distance/(measurements_noise[0]**2))
 
     # p_z_given_x_distance = 1
-    # Return importance weight based on all landmarkss
+    # Return importance weight based on all landmarks
 
     if dtmbes == 0: #si il n'y a pas de nouvelle données MBES
         dvl_bm1r, dvl_bm2r, dvl_bm3r, dvl_bm4r = [measurements_dvl[i] for i in range(4)]
@@ -416,7 +416,7 @@ if __name__ == '__main__':
     max_std = 3*np.mean(NORM_STD)
     masque = NORM_STD > max_std
 
-    plt.suptitle(f"Algorithm with MBES\n{n_particles} particles; 1/{steps} data log used\nTotal time:{int(elapsed_time)}s")
+    plt.suptitle(f"Algorithm with MBES & DVL\n{n_particles} particles; 1/{steps} data log used\nTotal time:{int(elapsed_time)}s")
     ax1 = plt.subplot2grid((3, 2), (0, 0), rowspan=3)
     ax2 = plt.subplot2grid((3, 2), (0, 1))
     ax3 = plt.subplot2grid((3, 2), (1, 1))
