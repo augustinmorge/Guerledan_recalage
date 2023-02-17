@@ -243,7 +243,6 @@ def f_measurements_offset(i):
     return measurements, None
 
 def f_measurements_offset_dvl(i):
-    offset_dvl = 119.91869636276917
     # range_dvl = np.array([dvl_BM1R[i,], dvl_BM2R[i,], dvl_BM3R[i,], dvl_BM4R[i,]])
     # dvl_BM1R[i,], dvl_BM2R[i,], dvl_BM3R[i,], dvl_BM4R[i,] = \
     #     filter_lpf_dvlr.low_pass_next(np.array([dvl_BM1R[i,], dvl_BM2R[i,], dvl_BM3R[i,], dvl_BM4R[i,]])).flatten()
@@ -371,8 +370,10 @@ if __name__ == '__main__':
 
             if dtmbes == 0:
                 plt.plot([], [], marker='o', color='red', label='MBES: off', markerfacecolor='red', markersize=10)
+                plt.plot([], [], marker='o', color='green', label='DVLbr: on', markerfacecolor='red', markersize=10)
             else:
                 plt.plot([], [], marker='o', color='green', label='MBES: on', markerfacecolor='green', markersize=10)
+                plt.plot([], [], marker='o', color='red', label='DVLbr: off', markerfacecolor='green', markersize=10)
 
             plt.legend()
 
