@@ -1,17 +1,24 @@
 #!/usr/bin/env python3
-import sys
-global dt_br
-dt_br = 0.05
-# from storage.data_import import *
-from storage_final.data_import import *
+from storage.data_import import *
+offset_dvl = -115.5714023521081
+offset_mbes = -117.6155899936386
+# from storage_afternoon.data_import import *
+# offset_dvl = -116.48084912914656
+# offset_mbes = -117.67756491403492
+# from storage_final.data_import import *
+# offset_dvl = -119.76367580513286
+# offset_mbes = 2.453176034602336
+# from storage_semi_final.data_import import *
+# offset_dvl = -120.01865559771537
+# offset_mbes = 2.358696133137073
 n_particles = int(input("Number of particles: "))
-steps = int(input("number of steps between measures ? "))
+steps = int(input("Number of steps between measures ? "))
 bool_display = (str(input("Display the particles ? [Y/]"))=="Y")
 using_offset = True # str(input("Using offset ? [Y/]")) == "Y"
 
 ct_resampling = 0
 
-import time
+import time, sys
 start_time = time.perf_counter()
 import numpy as np
 import matplotlib.pyplot as plt
@@ -176,8 +183,8 @@ if __name__ == '__main__':
     # resampling_threshold = 2/3*n_particles
     resampling_threshold = 1/2*n_particles
 
-    idx_ti = int(2/3*T.shape[0]) #0
-    idx_tf =  int(3/4*T.shape[0])
+    idx_ti = int(1/2*T.shape[0]) #0
+    idx_tf =  int(9/10*T.shape[0])
 
     dt = T[steps,] - T[0,]
     tini = T[idx_ti,]

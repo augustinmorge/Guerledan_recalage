@@ -559,7 +559,7 @@ if __name__ == '__main__':
         plt.ylabel("Error on measuremnts [m]")
         plt.title("Error of dvl range v/s MNT and mbes range v/s MNT")
         plt.plot()
-    # display_range()
+    display_range()
     def display_speed():
         ##################################################
         plt.figure()
@@ -630,7 +630,7 @@ if __name__ == '__main__':
         ax6.set_xlabel("Time [min]")
         ax6.set_ylabel("Error on angle [rad]")
         ax6.set_title("angle of speed")
-    # display_speed()
+    display_speed()
     def display_acc():
         plt.figure()
         plt.plot(T, ACC_X, label = "acc_x")
@@ -640,7 +640,7 @@ if __name__ == '__main__':
         plt.xlabel("time [min]")
         plt.ylabel("acc [m/s2]")
         plt.legend()
-    # display_acc()
+    display_acc()
     def display_beams_dvl():
         plt.figure()
         ax1 = plt.subplot2grid((2, 3), (0, 0))
@@ -715,7 +715,7 @@ if __name__ == '__main__':
         ax5.set_xlabel("Time [min]")
         ax5.set_ylabel("Range [m]")
         ax5.set_title("mean_range_dvl")
-    # display_beams_dvl()
+    display_beams_dvl()
 
     #Change the range to z
     #Convert the beam of the MBES

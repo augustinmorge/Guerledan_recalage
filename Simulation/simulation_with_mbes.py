@@ -6,12 +6,12 @@
 # from storage_afternoon.data_import import *
 # offset_dvl = -116.48084912914656
 # offset_mbes = -117.67756491403492
-from storage_final.data_import import *
-offset_dvl = -119.76367580513286
-offset_mbes = 2.453176034602336
-# from storage_semi_final.data_import import *
-# offset_dvl = -120.01865559771537
-# offset_mbes = 2.358696133137073
+# from storage_final.data_import import *
+# offset_dvl = -119.76367580513286
+# offset_mbes = 2.453176034602336
+from storage_semi_final.data_import import *
+offset_dvl = -120.01865559771537
+offset_mbes = 2.358696133137073
 n_particles = int(input("Number of particles: "))
 steps = int(input("Number of steps between measures ? "))
 bool_display = (str(input("Display the particles ? [Y/]"))=="Y")
