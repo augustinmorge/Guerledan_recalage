@@ -23,12 +23,12 @@ from filter import *
 # from storage_afternoon.data_import import *
 # offset_dvl = -116.48084912914656
 # offset_mbes = -117.67756491403492
-from storage_final.data_import import *
-offset_dvl = -119.76367580513286
-offset_mbes = 2.453176034602336
-# from storage_semi_final.data_import import *
-# offset_dvl = -120.01865559771537
-# offset_mbes = 2.358696133137073
+# from storage_final.data_import import *
+# offset_dvl = -119.76367580513286
+# offset_mbes = 2.453176034602336
+from storage_semi_final.data_import import *
+offset_dvl = -120.01865559771537
+offset_mbes = 2.358696133137073
 
 
 def sawtooth(x):
@@ -402,9 +402,9 @@ if __name__ == '__main__':
     ax3.set_xlabel("Time [min]")
     ax3.set_ylabel("Range [m]")
     mean_range_dvl = (dvl_BM1R*dvl_BM2R)/(dvl_BM1R+dvl_BM2R) + (dvl_BM3R*dvl_BM4R)/(dvl_BM3R+dvl_BM4R)
-    ax3.plot(dvl_T, mean_range_dvl + offset_dvl, label = "z_dvl")
-    ax3.plot(T, d_bottom_mnt, label = "z_mnt")
-    ax3.plot(MBES_T, MBES_Z + offset_mbes, label = "z_mbes")
+    ax3.plot((dvl_T - dvl_T[0,])/60, mean_range_dvl + offset_dvl, label = "z_dvl")
+    ax3.plot((T-T[0,])/60, d_bottom_mnt, label = "z_mnt")
+    ax3.plot((MBES_T-MBES_T[0,])/60, MBES_Z + offset_mbes, label = "z_mbes")
     ax3.legend()
 
 

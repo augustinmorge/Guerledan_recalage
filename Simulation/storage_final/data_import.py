@@ -292,9 +292,9 @@ dvl_BM4R = dvl["dvl_BM4R"]/100. #en cm -> m
 # dvl_VZ = dvl["dvl_VZ"]/11000.
 # dvl_VSTD = dvl["dvl_VSTD"]/11000.
 dvl_VE = dvl["dvl_VE"]/1000.
-dvl_VN = dvl["dvl_VN"]/10000.
-dvl_VZ = dvl["dvl_VZ"]/10000.
-dvl_VSTD = dvl["dvl_VSTD"]/10000.
+dvl_VN = dvl["dvl_VN"]/1000.
+dvl_VZ = dvl["dvl_VZ"]/1000.
+dvl_VSTD = dvl["dvl_VSTD"]/1000.
 
 """ Interpolate data """
 from scipy.interpolate import interp1d

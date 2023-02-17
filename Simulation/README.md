@@ -3,15 +3,19 @@
 ## First steps
 ### Logs
 We did several tests :
-  * The 13/10/22 at 1pm.
-  * The 13/10/22 at 3pm.
+  * The 13/10/22 at 1pm. (G1)
+  * The 13/10/22 at 3pm. (G1)
+  * The 09/02/23 at 11am. (G2)
+  * The 09/02/23 at 1pm. (G2)
 
 You have to download the .txt file from :
-  * [1pm](https://mega.nz/folder/LddXFIjJ#8aNVKljeaiCF3S-_OeuZqg) in /storage
-  * [3pm](https://mega.nz/folder/6JMSFIoS#Je4uvVFECIoUeqyPqkgzfQ) in /storage_afternoon
+  * [G1: 1pm](https://mega.nz/folder/LddXFIjJ#8aNVKljeaiCF3S-_OeuZqg) in /storage
+  * [G1: 3pm](https://mega.nz/folder/6JMSFIoS#Je4uvVFECIoUeqyPqkgzfQ) in /storage_afternoon
+  * [G2: 11am](https://mega.nz/folder/fFsSGLoT#b_4goBnMMQjKI6HvGNJZ5w) in storage_semi_final
+  * [G2: 1pm](https://mega.nz/folder/HMVAVaib#aon7IKUUBNBkaCgNgTzOxg) in storage_final
 
 
-Then go into the storage folder `cd storage` or `cd storage_afternoon` and run /data_import.py with **1** in bool_txt and **0** in bool_compress. Then relaunch ./data_import.py with the opposite.
+Then go into the right storage folder and run /data_import.py with **1** in bool_txt and **0** in bool_compress. Then relaunch ./data_import.py with the opposite.
 
 Once it's done you can look at your map : `./display_mnt.py` or run the simulation.
 
