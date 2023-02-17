@@ -96,24 +96,24 @@ def compute_likelihood(propagated_states, measurements, measurements_noise, beta
     # Return importance weight based on all landmarks
 
     if dtmbes == 0: #si il n'y a pas de nouvelle données MBES
-        dvl_BM1R, dvl_BM2R, dvl_BM3R, dvl_BM4R = [measurements_dvl[i] for i in range(4)]
+        dvl_bm1r, dvl_bm2r, dvl_bm3r, dvl_bm4r = [measurements_dvl[i] for i in range(4)]
         use_4_beams = False
         if use_4_beams:
             th = np.pi/4
             pi2_janus = 60*np.pi/180
             opp_angle = np.tan(60*np.pi/180)
 
-            dp_x_B1 = -dvl_BM1R/opp_angle*np.sin(yaw-th)
-            dp_y_B1 = dvl_BM1R/opp_angle*np.cos(yaw-th)
+            dp_x_B1 = -dvl_bm1r/opp_angle*np.sin(yaw-th)
+            dp_y_B1 = dvl_bm1r/opp_angle*np.cos(yaw-th)
 
-            dp_x_B2 = dvl_BM2R/opp_angle*np.sin(yaw-th)
-            dp_y_B2 = -dvl_BM2R/opp_angle*np.cos(yaw-th)
+            dp_x_B2 = dvl_bm2r/opp_angle*np.sin(yaw-th)
+            dp_y_B2 = -dvl_bm2r/opp_angle*np.cos(yaw-th)
 
-            dp_x_B3 = dvl_BM3R/opp_angle*np.cos(yaw-th)
-            dp_y_B3 = dvl_BM3R/opp_angle*np.sin(yaw-th)
+            dp_x_B3 = dvl_bm3r/opp_angle*np.cos(yaw-th)
+            dp_y_B3 = dvl_bm3r/opp_angle*np.sin(yaw-th)
 
-            dp_x_B4 = -dvl_BM4R/opp_angle*np.cos(yaw-th)
-            dp_y_B4 = -dvl_BM4R/opp_angle*np.sin(yaw-th)
+            dp_x_B4 = -dvl_bm4r/opp_angle*np.cos(yaw-th)
+            dp_y_B4 = -dvl_bm4r/opp_angle*np.sin(yaw-th)
 
             d_mnt_B1, d_mbes_particule_B1 = distance_to_bottom(np.hstack((propagated_states[1][0]+dp_x_B1,propagated_states[1][1]+dp_y_B1)),MNT)
             d_mnt_B2, d_mbes_particule_B2 = distance_to_bottom(np.hstack((propagated_states[1][0]+dp_x_B2,propagated_states[1][1]+dp_y_B2)),MNT)
@@ -121,16 +121,16 @@ def compute_likelihood(propagated_states, measurements, measurements_noise, beta
             d_mnt_B4, d_mbes_particule_B4 = distance_to_bottom(np.hstack((propagated_states[1][0]+dp_x_B4,propagated_states[1][1]+dp_y_B4)),MNT)
 
             # Map difference true and expected distance measurement to probability
-            distance_B1 = np.abs(d_mbes_particule_B1-dvl_BM1R)
-            distance_B2 = np.abs(d_mbes_particule_B2-dvl_BM2R)
-            distance_B3 = np.abs(d_mbes_particule_B3-dvl_BM3R)
-            distance_B4 = np.abs(d_mbes_particule_B4-dvl_BM4R)
+            distance_B1 = np.abs(d_mbes_particule_B1-dvl_bm1r)
+            distance_B2 = np.abs(d_mbes_particule_B2-dvl_bm2r)
+            distance_B3 = np.abs(d_mbes_particule_B3-dvl_bm3r)
+            distance_B4 = np.abs(d_mbes_particule_B4-dvl_bm4r)
             # print('distance : ', distance_B2[127])
 
 
             # print('distances : ', distance_B1[5], distance_B2[5], distance_B3[5], distance_B4[5])
             # print('d_mbes_particules : ', d_mbes_particule_B1[5], d_mbes_particule_B2[5], d_mbes_particule_B3[5], d_mbes_particule_B4[5])
-            # print('dvl_BMR : ', dvl_BM1R, dvl_BM2R, dvl_BM3R, dvl_BM4R)
+            # print('dvl_bmRr: ', dvl_bm1r, dvl_bm2r, dvl_bm3r, dvl_bm4r)
 
             if measurements_noise[0] == None:
                 if use_4_beams : #1000 1/4
@@ -139,14 +139,13 @@ def compute_likelihood(propagated_states, measurements, measurements_noise, beta
                 # p1, p2, p3, p4 = np.exp(-beta*distance_B1**2), np.exp(-beta*distance_B2**2), np.exp(-beta*distance_B3**2), np.exp(-beta*distance_B4**2)
             else:
                 p_z_given_x_distance = np.exp(-beta*distance_B1/(measurements_noise[0]**2))*np.exp(-beta*distance_B2/(measurements_noise[0]**2))*np.exp(-beta*distance_B3/(measurements_noise[0]**2))*np.exp(-beta*distance_B4/(measurements_noise[0]**2))
-
-            d_mnt = np.array([d_mnt_B1, d_mnt_B2, d_mnt_B3, d_mnt_B4])
-            new_z_particules_mnt = np.array([d_mbes_particule_B1, d_mbes_particule_B2, d_mbes_particule_B3, d_mbes_particule_B4])
+            #
+            # d_mnt = np.array([d_mnt_B1, d_mnt_B2, d_mnt_B3, d_mnt_B4])
+            # new_z_particules_mnt = np.array([d_mbes_particule_B1, d_mbes_particule_B2, d_mbes_particule_B3, d_mbes_particule_B4])
 
         else:
-            d_mnt, new_z_particules_mnt = distance_to_bottom(np.hstack((propagated_states[1][0],propagated_states[1][1])),MNT)
             if measurements_noise[0] == None:
-                mean_range_dvl = (dvl_BM1R*dvl_BM2R)/(dvl_BM1R+dvl_BM2R) + (dvl_BM3R*dvl_BM4R)/(dvl_BM3R+dvl_BM4R)
+                mean_range_dvl = (dvl_bm1r*dvl_bm2r)/(dvl_bm1r+dvl_bm2r) + (dvl_bm3r*dvl_bm4r)/(dvl_bm3r+dvl_bm4r)
                 d = np.abs(new_z_particules_mnt - mean_range_dvl)
                 p_z_given_x_distance = np.exp(-beta*d**2)
             else:
@@ -303,7 +302,8 @@ if __name__ == '__main__':
     fig, ax = plt.subplots()
     TIME = []; BAR = []; SPEED = []; ERR = []
     STD_X = []; STD_Y = []
-    beta = 10**(-1.37)
+    # beta = 10**(-1.37)
+    beta = 0.1
     filter_lpf_speed = Low_pass_filter(1., np.array([dvl_v_x[0,], dvl_v_y[0,]]))
 
     for i in r:
@@ -360,7 +360,7 @@ if __name__ == '__main__':
             print("Temps de calcul: ",time.time() - t0)
             t1 = time.time()
             ax.plot(coord2cart((LAT[idx_ti:idx_tf,], LON[idx_ti:idx_tf,]))[0,:], coord2cart((LAT[idx_ti:idx_tf,], LON[idx_ti:idx_tf,]))[1,:])
-            ax.set_title("Particle filter with {} particles with z = {}m".format(n_particles, measurements))
+            ax.set_title("Particle filter with {} particles".format(n_particles))# with z = {}m".format(n_particles, measurements))
             ax.set_xlim([x_gps_min - 100,x_gps_max + 100])
             ax.set_ylim([y_gps_min - 100,y_gps_max + 100])
             bx, by = get_average_state(particles)[0], get_average_state(particles)[1] #barycentre des particules

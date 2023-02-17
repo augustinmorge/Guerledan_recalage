@@ -537,52 +537,6 @@ if __name__ == '__main__':
     mean_dvlR = (dvl_BM1R + dvl_BM2R + dvl_BM3R + dvl_BM4R)/4
     print(f"the offset with dt = {dt_br} for the DVL/MNT is : {np.mean(mean_dvlR) - np.mean(distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze())}")
     print(f"the offset with dt = {dt_br} for the MBES/MNT is : {np.mean(MBES_mid_Z) - np.mean(distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze())}")
-    def display_range():
-        #######################################
-        plt.figure()
-        ax1 = plt.subplot2grid((2, 2), (0, 0), rowspan=2)
-        ax5 = plt.subplot2grid((2, 2), (0, 1), rowspan=2)
-
-        mask1 = np.abs(np.diff(MBES_mid_Z)) > 0.001*np.std(MBES_mid_Z)
-
-        d_bottom_mnt = distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze()
-
-        mean_dvlR = (dvl_BM1R + dvl_BM2R + dvl_BM3R + dvl_BM4R)/4
-
-        ax1.plot(dvl_T, dvl_BM1R - 115.57108493670452, label = "dvl_BM1R", color = 'red')
-        ax1.plot((MBES_mid_T[1:,])[~mask1], (MBES_mid_Z[1:,])[~mask1], label="MBES_mid_Z")
-        ax1.plot(T, d_bottom_mnt, label = "d_mnt")
-        ax1.legend()
-        ax1.grid()
-        ax1.set_xlabel("Time [min]")
-        ax1.set_ylabel("Range [m]")
-        ax1.set_title("dvl_BM1R")
-
-        ax5.scatter(T[:-1,], np.diff(distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze()), label = "d_mnt", s = 1)
-        mean_dvlR = (dvl_BM1R + dvl_BM2R + dvl_BM3R + dvl_BM4R)/4
-        ax5.scatter(dvl_T[:-1,], np.diff(mean_dvlR), label = "mean dvl_BMR", color = 'orange', s = 1)
-        ax5.scatter(MBES_mid_T[:-1,], np.diff(MBES_mid_Z), label="MBES_mid_Z", color = 'gray', s = 0.5)
-        ax5.legend()
-        ax5.grid()
-        ax5.set_xlabel("Time [min]")
-        ax5.set_ylabel("Range [m]")
-        ax5.set_title("Mean of dvl range v/s MBES")
-
-        # Calculate the error between the DVL and the MNT
-        dvl_error = np.diff(mean_dvlR) - np.diff(distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze())
-        # Calculate the error between the MBES and the MNT
-        MBES_mid_error = np.diff(MBES_mid_Z) - np.diff(distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze())
-
-        plt.figure()
-        plt.scatter(MBES_mid_T[:-1], MBES_mid_error, label = "MBES_mid_error", color = 'green', s = 1)
-        plt.scatter(T[:-1], dvl_error, label = "dvl_error", color = 'red', s = 1)
-        plt.legend()
-        plt.grid()
-        plt.xlabel("Time [min]")
-        plt.ylabel("Error on measuremnts [m]")
-        plt.title("Error of dvl range v/s MNT and mbes range v/s MNT")
-        plt.plot()
-    # display_range()
     def display_speed():
         ##################################################
         plt.figure()
@@ -653,7 +607,7 @@ if __name__ == '__main__':
         ax6.set_xlabel("Time [min]")
         ax6.set_ylabel("Error on angle [rad]")
         ax6.set_title("angle of speed")
-    # display_speed()
+    display_speed()
     def display_acc():
         plt.figure()
         plt.plot(T, ACC_X, label = "acc_x")
@@ -663,7 +617,7 @@ if __name__ == '__main__':
         plt.xlabel("time [min]")
         plt.ylabel("acc [m/s2]")
         plt.legend()
-    # display_acc()
+    display_acc()
     def display_beams_dvl():
         plt.figure()
         ax1 = plt.subplot2grid((2, 3), (0, 0))
@@ -737,8 +691,8 @@ if __name__ == '__main__':
         ax4.set_title("dvl_BM4R")
 
         h1, h2, h3, h4 = dvl_BM1R, dvl_BM2R, dvl_BM3R, dvl_BM4R
-        # mean_range_dvl = (h1*h2)/(h1+h2) + (h3*h4)/(h3+h4)
-        mean_range_dvl = (h1+h2+h3+h4)/4
+        mean_range_dvl = (h1*h2)/(h1+h2) + (h3*h4)/(h3+h4)
+        # mean_range_dvl = (h1+h2+h3+h4)/4
         d_bottom_mnt = distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze()
         ax5.plot(dvl_T, mean_range_dvl, label = "mean_range_dvl", color = 'red')
         ax5.plot(T, d_bottom_mnt, label = "d_bottom_mnt", color = 'green')

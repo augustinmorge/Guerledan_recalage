@@ -17,7 +17,18 @@ from tqdm import tqdm
 file_path = os.path.dirname(os.path.abspath(__file__))
 from filter import *
 
-offset_dvl = 119.91869636276917
+# from storage.data_import import *
+# offset_dvl = -115.5714023521081
+# offset_mbes = -117.6155899936386
+# from storage_afternoon.data_import import *
+# offset_dvl = -116.48084912914656
+# offset_mbes = -117.67756491403492
+from storage_final.data_import import *
+offset_dvl = -119.76367580513286
+offset_mbes = 2.453176034602336
+# from storage_semi_final.data_import import *
+# offset_dvl = -120.01865559771537
+# offset_mbes = 2.358696133137073
 
 
 def sawtooth(x):
@@ -61,7 +72,7 @@ def propagate_sample(samples, forward_motion, angular_motion, process_noise):
 
 def compute_likelihood(propagated_states, measurements, measurements_noise, beta, z_particules_mnt, yaw):
     dvl_BM1R, dvl_BM2R, dvl_BM3R, dvl_BM4R = [measurements[i] for i in range(4)]
-    use_4_beams = True
+    use_4_beams = False
     if use_4_beams:
         th = np.pi/4
         pi2_janus = 60*np.pi/180
@@ -96,14 +107,23 @@ def compute_likelihood(propagated_states, measurements, measurements_noise, beta
         # print('d_mbes_particules : ', d_mbes_particule_B1[5], d_mbes_particule_B2[5], d_mbes_particule_B3[5], d_mbes_particule_B4[5])
         # print('dvl_BMR : ', dvl_BM1R, dvl_BM2R, dvl_BM3R, dvl_BM4R)
 
-        if measurements_noise[0] == None:
-            if use_4_beams : #1000 1/4
+        if use_4_beams : #1000 1/4
+            if measurements_noise[0] == None:
                 # p_z_given_x_distance = (np.exp(-beta/100*pow(distance_B3,1/4))+np.exp(-beta/100*pow(distance_B4,1/4))+np.exp(-beta/100*pow(distance_B2,1/4))+np.exp(-beta/100*pow(distance_B1,1/4)))/4
                 p_z_given_x_distance = (np.exp(-beta/300*pow(distance_B3,1))*np.exp(-beta/300*pow(distance_B4,1))*np.exp(-beta/300*pow(distance_B2,1))*np.exp(-beta/300*pow(distance_B1,1)))
-            # p1, p2, p3, p4 = np.exp(-beta*distance_B1**2), np.exp(-beta*distance_B2**2), np.exp(-beta*distance_B3**2), np.exp(-beta*distance_B4**2)
+                # p1, p2, p3, p4 = np.exp(-beta*distance_B1**2), np.exp(-beta*distance_B2**2), np.exp(-beta*distance_B3**2), np.exp(-beta*distance_B4**2)
+            else:
+                p_z_given_x_distance = np.exp(-beta*distance_B1/(measurements_noise[0]**2))*np.exp(-beta*distance_B2/(measurements_noise[0]**2))*np.exp(-beta*distance_B3/(measurements_noise[0]**2))*np.exp(-beta*distance_B4/(measurements_noise[0]**2))
         else:
-            p_z_given_x_distance = np.exp(-beta*distance_B1/(measurements_noise[0]**2))*np.exp(-beta*distance_B2/(measurements_noise[0]**2))*np.exp(-beta*distance_B3/(measurements_noise[0]**2))*np.exp(-beta*distance_B4/(measurements_noise[0]**2))
-       
+            if measurements_noise[0] == None:
+                mean_range_dvl = (dvl_bm1r*dvl_bm2r)/(dvl_bm1r+dvl_bm2r) + (dvl_bm3r*dvl_bm4r)/(dvl_bm3r+dvl_bm4r)
+                d_mnt, new_z_particules_mnt = distance_to_bottom(np.hstack((propagated_states[1][0],propagated_states[1][1])),MNT)
+
+                d = np.abs(new_z_particules_mnt - mean_range_dvl)
+                p_z_given_x_distance = np.exp(-beta*d**2)
+            else:
+                p_z_given_x_distance = np.exp(-beta*d/(measurements_noise[0]**2))
+
         d_mnt = np.array([d_mnt_B1, d_mnt_B2, d_mnt_B3, d_mnt_B4])
         new_z_particules_mnt = np.array([d_mbes_particule_B1, d_mbes_particule_B2, d_mbes_particule_B3, d_mbes_particule_B4])
 
@@ -171,7 +191,7 @@ def f_measurements_offset(i):
     dvl_BM1R[i,], dvl_BM2R[i,], dvl_BM3R[i,], dvl_BM4R[i,] = \
         filter_lpf_dvlr.low_pass_next(np.array([dvl_BM1R[i,], dvl_BM2R[i,], dvl_BM3R[i,], dvl_BM4R[i,]])).flatten()
     range_dvl = np.array([dvl_BM1R[i,], dvl_BM2R[i,], dvl_BM3R[i,], dvl_BM4R[i,]])
-    measurements = range_dvl - offset_dvl
+    measurements = range_dvl + offset_dvl
     return measurements, None
 
 def test_diverge(ERR, err_max=1000):
@@ -188,16 +208,7 @@ def test_diverge(ERR, err_max=1000):
         return True #Alors on arrete
     return(False)
 
-
-if __name__ == '__main__':
-    print("~~~Start of the algorithm~~~")
-
-    x_gps_min, y_gps_min = np.min(coord2cart((LAT, LON))[0,:]), np.min(coord2cart((LAT, LON))[1,:])
-    x_gps_max, y_gps_max = np.max(coord2cart((LAT, LON))[0,:]), np.max(coord2cart((LAT, LON))[1,:])
-    # bounds = [[x_gps_min, x_gps_max], [y_gps_min, y_gps_max]]
-    particles = initialize_particles_uniform(n_particles)
-    # _, z_particules_mnt = distance_to_bottom(np.hstack((particles[1][0],particles[1][1])),MNT)
-
+def init_z():
     th = np.pi/4
     pi2_janus = 60*np.pi/180
     dvl_BM1R_0, dvl_BM2R_0, dvl_BM3R_0, dvl_BM4R_0 = dvl_BM1R[0,]-115.57149562238688, dvl_BM2R[0,]-115.57149562238688, dvl_BM3R[0,]-115.57149562238688, dvl_BM4R[0,]-115.57149562238688
@@ -220,7 +231,19 @@ if __name__ == '__main__':
     _, z_particules_mnt_B3 = distance_to_bottom(np.hstack((particles[1][0]+dp_x_B3,particles[1][1]+dp_y_B3)),MNT)
     _, z_particules_mnt_B4 = distance_to_bottom(np.hstack((particles[1][0]+dp_x_B4,particles[1][1]+dp_y_B4)),MNT)
     z_particules_mnt = np.array([z_particules_mnt_B1, z_particules_mnt_B2, z_particules_mnt_B3, z_particules_mnt_B4])
+    return(z_particules_mnt)
 
+
+if __name__ == '__main__':
+    print("~~~Start of the algorithm~~~")
+
+    x_gps_min, y_gps_min = np.min(coord2cart((LAT, LON))[0,:]), np.min(coord2cart((LAT, LON))[1,:])
+    x_gps_max, y_gps_max = np.max(coord2cart((LAT, LON))[0,:]), np.max(coord2cart((LAT, LON))[1,:])
+    # bounds = [[x_gps_min, x_gps_max], [y_gps_min, y_gps_max]]
+    particles = initialize_particles_uniform(n_particles)
+    # _, z_particules_mnt = distance_to_bottom(np.hstack((particles[1][0],particles[1][1])),MNT)
+
+    z_particules_mnt = init_z()
     #For the update
     resampler = Resampler()
     resampling_threshold = 2/3*n_particles
@@ -328,7 +351,7 @@ if __name__ == '__main__':
         STD_X.append(std_x)
         STD_Y.append(std_y)
         #Test if the algorithm diverge and why
-        if test_diverge(ERR, 500) : break
+        # if test_diverge(ERR, 500) : break
 
 
     print(f"Resampling used: {ct_resampling} ({ct_resampling/((idx_tf - idx_ti)/steps)*100}%)")
@@ -378,9 +401,10 @@ if __name__ == '__main__':
     ax3.set_title("Different types of bottom measurements")
     ax3.set_xlabel("Time [min]")
     ax3.set_ylabel("Range [m]")
-    # ax3.plot(dvl_T, mean_dvlR - 115.57149562238688, label = "z_dvl")
+    mean_range_dvl = (dvl_BM1R*dvl_BM2R)/(dvl_BM1R+dvl_BM2R) + (dvl_BM3R*dvl_BM4R)/(dvl_BM3R+dvl_BM4R)
+    ax3.plot(dvl_T, mean_range_dvl + offset_dvl, label = "z_dvl")
     ax3.plot(T, d_bottom_mnt, label = "z_mnt")
-    ax3.plot(MBES_T, MBES_Z - 117.61544705067318, label = "z_mbes")
+    ax3.plot(MBES_T, MBES_Z + offset_mbes, label = "z_mbes")
     ax3.legend()
 
 
