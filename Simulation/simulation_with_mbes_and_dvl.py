@@ -7,7 +7,7 @@
 # offset_dvl = -116.48084912914656
 # offset_mbes = -117.67756491403492
 from storage_final.data_import import *
-offset_dvl = -119.91869636276917
+offset_dvl = 119.91869636276917
 offset_mbes = 2.2981554769660306
 n_particles = int(input("Number of particles: "))
 steps = int(input("Number of steps between measures ? "))
@@ -451,7 +451,7 @@ if __name__ == '__main__':
     ax3.set_title("Different types of bottom measurements")
     ax3.set_xlabel("Time [min]")
     ax3.set_ylabel("Range [m]")
-    ax3.plot((dvl_T - dvl_T[0,])/60, mean_dvlR + offset_dvl, label = "z_dvl")
+    ax3.plot((dvl_T - dvl_T[0,])/60, mean_dvlR - offset_dvl, label = "z_dvl")
     ax3.plot((T - T[0,])/60, d_bottom_mnt, label = "z_mnt")
     ax3.plot((MBES_mid_T - MBES_mid_T[0,])/60, MBES_mid_Z + offset_mbes, label = "z_mbes")
     ax3.legend()
