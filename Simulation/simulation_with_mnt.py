@@ -229,7 +229,7 @@ if __name__ == '__main__':
         yaw_std = YAW_STD[i,]
         # yaw_std = np.abs(np.arctan2(V_Y[i,], V_X[i,] + V_X_STD[i,]) - np.arctan2(V_Y[i,] + V_Y_STD[i,], V_X[i,]))
         v_x, v_y = V_X[i,], V_Y[i,]
-        v_std = dt*np.sqrt(V_X_STD[i,]**2 + V_Y_STD[i,]**2)
+        v_std = np.sqrt(V_X_STD[i,]**2 + V_Y_STD[i,]**2)
 
         if using_offset : measurements, meas_model_distance_std = f_measurements_offset(i)
         else: measurements, previous_measurements, meas_model_distance_std = f_measurements(i, previous_measurements)
