@@ -363,7 +363,7 @@ if __name__ == '__main__':
     ax1.set_xlabel("x [m]")
     ax1.set_ylabel("y [m]")
     ax1.plot(coord2cart((LAT,LON))[0,:], coord2cart((LAT,LON))[1,:],label='true position',linewidth=0.5,color='k')
-    scatter = ax1.scatter(BAR[:,0][~masque], BAR[:,1][~masque], s = 1.2, c = NORM_STD[~masque], cmap='plasma', label='barycentre of the particle')
+    scatter = ax1.scatter(BAR[:,0][~masque], BAR[:,1][~masque], s = 1.2, c = NORM_STD[~masque], cmap='plasma', label='particle cloud barycenter')
     cbar = fig.colorbar(scatter, extend='both', ax = ax1)
     cbar.set_label('Ecart type')
     ax1.legend()
