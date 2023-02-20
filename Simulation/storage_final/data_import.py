@@ -42,8 +42,6 @@ if bool_txt:
     filepath = file_path+"/IMU_14h.txt"
     data_ins = np.genfromtxt(filepath, delimiter='\t', skip_header=2, dtype = "U")
     T = data_ins[:,0]
-    print(T[0])
-    print(T[-1])
     T = np.array([dt.split(":") for dt in T], dtype=np.float64)
     T = 60*60*T[:,0] + 60*T[:,1] + T[:,2]
 
@@ -118,8 +116,6 @@ if bool_txt:
 
     # Create Time_MBES array
     Time_MBES = np.array([dt.split(" ")[1].split(":") for dt in Date_Time], dtype=np.float64)
-    print(Time_MBES[0])
-    print(Time_MBES[-1])
     # Create the TIME vector array
     Time_MBES_mid_seconds = (60*60*Time_MBES[:,0] + 60*Time_MBES[:,1] + Time_MBES[:,2])
     # print("Beam: ",Beam)
@@ -276,6 +272,15 @@ MBES_min_Y = np.concatenate([np.array([MBES_Y[0]]), MBES_min_Y])
 MBES_min_Z = np.concatenate([np.array([MBES_Z[0]]), MBES_min_Z])
 MBES_min_idx = np.concatenate([np.array([1]), MBES_min_idx])
 
+# import matplotlib.pyplot as plt
+# plt.figure()
+# d = np.sqrt((MBES_min_X - MBES_mid_X)**2 + (MBES_min_Y - MBES_mid_Y)**2)
+# the = np.pi/2 - np.arctan(MBES_min_Z/d)
+# the = the*180/np.pi
+# print(f"mean angle = {np.mean(the)}")
+# plt.plot(MBES_mid_T, the)
+# plt.show()
+
 MBES_min_Z = -MBES_min_Z
 MBES_mid_Z = -MBES_mid_Z
 MBES_max_Z = -MBES_max_Z
@@ -291,7 +296,6 @@ dvl_BM4R = dvl["dvl_BM4R"]/100. #en cm -> m
 # dvl_VN = dvl["dvl_VN"]/11000.
 # dvl_VZ = dvl["dvl_VZ"]/11000.
 # dvl_VSTD = dvl["dvl_VSTD"]/11000.
-print(dvl["dvl_VE"])
 dvl_VE = dvl["dvl_VE"]/1000.
 dvl_VN = dvl["dvl_VN"]/10000.
 dvl_VZ = dvl["dvl_VZ"]/10000.
@@ -451,11 +455,6 @@ else:
     dvl_v_z = dvl_VZ
 
 if __name__ == '__main__':
-
-    print("todelete")
-    print(np.abs(np.max(V_X) - np.min(V_X))/np.abs(np.max(dvl_v_x) - np.min(dvl_v_x)))
-    print(np.abs(np.max(V_Y) - np.min(V_Y))/np.abs(np.max(dvl_v_y) - np.min(dvl_v_y)))
-
     # Interpolate the MBES
     interpolate_mbes = True
     if interpolate_mbes:
@@ -608,7 +607,7 @@ if __name__ == '__main__':
         ax6.set_xlabel("Time [min]")
         ax6.set_ylabel("Error on angle [rad]")
         ax6.set_title("angle of speed")
-    display_speed()
+    # display_speed()
     def display_acc():
         plt.figure()
         plt.plot(T, ACC_X, label = "acc_x")
@@ -618,7 +617,7 @@ if __name__ == '__main__':
         plt.xlabel("time [min]")
         plt.ylabel("acc [m/s2]")
         plt.legend()
-    display_acc()
+    # display_acc()
     def display_beams_dvl():
         plt.figure()
         ax1 = plt.subplot2grid((2, 3), (0, 0))
@@ -702,13 +701,16 @@ if __name__ == '__main__':
         ax5.set_xlabel("Time [min]")
         ax5.set_ylabel("Range [m]")
         ax5.set_title("mean_range_dvl")
-    display_beams_dvl()
+    # display_beams_dvl()
 
     #Change the range to z
     #Convert the beam of the MBES
     #On a 65° entre le milieu et le max/mix pour 256/2 beams
 
-    angle_mbes = 50 #63
+    angle_mbes = 26
+    # d = np.sqrt((MBES_max_X - MBES_mid_X)**2 + (MBES_max_Y - MBES_mid_Y)**2)
+    # angle_mbes = np.pi/2 - np.arctan(MBES_mid_Z/d)
+
     angle_max = (90 - (angle_mbes - (256 - MBES_max_idx)*angle_mbes/128))
     angle_min = -(90 - (angle_mbes - (MBES_min_idx - 1)*angle_mbes/128))
     angle_mid = 90 - (128 - MBES_mid_idx)*angle_mbes/128
@@ -722,8 +724,8 @@ if __name__ == '__main__':
         dp_x_mid = MBES_mid_Z/np.tan(angle_mid*np.pi/180)*np.cos(YAW)
         dp_y_mid = MBES_mid_Z/np.tan(angle_mid*np.pi/180)*np.sin(YAW)
 
-        dp_x_min = -MBES_min_Z/np.tan(angle_min*np.pi/180)*np.cos(YAW-3*np.pi/2)
-        dp_y_min = -MBES_min_Z/np.tan(angle_min*np.pi/180)*np.sin(YAW-3*np.pi/2)
+        dp_x_min = MBES_min_Z/np.tan(angle_min*np.pi/180)*np.cos(YAW-3*np.pi/2)
+        dp_y_min = MBES_min_Z/np.tan(angle_min*np.pi/180)*np.sin(YAW-3*np.pi/2)
 
         dp_x_max = MBES_max_Z/np.tan(angle_max*np.pi/180)*np.cos(YAW-np.pi/2)
         dp_y_max = MBES_max_Z/np.tan(angle_max*np.pi/180)*np.sin(YAW-np.pi/2)
@@ -802,6 +804,6 @@ if __name__ == '__main__':
             ax3.set_ylabel("Distance [m]")
             ax3.set_title("Range of MBES")
             ax3.legend()
-    display_beams_mbes()
+    # display_beams_mbes()
 
     plt.show()

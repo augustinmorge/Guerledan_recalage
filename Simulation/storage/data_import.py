@@ -262,6 +262,15 @@ MBES_min_Y = np.concatenate([np.array([MBES_Y[0]]), MBES_min_Y])
 MBES_min_Z = np.concatenate([np.array([MBES_Z[0]]), MBES_min_Z])
 MBES_min_idx = np.concatenate([np.array([1]), MBES_min_idx])
 
+# import matplotlib.pyplot as plt
+# plt.figure()
+# d = np.sqrt((MBES_max_X - MBES_mid_X)**2 + (MBES_max_Y - MBES_mid_Y)**2)
+# the = np.pi/2 - np.arctan(MBES_max_Z/d)
+# the = the*180/np.pi
+# print(f"mean angle = {np.mean(the)}")
+# plt.plot(MBES_mid_T, the)
+# plt.show()
+
 """ Load the DVL """
 dvl = np.load(file_path + "/dvl.npz")
 dvl_T = dvl["dvl_T"]

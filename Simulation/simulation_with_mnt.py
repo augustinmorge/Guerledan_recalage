@@ -77,26 +77,36 @@ def propagate_sample(samples, forward_motion, angular_motion, process_noise):
     # Make sure we stay within cyclic world
     return samples
 
+# def compute_likelihood(propagated_states, measurements, measurements_noise, beta, z_particules_mnt):
+#     d_mnt, new_z_particules_mnt = distance_to_bottom(np.hstack((propagated_states[1][0],propagated_states[1][1])),MNT)
+#     if using_offset : d_mbes_particule = new_z_particules_mnt
+#     else : d_mbes_particule = new_z_particules_mnt - z_particules_mnt
+#
+#     # Map difference true and expected distance measurement to probability
+#     distance = np.abs(d_mbes_particule-measurements)
+#
+#     # if measurements_noise[0] is not None:
+#     #     p_z_given_x_distance = np.exp(-beta*distance**2/(measurements_noise[0]**2))
+#     # else:
+#     #     p_z_given_x_distance = np.exp(-beta*distance**2)
+#     if measurements_noise[0] is not None:
+#         p_z_given_x_distance = np.exp(-beta*distance**2/(measurements_noise[0]**2))
+#     else:
+#         p_z_given_x_distance = np.exp(-beta*distance**2)
+#
+#     # p_z_given_x_distance = 1
+#     # Return importance weight based on all landmarks
+#     return d_mnt, p_z_given_x_distance, new_z_particules_mnt
+
 def compute_likelihood(propagated_states, measurements, measurements_noise, beta, z_particules_mnt):
-    d_mnt, new_z_particules_mnt = distance_to_bottom(np.hstack((propagated_states[1][0],propagated_states[1][1])),MNT)
-    if using_offset : d_mbes_particule = new_z_particules_mnt
-    else : d_mbes_particule = new_z_particules_mnt - z_particules_mnt
 
     # Map difference true and expected distance measurement to probability
-    distance = np.abs(d_mbes_particule-measurements)
+    distance_x = np.abs(measurements[0]-propagated_states[1][0])
+    distance_y = np.abs(measurements[1]-propagated_states[1][1])
 
-    # if measurements_noise[0] is not None:
-    #     p_z_given_x_distance = np.exp(-beta*distance**2/(measurements_noise[0]**2))
-    # else:
-    #     p_z_given_x_distance = np.exp(-beta*distance**2)
-    if measurements_noise[0] is not None:
-        p_z_given_x_distance = np.exp(-beta*distance/(measurements_noise[0]**2))
-    else:
-        p_z_given_x_distance = np.exp(-beta*distance)
+    p_z_given_x_distance = np.exp(-beta*np.sqrt(distance_x**2 + distance_y**2))
 
-    # p_z_given_x_distance = 1
-    # Return importance weight based on all landmarks
-    return d_mnt, p_z_given_x_distance, new_z_particules_mnt
+    return None, p_z_given_x_distance, None
 
 def needs_resampling(resampling_threshold):
     # return 1.0 / np.max(particles[0]) < resampling_threshold
@@ -149,10 +159,13 @@ def f_measurements(i, previous_measurements):
     d_mnt, measurements = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)
     return measurements-previous_measurements, measurements, d_mnt
 
+X_GPS, Y_GPS = coord2cart((LAT,LON))
 def f_measurements_offset(i):
-    x_gps, y_gps = coord2cart((LAT[i,],LON[i,])).flatten()
-    d_mnt, measurements = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)
-    return measurements, None #d_mnt
+    # x_gps, y_gps = coord2cart((LAT[i,],LON[i,])).flatten()
+    x_gps, y_gps = X_GPS[i,], Y_GPS[i,]
+    # d_mnt, measurements = distance_to_bottom(np.array([[x_gps, y_gps]]), MNT)
+    return([x_gps, y_gps], None)
+    # return measurements, None #d_mnt
 
 def test_diverge(ERR, err_max=1000):
     if ERR[-1] > err_max: #Si l'erreur est de plus de 500m il y a un probleme
@@ -184,7 +197,7 @@ if __name__ == '__main__':
     resampling_threshold = 1/2*n_particles
 
     idx_ti = int(1/2*T.shape[0]) #0
-    idx_tf = int(9/10*T.shape[0]) #T.shape[0] # 
+    idx_tf = int(9/10*T.shape[0]) #T.shape[0] #
 
     dt = T[steps,] - T[0,]
     print(dt)
@@ -208,8 +221,8 @@ if __name__ == '__main__':
     TIME = []; BAR = []; SPEED = []; ERR = []
     STD_X = []; STD_Y = []
     L_LAT = []; L_LON = []
-    beta = 10**(-1.37)
-    # beta = 5/100
+    # beta = 10**(-1.37)
+    beta = 5/100
     # beta = 1/100
 
     for i in r:
@@ -227,8 +240,8 @@ if __name__ == '__main__':
         #Use the INS
         t = T[i,]
         yaw = YAW[i,]
-        yaw_std = YAW_STD[i,]
-        # yaw_std = np.abs(np.arctan2(V_Y[i,], V_X[i,] + V_X_STD[i,]) - np.arctan2(V_Y[i,] + V_Y_STD[i,], V_X[i,]))
+        # yaw_std = YAW_STD[i,]
+        yaw_std = np.abs(np.arctan2(V_Y[i,], V_X[i,] + V_X_STD[i,]) - np.arctan2(V_Y[i,] + V_Y_STD[i,], V_X[i,]))
         v_x, v_y = V_X[i,], V_Y[i,]
         v_std = np.sqrt(V_X_STD[i,]**2 + V_Y_STD[i,]**2)
 

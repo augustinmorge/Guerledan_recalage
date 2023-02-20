@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
-from storage.data_import import *
-offset_dvl = -115.5714023521081
-offset_mbes = -117.6155899936386
-# from storage_afternoon.data_import import *
-# offset_dvl = -116.48084912914656
-# offset_mbes = -117.67756491403492
+# from storage.data_import import *
+# offset_dvl = -115.5714023521081
+# offset_mbes = -117.6155899936386
+from storage_afternoon.data_import import *
+offset_dvl = -116.48084912914656
+offset_mbes = -117.67756491403492
 # from storage_final.data_import import *
 # offset_dvl = -119.76367580513286
 # offset_mbes = 2.453176034602336
@@ -88,9 +88,9 @@ def compute_likelihood(propagated_states, measurements, measurements_noise, beta
     distance_max = np.abs(mbes_max_Z - d_mbes_particule_max)
 
     if measurements_noise[0] == None:
+        p_z_given_x_distance = np.exp(-beta*distance_min)*np.exp(-beta*distance_mid**2)*np.exp(-beta*distance_max)
         # p_z_given_x_distance = np.exp(-beta*distance_min)*np.exp(-beta*distance_mid**2)*np.exp(-beta*distance_max)
-        # p_z_given_x_distance = np.exp(-beta*distance_min)*np.exp(-beta*distance_mid**2)*np.exp(-beta*distance_max)
-        p_z_given_x_distance = np.exp(-beta*distance_mid**2)
+        # p_z_given_x_distance = np.exp(-beta*distance_mid**2)
 
     else:
         p_z_given_x_distance = np.exp(-beta*distance/(measurements_noise[0]**2))
@@ -110,23 +110,23 @@ def update(robot_forward_motion, robot_angular_motion, measurements, \
     # Propagate the particle state according to the current particle
     propagated_states = propagate_sample(particles, robot_forward_motion, robot_angular_motion, process_noise)
 
-    # if dtmbes != 0:
-    # Compute current particle's weight
-    d_mnt, p, z_particules_mnt = compute_likelihood(propagated_states, measurements, measurements_noise, beta, z_particules_mnt)
+    if dtmbes != 0: #new measure
+        # Compute current particle's weight
+        d_mnt, p, z_particules_mnt = compute_likelihood(propagated_states, measurements, measurements_noise, beta, z_particules_mnt)
 
-    particles = validate_state(propagated_states, d_mnt)
+        particles = validate_state(propagated_states, d_mnt)
 
-    # Update the probability of the particle
-    propagated_states[0] = particles[0] * p
+        # Update the probability of the particle
+        propagated_states[0] = particles[0] * p
 
-    # Update particles
-    particles = normalize_weights(propagated_states)
+        # Update particles
+        particles = normalize_weights(propagated_states)
 
-    # Resample if needed
-    if needs_resampling(resampling_threshold):
-        global ct_resampling
-        ct_resampling += 1
-        particles = resampler.resample(particles, n_particles)
+        # Resample if needed
+        if needs_resampling(resampling_threshold):
+            global ct_resampling
+            ct_resampling += 1
+            particles = resampler.resample(particles, n_particles)
 
     return(particles, z_particules_mnt)
 
@@ -218,7 +218,8 @@ if __name__ == '__main__':
     resampling_threshold = 2/3*n_particles
     # resampling_threshold = 1/2*n_particles
     idx_ti = 0
-    idx_tf =  dvl_T.shape[0]
+    # idx_tf = dvl_T.shape[0]
+    idx_tf = int(dvl_T.shape[0]*1/2)
 
     dt = dvl_T[steps,] - dvl_T[0,]
     tini = dvl_T[idx_ti,]
@@ -353,11 +354,58 @@ if __name__ == '__main__':
     max_std = 3*np.mean(NORM_STD)
     masque = NORM_STD > max_std
 
+    # plt.suptitle(f"Algorithm with MBES\n{n_particles} particles; 1/{steps} data log used\nTotal time:{int(elapsed_time)}s")
+    # ax1 = plt.subplot2grid((3, 2), (0, 0), rowspan=3)
+    # ax2 = plt.subplot2grid((3, 2), (0, 1))
+    # ax3 = plt.subplot2grid((3, 2), (1, 1))
+    # ax4 = plt.subplot2grid((3, 2), (2, 1))
+    #
+    # print("Display the error and the final result..")
+    # ax1.set_title("Barycentre")
+    # ax1.set_xlabel("x [m]")
+    # ax1.set_ylabel("y [m]")
+    # ax1.plot(coord2cart((LAT,LON))[0,:], coord2cart((LAT,LON))[1,:],label='true position',linewidth=0.5,color='k')
+    # scatter = ax1.scatter(BAR[:,0][~masque], BAR[:,1][~masque], s = 1.2, c = NORM_STD[~masque], cmap='plasma', label='particle cloud barycenter')
+    # cbar = fig.colorbar(scatter, extend='both', ax = ax1)
+    # cbar.set_label('Ecart type')
+    # ax1.legend()
+    #
+    # ax2.set_title("Error function.")
+    # ax2.set_xlabel("time [min]")
+    # ax2.set_ylabel("error (m)")
+    # # ax2.plot(TIME, ERR, color = 'b', label = 'erreur')
+    # ax2.scatter(TIME, ERR, color = np.array(color_mbes), label = 'erreur', s = 1)
+    # ax2.scatter(TIME, NORM_STD, color = 'green', label = 'ecart type', s = 1)
+    # ERR = np.array(ERR)
+    # idx_start = int(1/8*TIME.shape[0])
+    # ax2.plot(TIME, np.mean(ERR)*np.ones(TIME.shape), label = f"mean error from beggining = {np.mean(ERR)}")
+    # ax2.plot(TIME[idx_start:,], np.mean(ERR[idx_start:,])*np.ones(TIME[idx_start:,].shape), label = f"mean error from convergence = {np.mean(ERR[idx_start:,])}")
+    # ax2.legend()
+    #
+    # X_gps, Y_gps = coord2cart((LAT, LON))
+    # d_bottom_mnt = distance_to_bottom(np.column_stack((X_gps,Y_gps)),MNT)[1].squeeze()
+    # mean_dvlR = (dvl_BM1R + dvl_BM2R + dvl_BM3R + dvl_BM4R)/4
+    #
+    # ax3.set_title("Different types of bottom measurements")
+    # ax3.set_xlabel("Time [min]")
+    # ax3.set_ylabel("Range [m]")
+    # ax3.plot((dvl_T - dvl_T[0,])/60, mean_dvlR + offset_dvl, label = "z_dvl")
+    # # ax3.plot((T - T[0,])/60, d_bottom_mnt, label = "z_mnt")
+    # ax3.plot((MBES_mid_T - MBES_mid_T[0,])/60, MBES_mid_Z + offset_mbes, label = "z_mbes")
+    # ax3.legend()
+    #
+    # ax4.set_title("Speed")
+    # ax4.set_ylabel("v [m/s]")
+    # ax4.set_xlabel("t [min]")
+    # ax4.plot((dvl_T[steps:,] - dvl_T[steps,])/60, np.sqrt(dvl_v_x[steps:,]**2 + dvl_v_y[steps:,]**2), label = "dvl_speed")
+    # ax4.plot(TIME, SPEED, label = "dvl_speed_filtered")
+    # ax4.plot((T[steps:,] - T[steps,])/60, np.sqrt(V_X[steps:,]**2 + V_Y[steps:,]**2), label = "ins_speed")
+    # ax4.legend()
+
     plt.suptitle(f"Algorithm with MBES\n{n_particles} particles; 1/{steps} data log used\nTotal time:{int(elapsed_time)}s")
-    ax1 = plt.subplot2grid((3, 2), (0, 0), rowspan=3)
-    ax2 = plt.subplot2grid((3, 2), (0, 1))
-    ax3 = plt.subplot2grid((3, 2), (1, 1))
-    ax4 = plt.subplot2grid((3, 2), (2, 1))
+    ax1 = plt.subplot2grid((2, 2), (0, 0), rowspan=3)
+    ax2 = plt.subplot2grid((2, 2), (0, 1))
+    ax3 = plt.subplot2grid((2, 2), (1, 1))
 
     print("Display the error and the final result..")
     ax1.set_title("Barycentre")
@@ -374,32 +422,18 @@ if __name__ == '__main__':
     ax2.set_ylabel("error (m)")
     # ax2.plot(TIME, ERR, color = 'b', label = 'erreur')
     ax2.scatter(TIME, ERR, color = np.array(color_mbes), label = 'erreur', s = 1)
-    ax2.scatter(TIME, NORM_STD, color = 'green', label = 'ecart type', s = 1)
     ERR = np.array(ERR)
     idx_start = int(1/8*TIME.shape[0])
     ax2.plot(TIME, np.mean(ERR)*np.ones(TIME.shape), label = f"mean error from beggining = {np.mean(ERR)}")
     ax2.plot(TIME[idx_start:,], np.mean(ERR[idx_start:,])*np.ones(TIME[idx_start:,].shape), label = f"mean error from convergence = {np.mean(ERR[idx_start:,])}")
     ax2.legend()
 
-    X_gps, Y_gps = coord2cart((LAT, LON))
-    d_bottom_mnt = distance_to_bottom(np.column_stack((X_gps,Y_gps)),MNT)[1].squeeze()
-    mean_dvlR = (dvl_BM1R + dvl_BM2R + dvl_BM3R + dvl_BM4R)/4
-
-    ax3.set_title("Different types of bottom measurements")
-    ax3.set_xlabel("Time [min]")
-    ax3.set_ylabel("Range [m]")
-    ax3.plot((dvl_T - dvl_T[0,])/60, mean_dvlR + offset_dvl, label = "z_dvl")
-    ax3.plot((T - T[0,])/60, d_bottom_mnt, label = "z_mnt")
-    ax3.plot((MBES_mid_T - MBES_mid_T[0,])/60, MBES_mid_Z + offset_mbes, label = "z_mbes")
+    ax3.set_title("Std.")
+    ax3.set_xlabel("time [min]")
+    ax3.set_ylabel("std (m)")
+    ax3.scatter(TIME, NORM_STD, color = 'blue', label = 'ecart type', s = 1)
     ax3.legend()
 
-    ax4.set_title("Speed")
-    ax4.set_ylabel("v [m/s]")
-    ax4.set_xlabel("t [min]")
-    ax4.plot((dvl_T[steps:,] - dvl_T[steps,])/60, np.sqrt(dvl_v_x[steps:,]**2 + dvl_v_y[steps:,]**2), label = "dvl_speed")
-    ax4.plot(TIME, SPEED, label = "dvl_speed_filtered")
-    ax4.plot((T[steps:,] - T[steps,])/60, np.sqrt(V_X[steps:,]**2 + V_Y[steps:,]**2), label = "ins_speed")
-    ax4.legend()
 
     print("Computing the diagrams..")
 
