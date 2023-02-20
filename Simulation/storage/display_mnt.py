@@ -36,6 +36,7 @@ def display_mnt(LON, LAT, mnt):
 
 if __name__ == '__main__':
     from data_import import *
+    LON, LAT = coord2cart((LAT,LON))
     display_mnt(LON, LAT, MNT)
 
     from PIL import Image

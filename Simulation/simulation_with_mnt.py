@@ -184,9 +184,10 @@ if __name__ == '__main__':
     resampling_threshold = 1/2*n_particles
 
     idx_ti = int(1/2*T.shape[0]) #0
-    idx_tf =  int(9/10*T.shape[0])
+    idx_tf = int(9/10*T.shape[0]) #T.shape[0] # 
 
     dt = T[steps,] - T[0,]
+    print(dt)
     tini = T[idx_ti,]
 
     if bool_display:

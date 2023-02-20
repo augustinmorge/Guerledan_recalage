@@ -309,8 +309,9 @@ choice_sensor = sys.argv[0].split("_")[-1][:-3]
 print(f"Use sensor {choice_sensor} for bottom range")
 global dt_br
 if choice_sensor == "mnt":
-    dt_br = 0.05 #ins
-    print(f"dt choosen = {dt_br}")
+    # dt_br = 0.005 #ins
+    # print(f"dt choosen = {dt_br}")
+    pass
 else:
     dt_br = np.mean(np.diff(dvl_T)) #0.1
     print(f"dt choosen = {dt_br}")

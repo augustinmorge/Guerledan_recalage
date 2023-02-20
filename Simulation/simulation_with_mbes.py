@@ -110,6 +110,7 @@ def update(robot_forward_motion, robot_angular_motion, measurements, \
     # Propagate the particle state according to the current particle
     propagated_states = propagate_sample(particles, robot_forward_motion, robot_angular_motion, process_noise)
 
+    # if dtmbes != 0:
     # Compute current particle's weight
     d_mnt, p, z_particules_mnt = compute_likelihood(propagated_states, measurements, measurements_noise, beta, z_particules_mnt)
 
