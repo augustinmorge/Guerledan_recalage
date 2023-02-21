@@ -14,6 +14,7 @@ You have to download the .txt file from :
   * [G2: 11am](https://mega.nz/folder/fFsSGLoT#b_4goBnMMQjKI6HvGNJZ5w) in storage_semi_final
   * [G2: 1pm](https://mega.nz/folder/HMVAVaib#aon7IKUUBNBkaCgNgTzOxg) in storage_final
 
+The [MNT](https://mega.nz/folder/7INX0KhQ#BCGxQbB6KYzWIVMoU6gRNg)
 
 Then go into the right storage folder and run /data_import.py with **1** in bool_txt when you run it for the first time and **0** new time.
 

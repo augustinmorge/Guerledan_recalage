@@ -38,7 +38,7 @@ if __name__ == '__main__':
     from data_import import *
     print(np.min(LON), np.max(LON))
     print(np.min(LAT), np.max(LAT))
-    LON, LAT = coord2cart((LAT,LON))
+    # LON, LAT = coord2cart((LAT,LON))
     display_mnt(LON, LAT, MNT)
 
     from PIL import Image

@@ -9,7 +9,9 @@ import time
 file_path = os.path.dirname(os.path.abspath(__file__))
 
 bool_txt = 0
-data_cropped = 0
+
+#Ne plus toucher
+data_cropped = False
 
 # Définit les coordonnées de référence
 wpt_ponton = (48.1989495, -3.0148023)
@@ -138,7 +140,7 @@ if bool_txt:
     for i in MNT_txt:
         MNT.append(i.split(','))
         # MNT[-1] = [np.float64(MNT[-1][0]), np.float64(MNT[-1][1]), np.float64(MNT[-1][2]+'.'+MNT[-1][3])]
-        MNT[-1] = [np.float64(MNT[-1][0]), np.float64(MNT[-1][1]), np.float64(MNT[-1][2])]
+        MNT[-1] = [np.float64(MNT[-1][0]), np.float64(MNT[-1][1]), -np.float64(MNT[-1][2])]
     MNT = np.array(MNT)
 
     #Transform the proj
@@ -218,8 +220,6 @@ GYR_Z = ins['GYR_Z']
 """ Load MNT """
 mnt = np.load(file_path + "/mnt.npz")
 MNT = mnt['MNT']
-MNT[:,2] = -MNT[:,2]
-
 
 """ Load the KD-Tree """
 # Load the KD tree object from the file
@@ -537,6 +537,7 @@ if __name__ == '__main__':
     mean_dvlR = (dvl_BM1R + dvl_BM2R + dvl_BM3R + dvl_BM4R)/4
     print(f"the offset with dt = {dt_br} for the DVL/MNT is : {np.mean(mean_dvlR) - np.mean(distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze())}")
     print(f"the offset with dt = {dt_br} for the MBES/MNT is : {np.mean(MBES_mid_Z) - np.mean(distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze())}")
+
     def display_speed():
         ##################################################
         plt.figure()
@@ -707,7 +708,7 @@ if __name__ == '__main__':
     #Convert the beam of the MBES
     #On a 65° entre le milieu et le max/mix pour 256/2 beams
 
-    angle_mbes = 26
+    angle_mbes = 63
     # d = np.sqrt((MBES_max_X - MBES_mid_X)**2 + (MBES_max_Y - MBES_mid_Y)**2)
     # angle_mbes = np.pi/2 - np.arctan(MBES_mid_Z/d)
 
@@ -724,8 +725,8 @@ if __name__ == '__main__':
         dp_x_mid = MBES_mid_Z/np.tan(angle_mid*np.pi/180)*np.cos(YAW)
         dp_y_mid = MBES_mid_Z/np.tan(angle_mid*np.pi/180)*np.sin(YAW)
 
-        dp_x_min = MBES_min_Z/np.tan(angle_min*np.pi/180)*np.cos(YAW-3*np.pi/2)
-        dp_y_min = MBES_min_Z/np.tan(angle_min*np.pi/180)*np.sin(YAW-3*np.pi/2)
+        dp_x_min = -MBES_min_Z/np.tan(angle_min*np.pi/180)*np.cos(YAW-3*np.pi/2)
+        dp_y_min = -MBES_min_Z/np.tan(angle_min*np.pi/180)*np.sin(YAW-3*np.pi/2)
 
         dp_x_max = MBES_max_Z/np.tan(angle_max*np.pi/180)*np.cos(YAW-np.pi/2)
         dp_y_max = MBES_max_Z/np.tan(angle_max*np.pi/180)*np.sin(YAW-np.pi/2)
@@ -804,6 +805,6 @@ if __name__ == '__main__':
             ax3.set_ylabel("Distance [m]")
             ax3.set_title("Range of MBES")
             ax3.legend()
-    # display_beams_mbes()
+    display_beams_mbes()
 
     plt.show()

@@ -9,7 +9,7 @@ import time
 file_path = os.path.dirname(os.path.abspath(__file__))
 
 bool_txt = 0
-data_cropped = 1
+data_cropped = 0
 
 # Définit les coordonnées de référence
 wpt_ponton = (48.1989495, -3.0148023)
@@ -39,7 +39,7 @@ if bool_txt:
                 # Down Velocity Std.	Yaw	Yaw Std.	Roll	Roll Std.	Pitch
                     # Pitch Std.
 
-    filepath = file_path+"/IMU_14h.txt"
+    filepath = file_path+"/IMU_navsight.txt"
     data_ins = np.genfromtxt(filepath, delimiter='\t', skip_header=2, dtype = "U")
     T = data_ins[:,0]
     print(T[0])
@@ -77,8 +77,7 @@ if bool_txt:
 
     """ Import DVL """
     print("Importing the DVL-TXT file..")
-    print("WARNING: ONE HOUR LESS FOR DVL")
-    filepath = file_path + "/dvl_final.txt"
+    filepath = file_path + "/dvl_navsight.txt"
     data_dvl = np.genfromtxt(filepath, delimiter=',', skip_header=1)
     dvl_ensemble = data_dvl[:,0]
     start_time_idx_dvl = 1
@@ -91,7 +90,7 @@ if bool_txt:
     dvl_CS = data_dvl[:,start_time_idx_dvl + 6]
     # print(f"{dvl_H[0]}:{dvl_MN[0]}:{dvl_S[0]}")
     # print(f"{dvl_H[-1]}:{dvl_MN[-1]}:{dvl_S[-1]}")
-    dvl_T = 60*60*(dvl_H-1) + 60*dvl_MN + dvl_S + 1/100.*dvl_CS
+    dvl_T = 60*60*dvl_H + 60*dvl_MN + dvl_S + 1/100.*dvl_CS
     print(time.strftime("%H:%M:%S", time.gmtime(dvl_T[0])))
     print(time.strftime("%H:%M:%S", time.gmtime(dvl_T[-1])))
 
@@ -106,7 +105,7 @@ if bool_txt:
 
     """ Import MBES """
     print("Importing the MBES-TXT file..")
-    filepath = file_path+"/mbes_final.txt"
+    filepath = file_path+"/mbes_navsight.txt"
     # Read data from file
     data_mbes = np.genfromtxt(filepath, delimiter=',', skip_header=1, dtype = "U")
 
@@ -118,8 +117,6 @@ if bool_txt:
 
     # Create Time_MBES array
     Time_MBES = np.array([dt.split(" ")[1].split(":") for dt in Date_Time], dtype=np.float64)
-    print(Time_MBES[0])
-    print(Time_MBES[-1])
     # Create the TIME vector array
     Time_MBES_mid_seconds = (60*60*Time_MBES[:,0] + 60*Time_MBES[:,1] + Time_MBES[:,2])
     # print("Beam: ",Beam)
@@ -134,14 +131,16 @@ if bool_txt:
 
     MNT = []
     if data_cropped: #Choose the txt file
-        MNT_txt = np.loadtxt(file_path+"/../mnt/guerledan_cropped.txt", dtype = str)
+        MNT_txt = np.loadtxt(file_path+"/../mnt/guerledan_cropped_G12.txt", dtype = str)
     else: #Choose the compressed file
-        MNT_txt = np.loadtxt(file_path+"/../mnt/guerledan_EDF_2013-06_MNT1m.tiff.txt", dtype = str)
+        # MNT_txt = np.loadtxt(file_path+"/../mnt/guerledan_EDF_2013-06_MNT1m.tiff.txt", dtype = str)
+        MNT_txt = np.loadtxt(file_path+"/../mnt/guerledan_2019-02_MNT50cm.xyz", dtype = str)
 
     #Flip the MNT
     for i in MNT_txt:
         MNT.append(i.split(','))
-        MNT[-1] = [np.float64(MNT[-1][0]), np.float64(MNT[-1][1]), np.float64(MNT[-1][2]+'.'+MNT[-1][3])]
+        # MNT[-1] = [np.float64(MNT[-1][0]), np.float64(MNT[-1][1]), np.float64(MNT[-1][2]+'.'+MNT[-1][3])]
+        MNT[-1] = [np.float64(MNT[-1][0]), np.float64(MNT[-1][1]), -np.float64(MNT[-1][2])]
     MNT = np.array(MNT)
 
     #Transform the proj
@@ -448,6 +447,11 @@ else:
     dvl_v_y = (dvl_VN*np.sin(angle) + dvl_VE*np.cos(angle))*np.sin(YAW)*2.273491224939067
     dvl_v_z = dvl_VZ
 
+def distance_to_bottom(xy,mnt):
+    d_mnt, indices = kd_tree.query(xy)  #Utilise KDTree pour calculer les distances
+    Z = mnt[indices,2] # Récupère les altitudes des points les plus proches
+    return d_mnt, Z
+
 if __name__ == '__main__':
 
     print("todelete")
@@ -521,12 +525,6 @@ if __name__ == '__main__':
     dp_x_B4 = -dvl_BM4R/np.tan(60*np.pi/180)*np.cos(YAW-np.pi/4)
     dp_y_B4 = -dvl_BM4R/np.tan(60*np.pi/180)*np.sin(YAW-np.pi/4)
 
-    def distance_to_bottom(xy,mnt):
-        d_mnt, indices = kd_tree.query(xy)  #Utilise KDTree pour calculer les distances
-        Z = mnt[indices,2] # Récupère les altitudes des points les plus proches
-        return d_mnt, Z
-    x_gps, y_gps = coord2cart((LAT, LON))
-
     import matplotlib.pyplot as plt
     T = (T - T[0])/60
     dvl_T = (dvl_T - dvl_T[0])/60
@@ -534,8 +532,13 @@ if __name__ == '__main__':
     MBES_min_T = (MBES_min_T - MBES_min_T[0])/60
     MBES_max_T = (MBES_max_T - MBES_max_T[0])/60
     mean_dvlR = (dvl_BM1R + dvl_BM2R + dvl_BM3R + dvl_BM4R)/4
-    print(f"the offset with dt = {dt_br} for the DVL/MNT is : {np.mean(mean_dvlR) - np.mean(distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze())}")
-    print(f"the offset with dt = {dt_br} for the MBES/MNT is : {np.mean(MBES_mid_Z) - np.mean(distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze())}")
+    x_gps, y_gps = coord2cart((LAT, LON))
+    mean_dvlR = (dvl_BM1R + dvl_BM2R + dvl_BM3R + dvl_BM4R)/4
+    offset_dvl = np.mean(distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze()) - np.mean(mean_dvlR)
+    offset_mbes = np.mean(distance_to_bottom(np.column_stack((x_gps,y_gps)),MNT)[1].squeeze()) - np.mean(MBES_mid_Z)
+    print(f"the offset with dt = {dt_br} for the DVL/MNT is : {offset_dvl}")
+    print(f"the offset with dt = {dt_br} for the MBES/MNT is : {offset_mbes}")
+
     def display_range():
         #######################################
         plt.figure()
@@ -581,7 +584,7 @@ if __name__ == '__main__':
         plt.ylabel("Error on measuremnts [m]")
         plt.title("Error of dvl range v/s MNT and mbes range v/s MNT")
         plt.plot()
-    # display_range()
+    display_range()
     def display_speed():
         ##################################################
         plt.figure()
@@ -652,7 +655,7 @@ if __name__ == '__main__':
         ax6.set_xlabel("Time [min]")
         ax6.set_ylabel("Error on angle [rad]")
         ax6.set_title("angle of speed")
-    # display_speed()
+    display_speed()
     def display_acc():
         plt.figure()
         plt.plot(T, ACC_X, label = "acc_x")
@@ -662,7 +665,7 @@ if __name__ == '__main__':
         plt.xlabel("time [min]")
         plt.ylabel("acc [m/s2]")
         plt.legend()
-    # display_acc()
+    display_acc()
     def display_beams_dvl():
         plt.figure()
         ax1 = plt.subplot2grid((2, 3), (0, 0))
@@ -745,7 +748,7 @@ if __name__ == '__main__':
         ax5.set_xlabel("Time [min]")
         ax5.set_ylabel("Range [m]")
         ax5.set_title("mean_range_dvl")
-    # display_beams_dvl()
+    display_beams_dvl()
 
     #Change the range to z
     #Convert the beam of the MBES

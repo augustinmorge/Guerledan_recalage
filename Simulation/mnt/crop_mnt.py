@@ -20,15 +20,19 @@ warnings.filterwarnings("ignore")
 #     cropped = lines[mask]
 #     np.savetxt(mnt_cropped, cropped, delimiter=",", fmt="%s")
 
-with open("guerledan_cropped_G22.txt","w") as mnt_cropped:
-    MNT_txt = np.loadtxt(file_path+"/../mnt/guerledan_2019-02_MNT50cm.xyz", dtype=str)
+with open("guerledan_cropped_G12.txt","w") as mnt_cropped:
+    # MNT_txt = np.loadtxt(file_path+"/../mnt/guerledan_2019-02_MNT50cm.xyz", dtype=str)
+    MNT_txt = np.loadtxt(file_path+"/../mnt/guerledan_EDF_2013-06_MNT1m.tiff.txt", dtype=str)
     lines = np.array([line.split(",") for line in MNT_txt])
-    cart_mnt_x, cart_mnt_y, cart_mnt_z = lines.T
+    # cart_mnt_x, cart_mnt_y, cart_mnt_z = lines.T
+    cart_mnt_x, cart_mnt_y, cart_mnt_z0, cart_mnt_z1 = lines.T
+
     gcs = pyproj.CRS('epsg:4326')
     proj = pyproj.CRS('epsg:2154')
     lat_mnt, lon_mnt = pyproj.transform(proj, gcs, cart_mnt_x, cart_mnt_y)
     print(lon_mnt, lat_mnt)
     # mask = (lon_mnt > -3.02045) & (48.19654 < lat_mnt) & (lat_mnt < 48.20594)
-    mask = (lon_mnt > -3.025718) & (48.195638 < lat_mnt) & (lat_mnt < 48.198834)
+    # mask = (lon_mnt > -3.025718) & (48.195638 < lat_mnt) & (lat_mnt < 48.198834)
+    mask = (lon_mnt > -3.02472) & (48.195946 < lat_mnt) & (lat_mnt < 48.198939)
     cropped = lines[mask]
     np.savetxt(mnt_cropped, cropped, delimiter=",", fmt="%s")

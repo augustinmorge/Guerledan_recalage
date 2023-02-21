@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
-# from storage.data_import import *
-# offset_dvl = -115.5714023521081
-# offset_mbes = -117.6155899936386
-from storage_afternoon.data_import import *
-offset_dvl = -116.48084912914656
-offset_mbes = -117.67756491403492
+from storage.data_import import *
+offset_dvl = -115.5714023521081
+offset_mbes = -117.6155899936386
+# from storage_afternoon.data_import import *
+# offset_dvl = -116.48084912914656
+# offset_mbes = -117.67756491403492
 # from storage_final.data_import import *
 # offset_dvl = -119.76367580513286
 # offset_mbes = 2.453176034602336
@@ -217,9 +217,15 @@ if __name__ == '__main__':
     resampler = Resampler()
     resampling_threshold = 2/3*n_particles
     # resampling_threshold = 1/2*n_particles
-    idx_ti = 0
+
+    # idx_ti = 0
+    # idx_tf = int(dvl_T.shape[0]*1/2)
     # idx_tf = dvl_T.shape[0]
-    idx_tf = int(dvl_T.shape[0]*1/2)
+
+    #G11
+    idx_ti = 0
+    idx_tf =T.shape[0]
+
 
     dt = dvl_T[steps,] - dvl_T[0,]
     tini = dvl_T[idx_ti,]
@@ -290,32 +296,34 @@ if __name__ == '__main__':
 
         """ Affichage en temps réel """
         if bool_display:
-            lat = LAT[i,]
-            lon = LON[i,]
-            x_gps, y_gps = coord2cart((lat,lon)).flatten()
-            ax.cla()
-            print("Temps de calcul: ",time.time() - t0)
-            t1 = time.time()
-            ax.plot(coord2cart((LAT[idx_ti:idx_tf,], LON[idx_ti:idx_tf,]))[0,:], coord2cart((LAT[idx_ti:idx_tf,], LON[idx_ti:idx_tf,]))[1,:])
-            ax.set_title("Particle filter with {} particles with z = {}m".format(n_particles, measurements))
-            ax.set_xlim([x_gps_min - 100,x_gps_max + 100])
-            ax.set_ylim([y_gps_min - 100,y_gps_max + 100])
-            bx, by = get_average_state(particles)[0], get_average_state(particles)[1] #barycentre des particules
-            scatter1 = ax.scatter(x_gps, y_gps ,color='blue', label = 'True position panopée', s = 100)
-            # scatter2 = ax.scatter(particles[1][0], particles[1][1], color = 'red', s = 0.8, label = "particles",alpha=particles[0][:,0]/pow(np.max(particles[0][:,0]),2/3))
-            scatter2 = ax.scatter(particles[1][0], particles[1][1], color = 'red', s = 0.8, label = "particles") #,alpha=particles[0][:,0]/pow(np.max(particles[0][:,0]),2/3))
-            scatter3 = ax.scatter(bx, by , color = 'green', label = 'Estimation of particles')
+            if i%10 == 0:
+                lat = LAT[i,]
+                lon = LON[i,]
+                x_gps, y_gps = coord2cart((lat,lon)).flatten()
+                ax.cla()
+                print("Temps de calcul: ",time.time() - t0)
+                t1 = time.time()
+                ax.plot(coord2cart((LAT[idx_ti:idx_tf,], LON[idx_ti:idx_tf,]))[0,:], coord2cart((LAT[idx_ti:idx_tf,], LON[idx_ti:idx_tf,]))[1,:])
+                ax.set_title(f"Particle filter using MBES with {n_particles} particles") #with z = {}m".format(n_particles, measurements))
+                ax.set_xlim([x_gps_min - 100,x_gps_max + 100])
+                ax.set_ylim([y_gps_min - 100,y_gps_max + 100])
+                bx, by = get_average_state(particles)[0], get_average_state(particles)[1] #barycentre des particules
+                scatter1 = ax.scatter(x_gps, y_gps ,color='blue', label = 'True position panopée', s = 100)
+                # scatter2 = ax.scatter(particles[1][0], particles[1][1], color = 'red', s = 0.8, label = "particles",alpha=particles[0][:,0]/pow(np.max(particles[0][:,0]),2/3))
+                scatter2 = ax.scatter(particles[1][0], particles[1][1], color = 'red', s = 0.8, label = "particles",alpha=particles[0][:,0]/np.max(particles[0][:,0]))
+                # scatter2 = ax.scatter(particles[1][0], particles[1][1], color = 'red', s = 0.8, label = "particles") #,alpha=particles[0][:,0]/pow(np.max(particles[0][:,0]),2/3))
+                scatter3 = ax.scatter(bx, by , color = 'green', label = 'Estimation of particles')
 
-            if dtmbes == 0:
-                plt.plot([], [], marker='o', color='red', label='MBES: off', markerfacecolor='red', markersize=10)
-            else:
-                plt.plot([], [], marker='o', color='green', label='MBES: on', markerfacecolor='green', markersize=10)
+                if dtmbes == 0:
+                    plt.plot([], [], marker='o', color='red', label='MBES: off', markerfacecolor='red', markersize=10)
+                else:
+                    plt.plot([], [], marker='o', color='green', label='MBES: on', markerfacecolor='green', markersize=10)
 
-            plt.legend()
+                plt.legend()
 
 
-            plt.pause(0.00001)
-            print("Temps d'affichage: ",time.time()-t1,"\n")
+                plt.pause(0.00001)
+                print("Temps d'affichage: ",time.time()-t1,"\n")
 
         #Add variables useful to display graphs at the end of the program
         TIME.append(t)
@@ -336,6 +344,9 @@ if __name__ == '__main__':
         STD_Y.append(std_y)
         #Test if the algorithm diverge and why
         # if test_diverge(ERR, 500) : break
+
+        # if i == 0:
+        #     plt.pause(10)
 
 
     print(f"Resampling used: {ct_resampling} ({ct_resampling/((idx_tf - idx_ti)/steps)*100}%)")

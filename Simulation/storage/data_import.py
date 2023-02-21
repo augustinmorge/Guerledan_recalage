@@ -8,7 +8,7 @@ import joblib, pickle
 file_path = os.path.dirname(os.path.abspath(__file__))
 
 bool_txt = 0
-data_cropped = 1
+data_cropped = 0
 
 # Définit les coordonnées de référence
 wpt_ponton = (48.1989495, -3.0148023)
@@ -97,7 +97,7 @@ if bool_txt:
 
     """ Import MBES """
     print("Importing the MBES-TXT file..")
-    filepath = file_path+"/MBES_mid_trdi.txt"
+    filepath = file_path+"/mbes_trdi.txt"
     # Read data from file
     data_mbes = np.genfromtxt(filepath, delimiter=',', skip_header=1, dtype = "U")
 
@@ -127,11 +127,13 @@ if bool_txt:
         MNT_txt = np.loadtxt(file_path+"/../mnt/guerledan_cropped.txt", dtype = str)
     else: #Choose the compressed file
         MNT_txt = np.loadtxt(file_path+"/../mnt/guerledan_EDF_2013-06_MNT1m.tiff.txt", dtype = str)
+        # MNT_txt = np.loadtxt(file_path+"/../mnt/guerledan_2019-02_MNT50cm.xyz", dtype = str)
 
     #Flip the MNT
     for i in MNT_txt:
         MNT.append(i.split(','))
         MNT[-1] = [np.float64(MNT[-1][0]), np.float64(MNT[-1][1]), np.float64(MNT[-1][2]+'.'+MNT[-1][3])]
+        # MNT[-1] = [np.float64(MNT[-1][0]), np.float64(MNT[-1][1]), -np.float64(MNT[-1][2])] #+'.'+MNT[-1][3])]
     MNT = np.array(MNT)
 
     #Transform the proj
