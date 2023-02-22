@@ -88,9 +88,9 @@ def compute_likelihood(propagated_states, measurements, measurements_noise, beta
     distance_max = np.abs(mbes_max_Z - d_mbes_particule_max)
 
     if measurements_noise[0] == None:
-        p_z_given_x_distance = np.exp(-beta*distance_min)*np.exp(-beta*distance_mid**2)*np.exp(-beta*distance_max)
         # p_z_given_x_distance = np.exp(-beta*distance_min)*np.exp(-beta*distance_mid**2)*np.exp(-beta*distance_max)
-        # p_z_given_x_distance = np.exp(-beta*distance_mid**2)
+        # p_z_given_x_distance = np.exp(-beta*distance_min)*np.exp(-beta*distance_mid**2)*np.exp(-beta*distance_max)
+        p_z_given_x_distance = np.exp(-beta*distance_mid**2)
 
     else:
         p_z_given_x_distance = np.exp(-beta*distance/(measurements_noise[0]**2))
@@ -218,13 +218,15 @@ if __name__ == '__main__':
     resampling_threshold = 2/3*n_particles
     # resampling_threshold = 1/2*n_particles
 
-    # idx_ti = 0
-    # idx_tf = int(dvl_T.shape[0]*1/2)
-    # idx_tf = dvl_T.shape[0]
-
-    #G11
+    #G11; G21; G22
     idx_ti = 0
     idx_tf =T.shape[0]
+    # idx_ti = int(T.shape[0]*0.6)
+    # idx_tf = int(T.shape[0]*0.75)
+
+    #G12
+    # idx_ti = 0
+    # idx_tf = int(dvl_T.shape[0]*1/2)
 
 
     dt = dvl_T[steps,] - dvl_T[0,]
@@ -250,7 +252,7 @@ if __name__ == '__main__':
     STD_X = []; STD_Y = []
     beta = 10**(-1.37)
     filter_lpf_speed = Low_pass_filter(1., np.array([dvl_v_x[0,], dvl_v_y[0,]]))
-
+    XGPS, YGPS = coord2cart((LAT, LON))
     for i in r:
 
         """Set data"""
@@ -293,10 +295,11 @@ if __name__ == '__main__':
                                                measurements_noise, process_noise, particles,\
                                                 resampling_threshold, resampler, beta,\
                                                 z_particules_mnt)
-
         """ Affichage en temps réel """
         if bool_display:
             if i%10 == 0:
+                idx_ti = int(T.shape[0]*0.6)
+                idx_tf = int(T.shape[0]*0.75)
                 lat = LAT[i,]
                 lon = LON[i,]
                 x_gps, y_gps = coord2cart((lat,lon)).flatten()
@@ -305,8 +308,10 @@ if __name__ == '__main__':
                 t1 = time.time()
                 ax.plot(coord2cart((LAT[idx_ti:idx_tf,], LON[idx_ti:idx_tf,]))[0,:], coord2cart((LAT[idx_ti:idx_tf,], LON[idx_ti:idx_tf,]))[1,:])
                 ax.set_title(f"Particle filter using MBES with {n_particles} particles") #with z = {}m".format(n_particles, measurements))
-                ax.set_xlim([x_gps_min - 100,x_gps_max + 100])
-                ax.set_ylim([y_gps_min - 100,y_gps_max + 100])
+                # ax.set_xlim([x_gps_min - 100,x_gps_max + 100])
+                # ax.set_ylim([y_gps_min - 100,y_gps_max + 100])
+                ax.set_xlim([np.min(XGPS[idx_ti:idx_tf,]-20),np.max(XGPS[idx_ti:idx_tf,])])
+                ax.set_ylim([np.min(YGPS[idx_ti:idx_tf,]),np.max(YGPS[idx_ti:idx_tf,])])
                 bx, by = get_average_state(particles)[0], get_average_state(particles)[1] #barycentre des particules
                 scatter1 = ax.scatter(x_gps, y_gps ,color='blue', label = 'True position panopée', s = 100)
                 # scatter2 = ax.scatter(particles[1][0], particles[1][1], color = 'red', s = 0.8, label = "particles",alpha=particles[0][:,0]/pow(np.max(particles[0][:,0]),2/3))
@@ -418,12 +423,14 @@ if __name__ == '__main__':
     ax2 = plt.subplot2grid((2, 2), (0, 1))
     ax3 = plt.subplot2grid((2, 2), (1, 1))
 
+    idx_ti = int(T.shape[0]*0.6)
+    idx_tf = int(T.shape[0]*0.75)
     print("Display the error and the final result..")
     ax1.set_title("Barycentre")
     ax1.set_xlabel("x [m]")
     ax1.set_ylabel("y [m]")
-    ax1.plot(coord2cart((LAT,LON))[0,:], coord2cart((LAT,LON))[1,:],label='true position',linewidth=0.5,color='k')
-    scatter = ax1.scatter(BAR[:,0][~masque], BAR[:,1][~masque], s = 1.2, c = NORM_STD[~masque], cmap='plasma', label='particle cloud barycenter')
+    ax1.plot(coord2cart((LAT[idx_ti:idx_tf,],LON[idx_ti:idx_tf,]))[0,:], coord2cart((LAT[idx_ti:idx_tf,],LON[idx_ti:idx_tf,]))[1,:],label='true position',linewidth=0.5,color='k')
+    scatter = ax1.scatter(BAR[idx_ti:idx_tf,0][~masque], BAR[idx_ti:idx_tf,1][~masque], s = 1.2, c = NORM_STD[idx_ti:idx_tf,][~masque[idx_ti:idx_tf,]], cmap='plasma', label='particle cloud barycenter')
     cbar = fig.colorbar(scatter, extend='both', ax = ax1)
     cbar.set_label('Ecart type')
     ax1.legend()

@@ -15,8 +15,7 @@ def display_mnt(LON, LAT, mnt):
     z = -(mnt[:,2] - np.min(mnt[:,2]))
 
     # Create a scatter plot of the x and y values, colored by the z values
-    sc = ax.scatter(x, y, c=z, cmap="terrain")
-    # sc = ax.scatter(x, y, c=z)
+    sc = ax.scatter(x, y, c=z, cmap="terrain", s = 0.01)
 
     # Add a colorbar to the plot
     cb = fig.colorbar(sc)
@@ -34,11 +33,12 @@ def display_mnt(LON, LAT, mnt):
 
 
 
+
 if __name__ == '__main__':
     from data_import import *
     print(np.min(LON), np.max(LON))
     print(np.min(LAT), np.max(LAT))
-    # LON, LAT = coord2cart((LAT,LON))
+    LON, LAT = coord2cart((LAT,LON))
     display_mnt(LON, LAT, MNT)
 
     from PIL import Image

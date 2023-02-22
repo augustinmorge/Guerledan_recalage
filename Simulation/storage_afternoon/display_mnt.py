@@ -12,10 +12,10 @@ def display_mnt(LON, LAT, mnt):
     fig, ax = plt.subplots()
 
     # Extract z values from the mnt array
-    z = mnt[:,2]
+    z = -(mnt[:,2] - np.min(mnt[:,2]))
 
     # Create a scatter plot of the x and y values, colored by the z values
-    sc = ax.scatter(x, y, c=z)
+    sc = ax.scatter(x, y, c=z, cmap="terrain", s = 0.01)
 
     # Add a colorbar to the plot
     cb = fig.colorbar(sc)
@@ -24,11 +24,13 @@ def display_mnt(LON, LAT, mnt):
     ax.set_xlabel('x')
     ax.set_ylabel('y')
 
-    plt.plot(LON,LAT, color = 'red')
+    plt.plot(LON,LAT,color='red',label='trajectory')
 
     # Show the plot
     plt.savefig("MNT_G1.png", dpi = 200) #augmenter dpi pour une meilleure résolution
     # plt.show()
+    plt.legend()
+
 
 
 

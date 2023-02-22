@@ -15,8 +15,7 @@ def display_mnt(LON, LAT, mnt):
     z = -(mnt[:,2] - np.min(mnt[:,2]))
 
     # Create a scatter plot of the x and y values, colored by the z values
-    sc = ax.scatter(x, y, c=z, cmap="terrain")
-    # sc = ax.scatter(x, y, c=z)
+    sc = ax.scatter(x, y, c=z, cmap="terrain", s = 0.01)
 
     # Add a colorbar to the plot
     cb = fig.colorbar(sc)
@@ -24,6 +23,11 @@ def display_mnt(LON, LAT, mnt):
     # Set the x and y axis labels
     ax.set_xlabel('x')
     ax.set_ylabel('y')
+
+    ax.set_xlim(np.min(LON), np.max(LON))
+    ax.set_ylim(np.min(LAT), np.max(LAT))
+
+    ax.set_aspect('equal')
 
     plt.plot(LON,LAT,color='red',label='trajectory')
 
