@@ -18,21 +18,21 @@ def display_mnt(LON, LAT, mnt):
     sc = ax.scatter(x, y, c=z, cmap="terrain", s = 0.01)
 
     # Add a colorbar to the plot
-    cb = fig.colorbar(sc)
+    cb = fig.colorbar(sc) #, orientation = 'horizontal')
 
     # Set the x and y axis labels
     ax.set_xlabel('x')
     ax.set_ylabel('y')
 
-    ax.set_xlim(np.min(LON), np.max(LON))
-    ax.set_ylim(np.min(LAT), np.max(LAT))
+    # ax.set_xlim(np.min(LON), np.max(LON))
+    # ax.set_ylim(np.min(LAT), np.max(LAT))
 
     ax.set_aspect('equal')
 
-    plt.plot(LON,LAT,color='red',label='trajectory')
+    # plt.plot(LON,LAT,color='red',label='trajectory')
 
     # Show the plot
-    plt.savefig("MNT_G1.png", dpi = 200) #augmenter dpi pour une meilleure résolution
+    plt.savefig("../mnt/MNT_2019.png", dpi = 1000, transparent = True) #augmenter dpi pour une meilleure résolution
     # plt.show()
     plt.legend()
 
