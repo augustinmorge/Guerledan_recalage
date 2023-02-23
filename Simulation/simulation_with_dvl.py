@@ -392,7 +392,7 @@ if __name__ == '__main__':
     ax2.plot(TIME, ERR, color = 'b', label = 'erreur')
     ERR = np.array(ERR)
     idx_start = int(1/8*TIME.shape[0])
-    ax2.plot(TIME, np.mean(ERR)*np.ones(TIME.shape), label = f"mean error from beggining = {np.mean(ERR)}")
+    ax2.plot(TIME, np.mean(ERR)*np.ones(TIME.shape), label = f"mean error from begining = {np.mean(ERR)}")
     ax2.plot(TIME[idx_start:,], np.mean(ERR[idx_start:,])*np.ones(TIME[idx_start:,].shape), label = f"mean error from convergence = {np.mean(ERR[idx_start:,])}")
     ax2.legend()
 

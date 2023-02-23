@@ -147,8 +147,11 @@ if __name__ == '__main__':
     resampler = Resampler()
     resampling_threshold = 0.5*n_particles
 
-    idx_ti = 0 #int(1/3*T.shape[0])
-    idx_tf = T.shape[0] #int(4/5*T.shape[0]) #
+    # idx_ti = 0 #int(1/3*T.shape[0])
+    # idx_tf = T.shape[0] #int(4/5*T.shape[0]) #
+    
+    idx_ti = int(1/2*T.shape[0]) #0
+    idx_tf = int(9/10*T.shape[0]) #T.shape[0] #
 
     dt = T[steps,] - T[0,]
     tini = T[idx_ti,]
@@ -308,7 +311,7 @@ if __name__ == '__main__':
     # ax2.scatter(TIME, NORM_STD, color = 'green', label = 'ecart type', s = 1)
     # ERR = np.array(ERR)
     # idx_start = int(1/8*TIME.shape[0])
-    # ax2.plot(TIME, np.mean(ERR)*np.ones(TIME.shape), label = f"mean error from beggining = {np.mean(ERR)}")
+    # ax2.plot(TIME, np.mean(ERR)*np.ones(TIME.shape), label = f"mean error from begining = {np.mean(ERR)}")
     # ax2.plot(TIME[idx_start:,], np.mean(ERR[idx_start:,])*np.ones(TIME[idx_start:,].shape), label = f"mean error from convergence = {np.mean(ERR[idx_start:,])}")
     # ax2.legend()
     #
@@ -332,7 +335,7 @@ if __name__ == '__main__':
     # ax4.plot((T[steps:,] - T[steps,])/60, np.sqrt(V_X[steps:,]**2 + V_Y[steps:,]**2), label = "ins_speed")
     # ax4.legend()
 
-    plt.suptitle(f"Algorithm with MBES\n{n_particles} particles; 1/{steps} data log used") #\nTotal time:{int(elapsed_time)}s")
+    plt.suptitle(f"Algorithm with INS\n{n_particles} particles; 1/{steps} data log used") #\nTotal time:{int(elapsed_time)}s")
     ax1 = plt.subplot2grid((2, 2), (0, 0), rowspan=3)
     ax2 = plt.subplot2grid((2, 2), (0, 1))
     ax3 = plt.subplot2grid((2, 2), (1, 1))
@@ -358,7 +361,7 @@ if __name__ == '__main__':
     ax2.scatter(TIME, ERR, color = 'blue', label = 'erreur', s = 1)
     ERR = np.array(ERR)
     idx_start = int(1/8*TIME.shape[0])
-    ax2.plot(TIME, np.mean(ERR)*np.ones(TIME.shape), label = f"mean error from beggining = {np.mean(ERR)}")
+    ax2.plot(TIME, np.mean(ERR)*np.ones(TIME.shape), label = f"mean error from begining = {np.mean(ERR)}")
     ax2.plot(TIME[idx_start:,], np.mean(ERR[idx_start:,])*np.ones(TIME[idx_start:,].shape), label = f"mean error from convergence = {np.mean(ERR[idx_start:,])}")
     ax2.legend()
 
