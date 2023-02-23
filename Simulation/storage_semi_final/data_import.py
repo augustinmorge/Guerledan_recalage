@@ -444,7 +444,7 @@ else:
     dvl_VSTD = dvl_VSTD_interp
 
     #Rotate the dvl
-    angle = np.pi/4
+    angle = np.pi/4 - 0.0295242
     dvl_v_x = (dvl_VE*np.cos(angle) + dvl_VN*np.sin(angle))*np.cos(YAW)*2.296356504486271
     dvl_v_y = (dvl_VN*np.sin(angle) + dvl_VE*np.cos(angle))*np.sin(YAW)*2.515192334464708
     dvl_v_z = dvl_VZ

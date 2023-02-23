@@ -220,7 +220,9 @@ if __name__ == '__main__':
 
     #G11; G21; G22
     idx_ti = 0
-    idx_tf =T.shape[0]
+    idx_tf = T.shape[0]
+    # idx_ti = int(10*60*20)
+    # idx_tf = int(17*60*20)
     # idx_ti = int(T.shape[0]*0.6)
     # idx_tf = int(T.shape[0]*0.75)
 
@@ -254,7 +256,6 @@ if __name__ == '__main__':
     filter_lpf_speed = Low_pass_filter(1., np.array([dvl_v_x[0,], dvl_v_y[0,]]))
     XGPS, YGPS = coord2cart((LAT, LON))
     for i in r:
-
         """Set data"""
         #Use the DVL
         t = dvl_T[i,]
@@ -298,8 +299,8 @@ if __name__ == '__main__':
         """ Affichage en temps réel """
         if bool_display:
             if i%10 == 0:
-                idx_ti = int(T.shape[0]*0.6)
-                idx_tf = int(T.shape[0]*0.75)
+                idx_ti = 0
+                idx_tf = int(T.shape[0]/3)
                 lat = LAT[i,]
                 lon = LON[i,]
                 x_gps, y_gps = coord2cart((lat,lon)).flatten()
