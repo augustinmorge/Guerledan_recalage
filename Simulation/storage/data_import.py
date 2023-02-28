@@ -126,14 +126,14 @@ if bool_txt:
     if data_cropped: #Choose the txt file
         MNT_txt = np.loadtxt(file_path+"/../mnt/guerledan_cropped.txt", dtype = str)
     else: #Choose the compressed file
-        MNT_txt = np.loadtxt(file_path+"/../mnt/guerledan_EDF_2013-06_MNT1m.tiff.txt", dtype = str)
-        # MNT_txt = np.loadtxt(file_path+"/../mnt/guerledan_2019-02_MNT50cm.xyz", dtype = str)
+        # MNT_txt = np.loadtxt(file_path+"/../mnt/guerledan_EDF_2013-06_MNT1m.tiff.txt", dtype = str)
+        MNT_txt = np.loadtxt(file_path+"/../mnt/guerledan_2019-02_MNT50cm.xyz", dtype = str)
 
     #Flip the MNT
     for i in MNT_txt:
         MNT.append(i.split(','))
-        MNT[-1] = [np.float64(MNT[-1][0]), np.float64(MNT[-1][1]), np.float64(MNT[-1][2]+'.'+MNT[-1][3])]
-        # MNT[-1] = [np.float64(MNT[-1][0]), np.float64(MNT[-1][1]), -np.float64(MNT[-1][2])] #+'.'+MNT[-1][3])]
+        # MNT[-1] = [np.float64(MNT[-1][0]), np.float64(MNT[-1][1]), np.float64(MNT[-1][2]+'.'+MNT[-1][3])]
+        MNT[-1] = [np.float64(MNT[-1][0]), np.float64(MNT[-1][1]), -np.float64(MNT[-1][2])] #+'.'+MNT[-1][3])]
     MNT = np.array(MNT)
 
     #Transform the proj

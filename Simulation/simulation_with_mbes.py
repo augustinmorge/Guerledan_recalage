@@ -88,9 +88,9 @@ def compute_likelihood(propagated_states, measurements, measurements_noise, beta
     distance_max = np.abs(mbes_max_Z - d_mbes_particule_max)
 
     if measurements_noise[0] == None:
+        p_z_given_x_distance = np.exp(-beta*distance_min)*np.exp(-beta*distance_mid**2)*np.exp(-beta*distance_max)
         # p_z_given_x_distance = np.exp(-beta*distance_min)*np.exp(-beta*distance_mid**2)*np.exp(-beta*distance_max)
-        # p_z_given_x_distance = np.exp(-beta*distance_min)*np.exp(-beta*distance_mid**2)*np.exp(-beta*distance_max)
-        p_z_given_x_distance = np.exp(-beta*distance_mid**2)
+        # p_z_given_x_distance = np.exp(-beta*distance_mid**2)
 
     else:
         p_z_given_x_distance = np.exp(-beta*distance/(measurements_noise[0]**2))
@@ -299,8 +299,8 @@ if __name__ == '__main__':
         """ Affichage en temps réel """
         if bool_display:
             if i%10 == 0:
-                idx_ti_temp = 0
-                idx_tf_temp = int(T.shape[0]/3)
+                # idx_ti_temp = 0
+                # idx_tf_temp = int(T.shape[0]/3)
                 lat = LAT[i,]
                 lon = LON[i,]
                 x_gps, y_gps = coord2cart((lat,lon)).flatten()
